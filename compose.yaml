@@ -1,0 +1,8 @@
+name: shortly
+services:
+  app:
+    build: .
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/build

@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 )
 
-func GenerateShortID() string {
+func GenerateShortCode() string {
 	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	bytes := make([]byte, 8)
 	if _, err := rand.Read(bytes); err != nil {

@@ -4,12 +4,20 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"shortly/internal/app/helpers"
 	"shortly/internal/app/store"
 	"strings"
 )
 
 var storage = store.NewURLStore()
+var urlPattern = regexp.MustCompile(`^https?://[^\s/$.?#].[^\s]*$`)
+
+func HandleStatus(res http.ResponseWriter, req *http.Request) {
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusOK)
+	res.Write([]byte(`{"code": 200, "status":"ok"}`))
+}
 
 func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
@@ -22,14 +30,18 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 		http.Error(res, "Unable to read request body", http.StatusBadRequest)
 		return
 	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			http.Error(res, "Unable to close reader", http.StatusInternalServerError)
-		}
-	}(req.Body)
+	if len(body) == 0 {
+		http.Error(res, "Unable to process request", http.StatusBadRequest)
+		return
+	}
+	defer req.Body.Close()
 
 	longURL := string(body)
+	if !urlPattern.MatchString(longURL) {
+		http.Error(res, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
 	shortCode := helpers.GenerateShortCode()
 	shortURL := fmt.Sprintf(`http://localhost:8080/%s`, shortCode)
 

@@ -6,6 +6,7 @@ import (
 
 func Run() error {
 	mux := http.NewServeMux()
+	mux.HandleFunc("/status", HandleStatus)
 	mux.HandleFunc("/", HandleCreateShortLink)
 	mux.HandleFunc("/{id}", HandleGetShortLink)
 

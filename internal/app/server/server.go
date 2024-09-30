@@ -1,18 +1,28 @@
 package server
 
 import (
+	"log"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
-func Run() error {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/status", HandleStatus)
-	mux.HandleFunc("/", HandleCreateShortLink)
-	mux.HandleFunc("/{id}", HandleGetShortLink)
+func AppRouter() chi.Router {
+	router := chi.NewRouter()
 
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
-	return nil
+	router.Use(
+		middleware.Heartbeat("/status"),
+		middleware.Logger,
+		middleware.RequestID,
+		middleware.Recoverer)
+
+	router.Post("/", HandleCreateShortLink)
+	router.Get("/{id}", HandleGetShortLink)
+
+	return router
+}
+
+func Run() {
+	log.Fatal(http.ListenAndServe(":8080", AppRouter()))
 }

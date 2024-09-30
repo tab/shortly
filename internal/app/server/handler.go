@@ -5,19 +5,14 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
+
 	"shortly/internal/app/helpers"
 	"shortly/internal/app/store"
-	"strings"
 )
 
 var storage = store.NewURLStore()
 var urlPattern = regexp.MustCompile(`^https?://[^\s/$.?#].[^\s]*$`)
-
-func HandleStatus(res http.ResponseWriter, req *http.Request) {
-	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusOK)
-	res.Write([]byte(`{"code": 200, "status":"ok"}`))
-}
 
 func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {

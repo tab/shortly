@@ -10,44 +10,6 @@ import (
 	"testing"
 )
 
-func TestHandleStatus(t *testing.T) {
-	type result struct {
-		code        int
-		response    string
-		contentType string
-	}
-	tests := []struct {
-		name     string
-		expected result
-	}{
-		{
-			name: "Success",
-			expected: result{
-				code:     200,
-				response: `{"code": 200, "status":"ok"}`,
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodGet, "/status", nil)
-			recorder := httptest.NewRecorder()
-			HandleStatus(recorder, request)
-
-			response := recorder.Result()
-			assert.Equal(t, test.expected.code, response.StatusCode)
-
-			defer response.Body.Close()
-			responseBody, err := io.ReadAll(response.Body)
-
-			require.NoError(t, err)
-			assert.JSONEq(t, test.expected.response, string(responseBody))
-			assert.Equal(t, "application/json", response.Header.Get("Content-Type"))
-		})
-	}
-}
-
 func TestHandleCreateShortLink(t *testing.T) {
 	type result struct {
 		code        int

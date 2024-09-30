@@ -15,16 +15,16 @@ func main() {
 	fmt.Println("Enter long URL:")
 
 	reader := bufio.NewReader(os.Stdin)
-	longUrl, err := reader.ReadString('\n')
+	longURL, err := reader.ReadString('\n')
 	if err != nil {
 		panic(err)
 	}
-	longUrl = strings.TrimSuffix(longUrl, "\n")
+	longURL = strings.TrimSuffix(longURL, "\n")
 
 	client := resty.New()
 	response, err := client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
-		SetBody(longUrl).
+		SetBody(longURL).
 		Post(endpoint)
 	if err != nil {
 		panic(err)

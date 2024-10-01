@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -9,8 +10,15 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+type Options struct {
+	Endpoint string
+}
+
+var opts Options
+
 func main() {
-	endpoint := "http://localhost:8080"
+	flag.StringVar(&opts.Endpoint, "a", "http://localhost:8080", "address and port to call server")
+	flag.Parse()
 
 	fmt.Println("Enter long URL:")
 
@@ -25,7 +33,7 @@ func main() {
 	response, err := client.R().
 		SetHeader("Content-Type", "application/x-www-form-urlencoded").
 		SetBody(longURL).
-		Post(endpoint)
+		Post(opts.Endpoint)
 	if err != nil {
 		panic(err)
 	}

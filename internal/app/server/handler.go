@@ -38,7 +38,7 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	}
 
 	shortCode := helpers.GenerateShortCode()
-	shortURL := fmt.Sprintf(`http://localhost:8080/%s`, shortCode)
+	shortURL := fmt.Sprintf("%s/%s", options.BaseURL, shortCode)
 
 	storage.Set(shortCode, longURL)
 

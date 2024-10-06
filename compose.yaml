@@ -1,8 +1,43 @@
 name: shortly
 services:
-  app:
-    build: .
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+      target: base-backend
     tty: true
     stdin_open: true
     volumes:
-      - .:/build
+      - ./cmd:/app/cmd
+      - ./internal:/app/internal
+      - ./go.mod:/app/go.mod
+      - ./go.sum:/app/go.sum
+    ports:
+      - "8080:8080"
+    environment:
+        - SERVER_ADDRESS=0.0.0.0:8080
+        - BASE_URL=http://localhost:8080
+        - CLIENT_URL=http://localhost:3000
+    networks:
+      - shortly-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: frontend.Dockerfile
+      target: base-frontend
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./frontend:/frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+    networks:
+      - shortly-network
+
+networks:
+  shortly-network:
+    name: shortly-network
+    external: false

@@ -10,4 +10,6 @@
 /.gitignore
 /compose.yaml
 /Dockerfile
+/backend.Dockerfile
+/frontend.Dockerfile
 /README.md

@@ -1,0 +1,26 @@
+{
+  "translation": {
+    "pages": {
+      "home": {
+        "title": "Home"
+      }
+    },
+    "common": {
+      "loading": "Loading...",
+      "submit": "Submit",
+      "back": "Back"
+    },
+    "url": {
+      "title": "URL",
+      "form": {
+        "placeholder": "Enter URL"
+      }
+    },
+    "validation": {
+      "field": {
+        "required": "{{field}} is required",
+        "invalid": "{{field}} is not valid"
+      }
+    }
+  }
+}

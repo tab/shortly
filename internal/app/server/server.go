@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	"shortly/internal/app/config"
 )
@@ -17,6 +18,12 @@ func AppRouter() chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(
+		cors.Handler(cors.Options{
+			AllowedOrigins: []string{options.ClientURL},
+			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
+			AllowedHeaders: []string{"Content-Type"},
+			MaxAge:         300,
+		}),
 		middleware.Heartbeat("/status"),
 		middleware.Logger,
 		middleware.RequestID,
@@ -33,6 +40,7 @@ func Run() {
 
 	fmt.Println("Running server on", options.Addr)
 	fmt.Println("Shortener base address is", options.BaseURL)
+	fmt.Println("Shortener client address is", options.ClientURL)
 
 	err := http.ListenAndServe(options.Addr, AppRouter())
 	if err != nil {

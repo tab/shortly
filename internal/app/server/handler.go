@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"regexp"
 	"strings"
 
 	"shortly/internal/app/helpers"
@@ -12,7 +11,6 @@ import (
 )
 
 var storage = store.NewURLStore()
-var urlPattern = regexp.MustCompile(`^https?://[^\s/$.?#].[^\s]*$`)
 
 func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
@@ -31,8 +29,10 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	}
 	defer req.Body.Close()
 
-	longURL := string(body)
-	if !urlPattern.MatchString(longURL) {
+	longURL := strings.TrimSpace(string(body))
+	longURL = strings.Trim(longURL, "\"")
+
+	if helpers.IsInvalidURL(longURL) {
 		http.Error(res, "Invalid URL", http.StatusBadRequest)
 		return
 	}

@@ -20,29 +20,33 @@ func TestInitConfig(t *testing.T) {
 			args: []string{},
 			env:  map[string]string{},
 			expected: Options{
-				Addr:    "localhost:8080",
-				BaseURL: "http://localhost:8080",
+				Addr:      "localhost:8080",
+				BaseURL:   "http://localhost:8080",
+				ClientURL: "http://localhost:3000",
 			},
 		},
 		{
 			name: "Use env vars",
-			args: []string{"-a", "localhost:5000", "-b", "http://localhost:5000"},
+			args: []string{"-a", "localhost:5000", "-b", "http://localhost:5000", "-c", "http://localhost:6000"},
 			env: map[string]string{
 				"SERVER_ADDRESS": "localhost:3000",
 				"BASE_URL":       "http://localhost:3000",
+				"CLIENT_URL":     "http://localhost:6000",
 			},
 			expected: Options{
-				Addr:    "localhost:3000",
-				BaseURL: "http://localhost:3000",
+				Addr:      "localhost:3000",
+				BaseURL:   "http://localhost:3000",
+				ClientURL: "http://localhost:6000",
 			},
 		},
 		//{
 		//	name: "Use flags",
-		//	args: []string{"-a", "localhost:4000", "-b", "http://localhost:4000"},
+		//	args: []string{"-a", "localhost:4000", "-b", "http://localhost:4000", "-c", "http://localhost:5000"},
 		//	env:  map[string]string{},
 		//	expected: Options{
 		//		Addr:    "localhost:4000",
 		//		BaseURL: "http://localhost:4000",
+		//    ClientURL: "http://localhost:5000",
 		//	},
 		//},
 	}

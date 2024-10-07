@@ -37,7 +37,12 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortCode := helpers.GenerateShortCode()
+	shortCode, err := helpers.ShortCode()
+	if err != nil {
+		http.Error(res, "Failed to generate short code", http.StatusInternalServerError)
+		return
+	}
+
 	shortURL := fmt.Sprintf("%s/%s", options.BaseURL, shortCode)
 
 	storage.Set(shortCode, longURL)

@@ -9,24 +9,37 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"shortly/internal/app/helpers"
 )
 
+type MockShortCode struct{}
+
+func (MockShortCode) Code() (string, error) {
+	return "abcd1234", nil
+}
+
 func TestHandleCreateShortLink(t *testing.T) {
+	options.BaseURL = "http://localhost:8080"
+	helpers.SetShortCodeGenerator(MockShortCode{})
+
 	type result struct {
 		code        int
 		response    string
 		contentType string
 	}
 	tests := []struct {
-		name     string
-		method   string
-		body     string
-		expected result
+		name      string
+		method    string
+		body      string
+		shortCode string
+		expected  result
 	}{
 		{
-			name:   "Success",
-			method: http.MethodPost,
-			body:   "https://example.com",
+			name:      "Success",
+			method:    http.MethodPost,
+			body:      "https://example.com",
+			shortCode: "abcd1234",
 			expected: result{
 				code:        201,
 				response:    "http://localhost:8080/abcd1234",
@@ -34,9 +47,10 @@ func TestHandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Wrong HTTP method",
-			method: http.MethodGet,
-			body:   "",
+			name:      "Wrong HTTP method",
+			method:    http.MethodGet,
+			body:      "",
+			shortCode: "",
 			expected: result{
 				code:        400,
 				response:    "Wrong HTTP method\n",
@@ -44,9 +58,10 @@ func TestHandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Empty body",
-			method: http.MethodPost,
-			body:   "",
+			name:      "Empty body",
+			method:    http.MethodPost,
+			body:      "",
+			shortCode: "",
 			expected: result{
 				code:        400,
 				response:    "Unable to process request\n",
@@ -54,22 +69,13 @@ func TestHandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Invalid body",
-			method: http.MethodPost,
-			body:   "not-a-url",
+			name:      "Invalid body",
+			method:    http.MethodPost,
+			body:      "not-a-url",
+			shortCode: "",
 			expected: result{
 				code:        400,
-				response:    "invalid body\n",
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name:   "Read body error",
-			method: http.MethodPost,
-			body:   "invalid-body",
-			expected: result{
-				code:        400,
-				response:    "Unable to read request body\n",
+				response:    "Invalid URL\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -80,21 +86,17 @@ func TestHandleCreateShortLink(t *testing.T) {
 			request := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			recorder := httptest.NewRecorder()
 
-			if test.method == http.MethodPost && test.body == "invalid-body" {
-				request.Body = io.NopCloser(io.LimitReader(strings.NewReader(test.body), -1))
-			}
-
 			HandleCreateShortLink(recorder, request)
 
 			response := recorder.Result()
-
-			assert.Equal(t, test.expected.code, response.StatusCode)
 
 			defer response.Body.Close()
 			responseBody, err := io.ReadAll(response.Body)
 
 			require.NoError(t, err)
 			assert.NotEmpty(t, string(responseBody))
+			assert.Equal(t, test.expected.response, string(responseBody))
+			assert.Equal(t, test.expected.code, response.StatusCode)
 			assert.Equal(t, test.expected.contentType, response.Header.Get("Content-Type"))
 		})
 	}

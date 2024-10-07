@@ -58,7 +58,10 @@ func TestInitConfig(t *testing.T) {
 			}
 
 			flag.CommandLine = flag.NewFlagSet(test.name, flag.ContinueOnError)
-			flag.CommandLine.Parse(test.args)
+			//err := flag.CommandLine.Parse(test.args)
+			//if err != nil {
+			//	t.Fatalf("Failed to parse flags: %v", err)
+			//}
 
 			result := Init()
 

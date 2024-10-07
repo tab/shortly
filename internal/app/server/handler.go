@@ -44,7 +44,12 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 
 	res.Header().Set("Content-Type", "text/plain")
 	res.WriteHeader(http.StatusCreated)
-	res.Write([]byte(shortURL))
+
+	_, err = res.Write([]byte(shortURL))
+	if err != nil {
+		http.Error(res, "Failed to write response", http.StatusInternalServerError)
+		return
+	}
 }
 
 func HandleGetShortLink(res http.ResponseWriter, req *http.Request) {

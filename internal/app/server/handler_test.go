@@ -19,12 +19,14 @@ func TestHandleCreateShortLink(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
+		method   string
 		body     string
 		expected result
 	}{
 		{
-			name: "Success",
-			body: "https://example.com",
+			name:   "Success",
+			method: http.MethodPost,
+			body:   "https://example.com",
 			expected: result{
 				code:        201,
 				response:    "http://localhost:8080/abcd1234",
@@ -32,8 +34,19 @@ func TestHandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name: "Empty body",
-			body: "",
+			name:   "Wrong HTTP method",
+			method: http.MethodGet,
+			body:   "",
+			expected: result{
+				code:        400,
+				response:    "Wrong HTTP method\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:   "Empty body",
+			method: http.MethodPost,
+			body:   "",
 			expected: result{
 				code:        400,
 				response:    "Unable to process request\n",
@@ -41,11 +54,22 @@ func TestHandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name: "Invalid body",
-			body: "not-a-url",
+			name:   "Invalid body",
+			method: http.MethodPost,
+			body:   "not-a-url",
 			expected: result{
 				code:        400,
 				response:    "invalid body\n",
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:   "Read body error",
+			method: http.MethodPost,
+			body:   "invalid-body",
+			expected: result{
+				code:        400,
+				response:    "Unable to read request body\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -53,8 +77,13 @@ func TestHandleCreateShortLink(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(test.body))
+			request := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			recorder := httptest.NewRecorder()
+
+			if test.method == http.MethodPost && test.body == "invalid-body" {
+				request.Body = io.NopCloser(io.LimitReader(strings.NewReader(test.body), -1))
+			}
+
 			HandleCreateShortLink(recorder, request)
 
 			response := recorder.Result()

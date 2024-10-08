@@ -96,7 +96,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			request := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			recorder := httptest.NewRecorder()
 
-			handler.HandleCreateShortLink()(recorder, request)
+			handler.HandleCreateShortLink(recorder, request)
 
 			response := recorder.Result()
 			defer response.Body.Close()
@@ -162,7 +162,7 @@ func TestHandleGetShortLink(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.path, nil)
 			recorder := httptest.NewRecorder()
 
-			handler.HandleGetShortLink()(recorder, request)
+			handler.HandleGetShortLink(recorder, request)
 
 			response := recorder.Result()
 			defer response.Body.Close()

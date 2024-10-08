@@ -34,8 +34,9 @@ func (h *Handler) HandleCreateShortLink(res http.ResponseWriter, req *http.Reque
 	longURL := strings.TrimSpace(string(body))
 	longURL = strings.Trim(longURL, "\"")
 
-	if helpers.IsInvalidURL(longURL) {
-		httpError(res, &errors.InvalidURLError{URL: longURL}, http.StatusBadRequest)
+	_, err = helpers.Validate(longURL)
+	if err != nil {
+		httpError(res, err, http.StatusBadRequest)
 		return
 	}
 

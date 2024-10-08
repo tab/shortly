@@ -24,38 +24,15 @@ func New() *AppConfig {
 	flag.Parse()
 
 	return &AppConfig{
-		Addr:      setServerAddress(*flagAddr),
-		BaseURL:   setBaseURL(*flagBaseURL),
-		ClientURL: setClientURL(*flagClientURL),
+		Addr:      getEnvOrFlag("SERVER_ADDRESS", *flagAddr),
+		BaseURL:   getEnvOrFlag("BASE_URL", *flagBaseURL),
+		ClientURL: getEnvOrFlag("CLIENT_URL", *flagClientURL),
 	}
 }
 
-func setServerAddress(flagAddr string) string {
-	envAddr, ok := os.LookupEnv("SERVER_ADDRESS")
-
-	if ok {
-		return envAddr
+func getEnvOrFlag(envVar, flagValue string) string {
+	if envValue, ok := os.LookupEnv(envVar); ok {
+		return envValue
 	}
-
-	return flagAddr
-}
-
-func setBaseURL(flagBaseURL string) string {
-	envBaseURL, ok := os.LookupEnv("BASE_URL")
-
-	if ok {
-		return envBaseURL
-	}
-
-	return flagBaseURL
-}
-
-func setClientURL(flagClientURL string) string {
-	envClientURL, ok := os.LookupEnv("CLIENT_URL")
-
-	if ok {
-		return envClientURL
-	}
-
-	return flagClientURL
+	return flagValue
 }

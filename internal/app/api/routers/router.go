@@ -36,8 +36,8 @@ func AppRouter(appConfig *config.AppConfig) (chi.Router, *handlers.Handler) {
 		middleware.RequestID,
 		middleware.Recoverer)
 
-	router.Post("/", handler.HandleCreateShortLink())
-	router.Get("/{id}", handler.HandleGetShortLink())
+	router.Post("/", handler.HandleCreateShortLink)
+	router.Get("/{id}", handler.HandleGetShortLink)
 
 	return router, handler
 }

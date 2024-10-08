@@ -2,38 +2,33 @@ package helpers
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"errors"
 )
 
-const ShortCodeLength = 8
+const BytesLength = 4 // 4 bytes = 8 characters
 
-type SecureRandom interface {
-	Code() (string, error)
+type SecureRandomGenerator interface {
+	Hex() (string, error)
 }
 
-type Generator struct{}
+type SecureRandom struct{}
 
-var generator SecureRandom = Generator{}
+func NewSecureRandom() *SecureRandom {
+	return &SecureRandom{}
+}
 
-func (Generator) Code() (string, error) { // Changed method name to Code
-	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	bytes := make([]byte, ShortCodeLength)
+func (random *SecureRandom) Read(bytes []byte) (int, error) {
+	return rand.Read(bytes)
+}
 
-	if _, err := rand.Read(bytes); err != nil {
-		return "", errors.New("failed to generate short code")
+func (random *SecureRandom) Hex() (string, error) {
+	bytes := make([]byte, BytesLength)
+
+	_, err := random.Read(bytes)
+	if err != nil {
+		return "", errors.New("failed to generate secure random bytes")
 	}
 
-	for i, b := range bytes {
-		bytes[i] = chars[b%byte(len(chars))]
-	}
-
-	return string(bytes), nil
-}
-
-func SetShortCodeGenerator(gen SecureRandom) {
-	generator = gen
-}
-
-func ShortCode() (string, error) {
-	return generator.Code()
+	return hex.EncodeToString(bytes), nil
 }

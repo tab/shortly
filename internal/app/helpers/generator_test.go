@@ -7,19 +7,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockShortCode struct{}
+type MockSecureRandom struct{}
 
-func (MockShortCode) Code() (string, error) {
+func (MockSecureRandom) Hex() (string, error) {
 	return "abcd1234", nil
 }
 
 type MockFailingGenerator struct{}
 
-func (MockFailingGenerator) Code() (string, error) {
+func (MockFailingGenerator) Hex() (string, error) {
 	return "", errors.New("failed to generate short code")
 }
 
-func TestShortCode(t *testing.T) {
+func TestSecureRandom_Hex(t *testing.T) {
 	type result struct {
 		length int
 		code   string
@@ -28,23 +28,23 @@ func TestShortCode(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		mock     SecureRandom
+		mock     SecureRandomGenerator
 		expected result
 	}{
 		{
 			name: "Success",
-			mock: Generator{},
+			mock: NewSecureRandom(),
 			expected: result{
-				length: ShortCodeLength,
-				code:   "unique",
+				length: BytesLength * 2,
+				code:   "",
 				error:  false,
 			},
 		},
 		{
 			name: "Mocked Success",
-			mock: MockShortCode{},
+			mock: MockSecureRandom{},
 			expected: result{
-				length: ShortCodeLength,
+				length: BytesLength * 2,
 				code:   "abcd1234",
 				error:  false,
 			},
@@ -62,9 +62,7 @@ func TestShortCode(t *testing.T) {
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			SetShortCodeGenerator(test.mock)
-
-			code, err := ShortCode()
+			code, err := test.mock.Hex()
 
 			if test.expected.error {
 				assert.Error(t, err)
@@ -73,6 +71,10 @@ func TestShortCode(t *testing.T) {
 				assert.NoError(t, err)
 				assert.NotEmpty(t, code)
 				assert.Equal(t, test.expected.length, len(code))
+
+				if test.expected.code != "" {
+					assert.Equal(t, test.expected.code, code)
+				}
 			}
 		})
 	}

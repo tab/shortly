@@ -1,4 +1,4 @@
-package server
+package routers
 
 import (
 	"io"
@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"shortly/internal/app/config"
 )
 
 func requestHelper(t *testing.T, server *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
@@ -27,9 +29,16 @@ func requestHelper(t *testing.T, server *httptest.Server, method, path string, b
 }
 
 func TestAppRouter(t *testing.T) {
-	storage.Set("abcd1234", "https://example.com")
+	appConfig := &config.AppConfig{
+		Addr:      config.ServerAddress,
+		BaseURL:   config.BaseURL,
+		ClientURL: config.ClientURL,
+	}
 
-	server := httptest.NewServer(AppRouter())
+	router, handler := AppRouter(appConfig)
+	handler.Store.Set("abcd1234", "https://example.com")
+
+	server := httptest.NewServer(router)
 	defer server.Close()
 
 	var tests = []struct {
@@ -61,6 +70,7 @@ func TestAppRouter(t *testing.T) {
 			code:   http.StatusNotFound,
 		},
 	}
+
 	for _, test := range tests {
 		resp, _ := requestHelper(t, server, test.method, test.path, strings.NewReader(test.body))
 		defer resp.Body.Close()

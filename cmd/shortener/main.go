@@ -1,7 +1,11 @@
 package main
 
-import "shortly/internal/app/server"
+import (
+	"shortly/internal/app/api/routers"
+	"shortly/internal/app/config"
+)
 
 func main() {
-	server.Run()
+	appConfig := config.Init()
+	routers.Run(appConfig)
 }

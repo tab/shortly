@@ -13,16 +13,16 @@ func TestInitConfig(t *testing.T) {
 		name     string
 		args     []string
 		env      map[string]string
-		expected Options
+		expected *AppConfig
 	}{
 		{
 			name: "Use default values",
 			args: []string{},
 			env:  map[string]string{},
-			expected: Options{
-				Addr:      "localhost:8080",
-				BaseURL:   "http://localhost:8080",
-				ClientURL: "http://localhost:3000",
+			expected: &AppConfig{
+				Addr:      ServerAddress,
+				BaseURL:   BaseURL,
+				ClientURL: ClientURL,
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func TestInitConfig(t *testing.T) {
 				"BASE_URL":       "http://localhost:3000",
 				"CLIENT_URL":     "http://localhost:6000",
 			},
-			expected: Options{
+			expected: &AppConfig{
 				Addr:      "localhost:3000",
 				BaseURL:   "http://localhost:3000",
 				ClientURL: "http://localhost:6000",
@@ -43,10 +43,10 @@ func TestInitConfig(t *testing.T) {
 		//	name: "Use flags",
 		//	args: []string{"-a", "localhost:4000", "-b", "http://localhost:4000", "-c", "http://localhost:5000"},
 		//	env:  map[string]string{},
-		//	expected: Options{
-		//		Addr:    "localhost:4000",
-		//		BaseURL: "http://localhost:4000",
-		//    ClientURL: "http://localhost:5000",
+		//	expected: &AppConfig{
+		//		Addr:      "localhost:4000",
+		//		BaseURL:   "http://localhost:4000",
+		//		ClientURL: "http://localhost:5000",
 		//	},
 		//},
 	}
@@ -67,6 +67,7 @@ func TestInitConfig(t *testing.T) {
 
 			assert.Equal(t, test.expected.Addr, result.Addr)
 			assert.Equal(t, test.expected.BaseURL, result.BaseURL)
+			assert.Equal(t, test.expected.ClientURL, result.ClientURL)
 
 			for key := range test.env {
 				os.Unsetenv(key)

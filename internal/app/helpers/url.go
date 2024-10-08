@@ -1,13 +1,19 @@
 package helpers
 
-import "regexp"
+import (
+	"regexp"
+
+	"shortly/internal/app/errors"
+)
 
 const URLRegex = `^(https?:\/\/)?([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,6}([\/\w .-]*)*\/?$`
 
-func IsValidURL(url string) bool {
-	return regexp.MustCompile(URLRegex).MatchString(url)
-}
+var urlRegex = regexp.MustCompile(URLRegex)
 
-func IsInvalidURL(url string) bool {
-	return !IsValidURL(url)
+func Validate(url string) (bool, error) {
+	isValid := urlRegex.MatchString(url)
+	if !isValid {
+		return isValid, &errors.InvalidURLError{URL: url}
+	}
+	return isValid, nil
 }

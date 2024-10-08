@@ -6,56 +6,34 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestIsValidURL(t *testing.T) {
+func TestValidate(t *testing.T) {
 	tests := []struct {
-		name     string
-		url      string
-		expected bool
+		name  string
+		url   string
+		valid bool
 	}{
 		{
-			name:     "Valid URL",
-			url:      "https://www.google.com",
-			expected: true,
+			name:  "Valid URL",
+			url:   "https://www.google.com",
+			valid: true,
 		},
 		{
-			name:     "Invalid URL",
-			url:      "not-a-url",
-			expected: false,
+			name:  "Invalid URL",
+			url:   "not-a-url",
+			valid: false,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			result := IsValidURL(test.url)
+			result, err := Validate(test.url)
 
-			assert.Equal(t, test.expected, result)
-		})
-	}
-}
-
-func TestIsInvalidURL(t *testing.T) {
-	tests := []struct {
-		name     string
-		url      string
-		expected bool
-	}{
-		{
-			name:     "Valid URL",
-			url:      "https://www.google.com",
-			expected: false,
-		},
-		{
-			name:     "Invalid URL",
-			url:      "not-a-url",
-			expected: true,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := IsInvalidURL(test.url)
-
-			assert.Equal(t, test.expected, result)
+			if test.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+			assert.Equal(t, test.valid, result)
 		})
 	}
 }

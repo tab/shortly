@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/errors"
 	"shortly/internal/app/helpers"
 	"shortly/internal/app/store"
 )
@@ -20,13 +21,13 @@ type Handler struct {
 func (h *Handler) HandleCreateShortLink() http.HandlerFunc {
 	return func(res http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
-			http.Error(res, "Wrong HTTP method", http.StatusBadRequest)
+			httpError(res, &errors.MethodNotAllowedError{}, http.StatusBadRequest)
 			return
 		}
 
 		body, err := io.ReadAll(req.Body)
 		if err != nil || len(body) == 0 {
-			http.Error(res, "Unable to process request", http.StatusBadRequest)
+			httpError(res, &errors.InvalidRequestBodyError{}, http.StatusBadRequest)
 			return
 		}
 		defer req.Body.Close()
@@ -35,27 +36,20 @@ func (h *Handler) HandleCreateShortLink() http.HandlerFunc {
 		longURL = strings.Trim(longURL, "\"")
 
 		if helpers.IsInvalidURL(longURL) {
-			http.Error(res, "Invalid URL", http.StatusBadRequest)
+			httpError(res, &errors.InvalidURLError{URL: longURL}, http.StatusBadRequest)
 			return
 		}
 
 		shortCode, err := h.SecureRandom.Hex()
 		if err != nil {
-			http.Error(res, "Failed to generate short code", http.StatusInternalServerError)
+			httpError(res, &errors.ShortCodeGenerationError{}, http.StatusInternalServerError)
 			return
 		}
 
 		shortURL := fmt.Sprintf("%s/%s", h.AppConfig.BaseURL, shortCode)
 		h.Store.Set(shortCode, longURL)
 
-		res.Header().Set("Content-Type", "text/plain")
-		res.WriteHeader(http.StatusCreated)
-
-		_, err = res.Write([]byte(shortURL))
-		if err != nil {
-			http.Error(res, "Failed to write response", http.StatusInternalServerError)
-			return
-		}
+		httpResponse(res, http.StatusCreated, []byte(shortURL), "")
 	}
 }
 
@@ -65,11 +59,10 @@ func (h *Handler) HandleGetShortLink() http.HandlerFunc {
 
 		longURL, found := h.Store.Get(shortCode)
 		if !found {
-			http.Error(res, "Short code not found", http.StatusNotFound)
+			httpError(res, &errors.ShortCodeNotFoundError{Code: shortCode}, http.StatusNotFound)
 			return
 		}
 
-		res.Header().Set("Content-Type", "text/plain")
-		http.Redirect(res, req, longURL, http.StatusTemporaryRedirect)
+		httpResponse(res, http.StatusTemporaryRedirect, nil, longURL)
 	}
 }

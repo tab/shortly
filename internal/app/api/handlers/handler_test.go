@@ -33,6 +33,12 @@ func TestHandleCreateShortLink(t *testing.T) {
 		Store:        *store.NewURLStore(),
 	}
 
+	type result struct {
+		code        int
+		response    string
+		contentType string
+	}
+
 	tests := []struct {
 		name     string
 		method   string
@@ -47,11 +53,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			name:   "Success",
 			method: http.MethodPost,
 			body:   "https://example.com",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusCreated,
 				response:    "http://localhost:8080/abcd1234",
 				contentType: "text/plain",
@@ -61,11 +63,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			name:   "Wrong HTTP method",
 			method: http.MethodGet,
 			body:   "",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusBadRequest,
 				response:    "Wrong HTTP method\n",
 				contentType: "text/plain; charset=utf-8",
@@ -75,27 +73,19 @@ func TestHandleCreateShortLink(t *testing.T) {
 			name:   "Empty body",
 			method: http.MethodPost,
 			body:   "",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusBadRequest,
 				response:    "Unable to process request\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
-			name:   "Invalid URL",
+			name:   "Invalid URL: not-a-url\n",
 			method: http.MethodPost,
 			body:   "not-a-url",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusBadRequest,
-				response:    "Invalid URL\n",
+				response:    "Invalid URL: not-a-url\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},
@@ -136,23 +126,21 @@ func TestHandleGetShortLink(t *testing.T) {
 
 	handler.Store.Set("abcd1234", "https://example.com")
 
+	type result struct {
+		code        int
+		response    string
+		contentType string
+	}
+
 	tests := []struct {
 		name     string
 		path     string
-		expected struct {
-			code        int
-			response    string
-			contentType string
-		}
+		expected result
 	}{
 		{
 			name: "Redirect to long URL",
 			path: "/abcd1234",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusTemporaryRedirect,
 				response:    "",
 				contentType: "text/plain",
@@ -161,13 +149,9 @@ func TestHandleGetShortLink(t *testing.T) {
 		{
 			name: "Not found",
 			path: "/not-valid-code",
-			expected: struct {
-				code        int
-				response    string
-				contentType string
-			}{
+			expected: result{
 				code:        http.StatusNotFound,
-				response:    "Short code not found\n",
+				response:    "Short code not found: not-valid-code\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},

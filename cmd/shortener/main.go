@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	appConfig := config.Init()
+	appConfig := config.New()
 	routers.Run(appConfig)
 }

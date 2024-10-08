@@ -5,9 +5,11 @@ import (
 	"os"
 )
 
-const ServerAddress = "localhost:8080"
-const BaseURL = "http://localhost:8080"
-const ClientURL = "http://localhost:3000"
+const (
+	BaseURL       = "http://localhost:8080"
+	ClientURL     = "http://localhost:3000"
+	ServerAddress = "localhost:8080"
+)
 
 type AppConfig struct {
 	Addr      string
@@ -15,7 +17,7 @@ type AppConfig struct {
 	ClientURL string
 }
 
-func Init() *AppConfig {
+func New() *AppConfig {
 	flagAddr := flag.String("a", ServerAddress, "address and port to run server")
 	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
 	flagClientURL := flag.String("c", ClientURL, "frontend client URL")

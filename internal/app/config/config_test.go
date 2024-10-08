@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInitConfig(t *testing.T) {
+func TestNewConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string
@@ -63,7 +63,7 @@ func TestInitConfig(t *testing.T) {
 			//	t.Fatalf("Failed to parse flags: %v", err)
 			//}
 
-			result := Init()
+			result := New()
 
 			assert.Equal(t, test.expected.Addr, result.Addr)
 			assert.Equal(t, test.expected.BaseURL, result.BaseURL)

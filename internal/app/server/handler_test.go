@@ -10,18 +10,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"shortly/internal/app/helpers"
+	"shortly/internal/app/store"
 )
 
-type MockShortCode struct{}
+type MockSecureRandom struct{}
 
-func (MockShortCode) Code() (string, error) {
+func (mock *MockSecureRandom) Hex() (string, error) {
 	return "abcd1234", nil
 }
 
 func TestHandleCreateShortLink(t *testing.T) {
 	options.BaseURL = "http://localhost:8080"
-	helpers.SetShortCodeGenerator(MockShortCode{})
+	config := NewHandlerConfig(&MockSecureRandom{}, store.NewURLStore())
 
 	type result struct {
 		code        int
@@ -86,7 +86,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			request := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
 			recorder := httptest.NewRecorder()
 
-			HandleCreateShortLink(recorder, request)
+			config.HandleCreateShortLink(recorder, request)
 
 			response := recorder.Result()
 
@@ -103,7 +103,8 @@ func TestHandleCreateShortLink(t *testing.T) {
 }
 
 func TestHandleGetShortLink(t *testing.T) {
-	storage.Set("abcd1234", "https://example.com")
+	config := NewHandlerConfig(&MockSecureRandom{}, store.NewURLStore())
+	config.Store.Set("abcd1234", "https://example.com")
 
 	type result struct {
 		code        int
@@ -148,7 +149,7 @@ func TestHandleGetShortLink(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			request := httptest.NewRequest(http.MethodGet, test.path, nil)
 			recorder := httptest.NewRecorder()
-			HandleGetShortLink(recorder, request)
+			config.HandleGetShortLink(recorder, request)
 
 			response := recorder.Result()
 

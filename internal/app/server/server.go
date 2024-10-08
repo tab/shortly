@@ -12,14 +12,14 @@ import (
 	"shortly/internal/app/config"
 )
 
-var options config.Options
+var options *config.AppConfig
 
 func AppRouter() chi.Router {
 	router := chi.NewRouter()
 
 	router.Use(
 		cors.Handler(cors.Options{
-			AllowedOrigins: []string{options.ClientURL},
+			AllowedOrigins: []string{options.Flags.ClientURL},
 			AllowedMethods: []string{"GET", "POST", "OPTIONS"},
 			AllowedHeaders: []string{"Content-Type"},
 			MaxAge:         300,
@@ -36,7 +36,7 @@ func AppRouter() chi.Router {
 }
 
 func Run() {
-	options = config.Init()
+	options = config
 
 	fmt.Println("Running server on", options.Addr)
 	fmt.Println("Shortener base address is", options.BaseURL)

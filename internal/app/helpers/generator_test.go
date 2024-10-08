@@ -7,73 +7,59 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type MockShortCode struct{}
+type MockSecureRandom struct{}
 
-func (MockShortCode) Code() (string, error) {
+func (mock *MockSecureRandom) Hex() (string, error) {
 	return "abcd1234", nil
 }
 
-type MockFailingGenerator struct{}
+type MockFailingSecureRandom struct{}
 
-func (MockFailingGenerator) Code() (string, error) {
-	return "", errors.New("failed to generate short code")
+func (mock *MockFailingSecureRandom) Hex() (string, error) {
+	return "", errors.New("failed to generate secure random bytes")
 }
 
-func TestShortCode(t *testing.T) {
+func TestNewSecureRandomHex(t *testing.T) {
 	type result struct {
-		length int
 		code   string
+		length int
 		error  bool
 	}
 
 	testCases := []struct {
-		name     string
-		mock     SecureRandom
-		expected result
+		name      string
+		generator SecureRandomGenerator
+		expected  result
 	}{
 		{
-			name: "Success",
-			mock: Generator{},
-			expected: result{
-				length: ShortCodeLength,
-				code:   "unique",
-				error:  false,
-			},
+			name:      "Success",
+			generator: NewSecureRandom(),
+			expected:  result{code: "unique", length: 8, error: false},
 		},
 		{
-			name: "Mocked Success",
-			mock: MockShortCode{},
-			expected: result{
-				length: ShortCodeLength,
-				code:   "abcd1234",
-				error:  false,
-			},
+			name:      "Mocked Success",
+			generator: &MockSecureRandom{},
+			expected:  result{code: "abcd1234", length: 8, error: false},
 		},
 		{
-			name: "Mocked Failure",
-			mock: MockFailingGenerator{},
-			expected: result{
-				length: 0,
-				code:   "",
-				error:  true,
-			},
+			name:      "Mocked Failure",
+			generator: &MockFailingSecureRandom{},
+			expected:  result{code: "", length: 0, error: true},
 		},
 	}
 
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			SetShortCodeGenerator(test.mock)
-
-			code, err := ShortCode()
+			code, err := test.generator.Hex()
 
 			if test.expected.error {
 				assert.Error(t, err)
-				assert.Empty(t, code)
+				assert.Equal(t, "failed to generate secure random bytes", err.Error())
 			} else {
 				assert.NoError(t, err)
-				assert.NotEmpty(t, code)
-				assert.Equal(t, test.expected.length, len(code))
 			}
+
+			assert.Equal(t, test.expected.length, len(code))
 		})
 	}
 }

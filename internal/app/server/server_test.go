@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"shortly/internal/app/store"
 )
 
 func requestHelper(t *testing.T, server *httptest.Server, method, path string, body io.Reader) (*http.Response, string) {
@@ -27,7 +29,8 @@ func requestHelper(t *testing.T, server *httptest.Server, method, path string, b
 }
 
 func TestAppRouter(t *testing.T) {
-	storage.Set("abcd1234", "https://example.com")
+	config := NewHandlerConfig(&MockSecureRandom{}, store.NewURLStore())
+	config.Store.Set("abcd1234", "https://example.com")
 
 	server := httptest.NewServer(AppRouter())
 	defer server.Close()

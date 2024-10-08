@@ -10,9 +10,19 @@ import (
 	"shortly/internal/app/store"
 )
 
-var storage = store.NewURLStore()
+type HandlerConfig struct {
+	SecureRandom helpers.SecureRandomGenerator
+	Store        *store.URLStore
+}
 
-func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
+func NewHandlerConfig(SecureRandom helpers.SecureRandomGenerator, Store *store.URLStore) *HandlerConfig {
+	return &HandlerConfig{
+		SecureRandom: SecureRandom,
+		Store:        Store,
+	}
+}
+
+func (config *HandlerConfig) HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(res, "Wrong HTTP method", http.StatusBadRequest)
 		return
@@ -37,7 +47,7 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	shortCode, err := helpers.ShortCode()
+	shortCode, err := config.SecureRandom.Hex()
 	if err != nil {
 		http.Error(res, "Failed to generate short code", http.StatusInternalServerError)
 		return
@@ -45,7 +55,7 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 
 	shortURL := fmt.Sprintf("%s/%s", options.BaseURL, shortCode)
 
-	storage.Set(shortCode, longURL)
+	config.Store.Set(shortCode, longURL)
 
 	res.Header().Set("Content-Type", "text/plain")
 	res.WriteHeader(http.StatusCreated)
@@ -57,10 +67,10 @@ func HandleCreateShortLink(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func HandleGetShortLink(res http.ResponseWriter, req *http.Request) {
+func (config *HandlerConfig) HandleGetShortLink(res http.ResponseWriter, req *http.Request) {
 	shortCode := strings.TrimPrefix(req.URL.Path, "/")
 
-	longURL, found := storage.Get(shortCode)
+	longURL, found := config.Store.Get(shortCode)
 	if !found {
 		http.Error(res, "Short code not found", http.StatusNotFound)
 		return

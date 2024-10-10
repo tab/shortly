@@ -1,9 +1,10 @@
-package helpers
+package service
 
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"errors"
+
+	"shortly/internal/app/errors"
 )
 
 const BytesLength = 4 // 4 bytes = 8 characters
@@ -27,7 +28,7 @@ func (random *SecureRandom) Hex() (string, error) {
 
 	_, err := random.Read(bytes)
 	if err != nil {
-		return "", errors.New("failed to generate secure random bytes")
+		return "", errors.ErrorFailedToReadRandomBytes
 	}
 
 	return hex.EncodeToString(bytes), nil

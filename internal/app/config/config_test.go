@@ -8,18 +8,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewConfig(t *testing.T) {
+func TestLoadConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string
 		env      map[string]string
-		expected *AppConfig
+		expected *Config
 	}{
 		{
 			name: "Use default values",
 			args: []string{},
 			env:  map[string]string{},
-			expected: &AppConfig{
+			expected: &Config{
 				Addr:      ServerAddress,
 				BaseURL:   BaseURL,
 				ClientURL: ClientURL,
@@ -33,7 +33,7 @@ func TestNewConfig(t *testing.T) {
 				"BASE_URL":       "http://localhost:3000",
 				"CLIENT_URL":     "http://localhost:6000",
 			},
-			expected: &AppConfig{
+			expected: &Config{
 				Addr:      "localhost:3000",
 				BaseURL:   "http://localhost:3000",
 				ClientURL: "http://localhost:6000",
@@ -43,7 +43,7 @@ func TestNewConfig(t *testing.T) {
 		//	name: "Use flags",
 		//	args: []string{"-a", "localhost:4000", "-b", "http://localhost:4000", "-c", "http://localhost:5000"},
 		//	env:  map[string]string{},
-		//	expected: &AppConfig{
+		//	expected: &Config{
 		//		Addr:      "localhost:4000",
 		//		BaseURL:   "http://localhost:4000",
 		//		ClientURL: "http://localhost:5000",
@@ -63,7 +63,7 @@ func TestNewConfig(t *testing.T) {
 			//	t.Fatalf("Failed to parse flags: %v", err)
 			//}
 
-			result := New()
+			result := LoadConfig()
 
 			assert.Equal(t, test.expected.Addr, result.Addr)
 			assert.Equal(t, test.expected.BaseURL, result.BaseURL)

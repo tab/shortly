@@ -109,7 +109,10 @@ func TestHandleCreateShortLink(t *testing.T) {
 
 			handler.HandleCreateShortLink(w, req)
 
-			assert.Equal(t, test.expected.status, w.Result().StatusCode)
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			assert.Equal(t, test.expected.status, resp.StatusCode)
 			assert.Equal(t, test.expected.response, strings.TrimSpace(w.Body.String()))
 		})
 	}
@@ -177,7 +180,10 @@ func TestHandleGetShortLink(t *testing.T) {
 			r.Get("/{id}", handler.HandleGetShortLink)
 			r.ServeHTTP(w, req)
 
-			assert.Equal(t, test.expected.status, w.Result().StatusCode)
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			assert.Equal(t, test.expected.status, resp.StatusCode)
 			if test.expected.status == http.StatusTemporaryRedirect {
 				assert.Equal(t, test.expected.header, w.Header().Get("Location"))
 			} else {

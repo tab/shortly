@@ -1,3 +1,7 @@
 package main
 
-func main() {}
+import "shortly/internal/app"
+
+func main() {
+	app.Run()
+}

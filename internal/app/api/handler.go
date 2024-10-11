@@ -2,11 +2,11 @@ package api
 
 import (
 	"net/http"
-	"shortly/internal/app/errors"
 
 	"github.com/go-chi/chi/v5"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/errors"
 	"shortly/internal/app/service"
 )
 
@@ -27,12 +27,12 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 
 	shortURL, err := h.service.CreateShortLink(r)
 	if err != nil {
-		switch err {
-		case errors.ErrorRequestBodyEmpty:
+		switch {
+		case errors.Is(err, errors.ErrRequestBodyEmpty):
 			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.ErrorInvalidURL:
+		case errors.Is(err, errors.ErrInvalidURL):
 			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.ErrorCouldNotGenerateCode:
+		case errors.Is(err, errors.ErrCouldNotGenerateCode):
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		default:
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -53,7 +53,7 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 	url, found := h.service.GetShortLink(shortCode)
 	if !found {
-		http.Error(w, errors.ErrorShortLinkNotFound.Error(), http.StatusNotFound)
+		http.Error(w, errors.ErrShortLinkNotFound.Error(), http.StatusNotFound)
 		return
 	}
 

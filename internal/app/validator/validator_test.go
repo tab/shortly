@@ -25,19 +25,19 @@ func TestValidate(t *testing.T) {
 			name:     "Invalid URL",
 			url:      "not-a-url",
 			valid:    false,
-			expected: errors.ErrorInvalidURL,
+			expected: errors.ErrInvalidURL,
 		},
 		{
 			name:     "Empty URL",
 			url:      "",
 			valid:    false,
-			expected: errors.ErrorInvalidURL,
+			expected: errors.ErrInvalidURL,
 		},
 		{
 			name:     "URL without scheme",
 			url:      "www.example.com",
 			valid:    false,
-			expected: errors.ErrorInvalidURL,
+			expected: errors.ErrInvalidURL,
 		},
 	}
 

@@ -12,7 +12,7 @@ var urlRegex = regexp.MustCompile(URLRegex)
 
 func Validate(url string) error {
 	if !urlRegex.MatchString(url) {
-		return errors.ErrorInvalidURL
+		return errors.ErrInvalidURL
 	}
 	return nil
 }

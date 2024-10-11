@@ -64,7 +64,7 @@ func TestCreateShortLink(t *testing.T) {
 			expected: result{
 				shortCode: "",
 				shortURL:  "",
-				error:     errors.ErrorRequestBodyEmpty,
+				error:     errors.ErrRequestBodyEmpty,
 			},
 		},
 		{
@@ -74,19 +74,19 @@ func TestCreateShortLink(t *testing.T) {
 			expected: result{
 				shortCode: "",
 				shortURL:  "",
-				error:     errors.ErrorInvalidURL,
+				error:     errors.ErrInvalidURL,
 			},
 		},
 		{
 			name: "Error generating short code",
 			body: "https://example.com",
 			before: func() {
-				rand.EXPECT().Hex().Return("", errors.ErrorFailedToReadRandomBytes)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
 				shortCode: "",
 				shortURL:  "",
-				error:     errors.ErrorCouldNotGenerateCode,
+				error:     errors.ErrCouldNotGenerateCode,
 			},
 		},
 	}

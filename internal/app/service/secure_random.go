@@ -28,7 +28,7 @@ func (random *SecureRandom) Hex() (string, error) {
 
 	_, err := random.Read(bytes)
 	if err != nil {
-		return "", errors.ErrorFailedToReadRandomBytes
+		return "", errors.ErrFailedToReadRandomBytes
 	}
 
 	return hex.EncodeToString(bytes), nil

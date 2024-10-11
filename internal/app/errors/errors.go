@@ -3,9 +3,15 @@ package errors
 import "errors"
 
 var (
-	ErrorCouldNotGenerateCode    = errors.New("could not generate short code")
-	ErrorInvalidURL              = errors.New("invalid URL")
-	ErrorRequestBodyEmpty        = errors.New("request body is empty")
-	ErrorShortLinkNotFound       = errors.New("short link not found")
-	ErrorFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
+	ErrCouldNotGenerateCode    = errors.New("could not generate short code")
+	ErrInvalidURL              = errors.New("invalid URL")
+	ErrRequestBodyEmpty        = errors.New("request body is empty")
+	ErrShortLinkNotFound       = errors.New("short link not found")
+	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
+)
+
+var (
+	Is     = errors.Is
+	As     = errors.As
+	Unwrap = errors.Unwrap
 )

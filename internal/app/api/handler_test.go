@@ -73,7 +73,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				status:   http.StatusBadRequest,
-				response: errors.ErrorRequestBodyEmpty.Error(),
+				response: errors.ErrRequestBodyEmpty.Error(),
 			},
 		},
 		{
@@ -83,7 +83,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				status:   http.StatusBadRequest,
-				response: errors.ErrorInvalidURL.Error(),
+				response: errors.ErrInvalidURL.Error(),
 			},
 		},
 		{
@@ -91,11 +91,11 @@ func TestHandleCreateShortLink(t *testing.T) {
 			method: http.MethodPost,
 			body:   "https://example.com",
 			before: func() {
-				rand.EXPECT().Hex().Return("", errors.ErrorFailedToReadRandomBytes)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
 				status:   http.StatusInternalServerError,
-				response: errors.ErrorCouldNotGenerateCode.Error(),
+				response: errors.ErrCouldNotGenerateCode.Error(),
 			},
 		},
 	}
@@ -164,7 +164,7 @@ func TestHandleGetShortLink(t *testing.T) {
 			},
 			expected: result{
 				status:   http.StatusNotFound,
-				response: errors.ErrorShortLinkNotFound.Error(),
+				response: errors.ErrShortLinkNotFound.Error(),
 			},
 		},
 	}

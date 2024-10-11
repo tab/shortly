@@ -29,7 +29,7 @@ func NewURLService(repo repository.URLRepository, rand SecureRandomGenerator, cf
 func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil || len(body) == 0 {
-		return "", errors.ErrorRequestBodyEmpty
+		return "", errors.ErrRequestBodyEmpty
 	}
 	defer r.Body.Close()
 
@@ -42,7 +42,7 @@ func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
 
 	shortCode, err := s.rand.Hex()
 	if err != nil {
-		return "", errors.ErrorCouldNotGenerateCode
+		return "", errors.ErrCouldNotGenerateCode
 	}
 
 	url := repository.URL{

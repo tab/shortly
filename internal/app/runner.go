@@ -13,6 +13,7 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/logger"
 )
 
 func Run() {
@@ -33,7 +34,7 @@ func Run() {
 			MaxAge:         300,
 		}),
 		middleware.Heartbeat("/health"),
-		middleware.Logger,
+		//middleware.Logger,
 		middleware.RequestID,
 		middleware.Recoverer,
 	)
@@ -45,7 +46,7 @@ func Run() {
 	fmt.Println("Shortener base address is", cfg.BaseURL)
 	fmt.Println("Shortener client address is", cfg.ClientURL)
 
-	err := http.ListenAndServe(cfg.Addr, router)
+	err := http.ListenAndServe(cfg.Addr, logger.RequestLogger(router))
 	if err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}

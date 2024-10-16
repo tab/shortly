@@ -13,6 +13,7 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/logger"
 )
 
 func main() {
@@ -51,7 +52,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 			AllowedHeaders: []string{"Content-Type"},
 			MaxAge:         300,
 		}),
-		middleware.Logger,
+		//middleware.Logger,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),
@@ -60,5 +61,5 @@ func setupRouter(cfg *config.Config) http.Handler {
 	router.Post("/", handler.HandleCreateShortLink)
 	router.Get("/{id}", handler.HandleGetShortLink)
 
-	return router
+	return logger.RequestLogger(router)
 }

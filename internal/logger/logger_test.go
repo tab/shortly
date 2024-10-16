@@ -32,10 +32,10 @@ func TestGetLogger(t *testing.T) {
 
 func TestRequestLogger(t *testing.T) {
 	type result struct {
-		path        string
-		method      string
-		duration    string
-		request_uri string
+		path       string
+		method     string
+		duration   string
+		requestURI string
 	}
 
 	tests := []struct {
@@ -49,10 +49,10 @@ func TestRequestLogger(t *testing.T) {
 			method: http.MethodGet,
 			path:   "/test-get",
 			expected: result{
-				method:      http.MethodGet,
-				path:        "/test-get",
-				duration:    "duration",
-				request_uri: "/test-get",
+				method:     http.MethodGet,
+				path:       "/test-get",
+				duration:   "duration",
+				requestURI: "/test-get",
 			},
 		},
 		{
@@ -60,10 +60,10 @@ func TestRequestLogger(t *testing.T) {
 			method: http.MethodPost,
 			path:   "/test-post",
 			expected: result{
-				method:      http.MethodPost,
-				path:        "/test-post",
-				duration:    "duration",
-				request_uri: "/test-post",
+				method:     http.MethodPost,
+				path:       "/test-post",
+				duration:   "duration",
+				requestURI: "/test-post",
 			},
 		},
 	}
@@ -92,7 +92,7 @@ func TestRequestLogger(t *testing.T) {
 			assert.Contains(t, result, tt.expected.method)
 			assert.Contains(t, result, tt.expected.path)
 			assert.Contains(t, result, tt.expected.duration)
-			assert.Contains(t, result, tt.expected.request_uri)
+			assert.Contains(t, result, tt.expected.requestURI)
 		})
 	}
 }

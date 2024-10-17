@@ -1,2 +1,24 @@
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false
+  require_base: no
+
+coverage:
+  precision: 2
+  round: down
+  range: "40...100"
+
+  status:
+    project:
+      default:
+        threshold: 1.0
+        target: 40%
+    patch:
+      default:
+        threshold: 1.0
+        target: 40%
+
 ignore:
   - "**/mock_*.go"
+  - "**/*_test.go"

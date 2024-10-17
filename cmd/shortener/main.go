@@ -1,7 +1,15 @@
 package main
 
-import "shortly/internal/app"
+import (
+	"log"
+
+	"shortly/internal/app"
+)
 
 func main() {
-	app.Run()
+	err := app.Run(&app.HTTPServer{})
+
+	if err != nil {
+		log.Fatalf("Failed to start server: %v", err)
+	}
 }

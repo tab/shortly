@@ -8,6 +8,7 @@ var (
 	ErrRequestBodyEmpty        = errors.New("request body is empty")
 	ErrShortLinkNotFound       = errors.New("short link not found")
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
+	ErrCouldNotStartServer     = errors.New("could not start server")
 )
 
 var (

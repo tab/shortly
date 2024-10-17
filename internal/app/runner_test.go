@@ -9,12 +9,46 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"shortly/internal/app/api"
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
 )
+
+func Test_Run(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	server := NewMockServer(ctrl)
+
+	cfg := &config.Config{
+		Addr: "localhost:8080",
+	}
+
+	tests := []struct {
+		name   string
+		before func()
+		expect error
+	}{
+		{
+			name: "Success",
+			before: func() {
+				server.EXPECT().Serve(cfg.Addr, gomock.Any()).Return(nil)
+			},
+			expect: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+			err := Run(server)
+			assert.Equal(t, tt.expect, err)
+		})
+	}
+}
 
 func TestRun_CreateShortLink(t *testing.T) {
 	cfg := &config.Config{

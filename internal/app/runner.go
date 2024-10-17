@@ -2,20 +2,17 @@ package app
 
 import (
 	"fmt"
-	"log"
-	"net/http"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-
 	"shortly/internal/app/api"
 	"shortly/internal/app/config"
+	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
 )
 
-func Run() {
+func Run(server Server) error {
 	cfg := config.LoadConfig()
 
 	repo := repository.NewInMemoryRepository()
@@ -45,8 +42,10 @@ func Run() {
 	fmt.Println("Shortener base address is", cfg.BaseURL)
 	fmt.Println("Shortener client address is", cfg.ClientURL)
 
-	err := http.ListenAndServe(cfg.Addr, router)
+	err := server.Serve(cfg.Addr, router)
 	if err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+		return errors.ErrCouldNotStartServer
 	}
+
+	return nil
 }

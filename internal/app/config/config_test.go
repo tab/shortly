@@ -39,16 +39,6 @@ func Test_LoadConfig(t *testing.T) {
 				ClientURL: "http://localhost:6000",
 			},
 		},
-		//{
-		//	name: "Use flags",
-		//	args: []string{"-a", "localhost:4000", "-b", "http://localhost:4000", "-c", "http://localhost:5000"},
-		//	env:  map[string]string{},
-		//	expected: &Config{
-		//		Addr:      "localhost:4000",
-		//		BaseURL:   "http://localhost:4000",
-		//		ClientURL: "http://localhost:5000",
-		//	},
-		//},
 	}
 
 	for _, test := range tests {
@@ -58,11 +48,6 @@ func Test_LoadConfig(t *testing.T) {
 			}
 
 			flag.CommandLine = flag.NewFlagSet(test.name, flag.ContinueOnError)
-			//err := flag.CommandLine.Parse(test.args)
-			//if err != nil {
-			//	t.Fatalf("Failed to parse flags: %v", err)
-			//}
-
 			result := LoadConfig()
 
 			assert.Equal(t, test.expected.Addr, result.Addr)

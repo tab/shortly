@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSet(t *testing.T) {
+func Test_InMemoryRepository_Set(t *testing.T) {
 	store := NewInMemoryRepository()
 
 	tests := []struct {
@@ -55,7 +55,7 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func Test_InMemoryRepository_Get(t *testing.T) {
 	store := NewInMemoryRepository()
 	store.Set(URL{
 		LongURL:   "https://example.com",

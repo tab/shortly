@@ -8,7 +8,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-func TestSecureRandomHex(t *testing.T) {
+func Test_SecureRandom_Hex(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

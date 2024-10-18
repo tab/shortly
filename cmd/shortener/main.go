@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -24,7 +25,15 @@ func run() error {
 	cfg := config.LoadConfig()
 	router := setupRouter(cfg)
 
-	return http.ListenAndServe(cfg.Addr, router)
+	server := &http.Server{
+		Addr:         cfg.Addr,
+		Handler:      router,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  120 * time.Second,
+	}
+
+	return server.ListenAndServe()
 }
 
 func setupRouter(cfg *config.Config) http.Handler {

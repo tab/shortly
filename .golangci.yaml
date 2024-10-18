@@ -25,6 +25,7 @@ linters:
 
 issues:
   exclude-dirs:
+    - docs
     - vendor
   exclude-rules:
     - path: _test\.go

@@ -52,7 +52,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 			AllowedHeaders: []string{"Content-Type"},
 			MaxAge:         300,
 		}),
-		//middleware.Logger,
+		// middleware.Logger,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),

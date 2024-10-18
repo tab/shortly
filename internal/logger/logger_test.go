@@ -81,7 +81,7 @@ func TestRequestLogger(t *testing.T) {
 			req.Host = "example.com"
 			w := httptest.NewRecorder()
 
-			handler := RequestLogger(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			handler := RequestLogger(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
 

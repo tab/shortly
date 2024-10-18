@@ -2,9 +2,12 @@ name: autotests
 
 on:
   pull_request:
+    branches:
+      - iter*
   push:
     branches:
       - main
+      - iter*
 
 jobs:
 

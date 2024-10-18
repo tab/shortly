@@ -8,7 +8,7 @@ import (
 	"shortly/internal/app/errors"
 )
 
-func TestValidate(t *testing.T) {
+func Test_Validate(t *testing.T) {
 	tests := []struct {
 		name     string
 		url      string

@@ -53,6 +53,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 			MaxAge:         300,
 		}),
 		// middleware.Logger,
+		logger.RequestLogger,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),
@@ -61,5 +62,5 @@ func setupRouter(cfg *config.Config) http.Handler {
 	router.Post("/", handler.HandleCreateShortLink)
 	router.Get("/{id}", handler.HandleGetShortLink)
 
-	return logger.RequestLogger(router)
+	return router
 }

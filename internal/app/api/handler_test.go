@@ -16,7 +16,7 @@ import (
 	"shortly/internal/app/service"
 )
 
-func TestHandleCreateShortLink(t *testing.T) {
+func Test_HandleCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -118,7 +118,7 @@ func TestHandleCreateShortLink(t *testing.T) {
 	}
 }
 
-func TestHandleGetShortLink(t *testing.T) {
+func Test_HandleGetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

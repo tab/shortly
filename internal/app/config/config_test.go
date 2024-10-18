@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLoadConfig(t *testing.T) {
+func Test_LoadConfig(t *testing.T) {
 	tests := []struct {
 		name     string
 		args     []string

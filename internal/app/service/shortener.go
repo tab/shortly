@@ -1,6 +1,8 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,30 +15,67 @@ import (
 )
 
 type URLService struct {
+	cfg  *config.Config
 	repo repository.URLRepository
 	rand SecureRandomGenerator
-	cfg  *config.Config
 }
 
-func NewURLService(repo repository.URLRepository, rand SecureRandomGenerator, cfg *config.Config) *URLService {
+func NewURLService(cfg *config.Config, repo repository.URLRepository, rand SecureRandomGenerator) *URLService {
 	return &URLService{
+		cfg:  cfg,
 		repo: repo,
 		rand: rand,
-		cfg:  cfg,
 	}
 }
 
+type RequestParams struct {
+	URL string `json:"url"`
+}
+
 func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
+	var params RequestParams
+	var buf bytes.Buffer
+
+	_, err := buf.ReadFrom(r.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if err = json.Unmarshal(buf.Bytes(), &params); err != nil {
+		return "", err
+	}
+
+	longURL := strings.Trim(strings.TrimSpace(params.URL), "\"")
+
+	if err = validator.Validate(longURL); err != nil {
+		return "", err
+	}
+
+	shortCode, err := s.rand.Hex()
+	if err != nil {
+		return "", errors.ErrCouldNotGenerateCode
+	}
+
+	url := repository.URL{
+		LongURL:   longURL,
+		ShortCode: shortCode,
+	}
+	s.repo.Set(url)
+
+	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
+}
+
+// NOTE: text/plain request is deprecated
+func (s *URLService) DeprecatedCreateShortLink(r *http.Request) (string, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil || len(body) == 0 {
 		return "", errors.ErrRequestBodyEmpty
 	}
 	defer r.Body.Close()
 
-	longURL := strings.TrimSpace(string(body))
-	longURL = strings.Trim(longURL, "\"")
+	longURL := strings.Trim(strings.TrimSpace(string(body)), "\"")
 
-	if err := validator.Validate(longURL); err != nil {
+	if err = validator.Validate(longURL); err != nil {
 		return "", err
 	}
 

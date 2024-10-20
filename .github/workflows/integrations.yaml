@@ -25,6 +25,25 @@ on:
   push:
     branches:
       - main
+      - iter6
+      - iter7
+      - iter8
+      - iter9
+      - iter10
+      - iter11
+      - iter12
+      - iter13
+      - iter14
+      - iter15
+      - iter16
+      - iter17
+      - iter18
+      - iter19
+      - iter20
+      - iter21
+      - iter22
+      - iter23
+      - iter24
 jobs:
   shortenertest:
     runs-on: ubuntu-latest

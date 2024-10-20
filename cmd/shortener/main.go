@@ -53,7 +53,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 			MaxAge:         300,
 		}),
 		// middleware.Logger,
-		logger.RequestLogger,
+		logger.Middleware,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),

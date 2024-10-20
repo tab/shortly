@@ -54,6 +54,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 		}),
 		// middleware.Logger,
 		logger.Middleware,
+		middleware.Compress(5, "application/json", "text/html"),
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),

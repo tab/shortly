@@ -18,16 +18,54 @@ paths:
                 type: string
                 description: Health check message
         '500':
-          description: Internal Server Error
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Error message
-  /:
+          $ref: '#/components/responses/InternalServerErrorPlain'
+  /api/shorten:
     post:
       summary: Create a short link
-      description: Accepts a plain text URL and returns a short URL
+      description: Accepts a JSON object with a URL and returns a shortened URL
+      requestBody:
+        description: Original URL to be shortened
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The original URL to be shortened
+              required:
+                - url
+      responses:
+        '201':
+          $ref: '#/components/responses/ShortLinkCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/shorten/{id}:
+    get:
+      summary: Retrieve original URL
+      description: Retrieves the original URL associated with the given short code
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Short code of the URL
+      responses:
+        '200':
+          $ref: '#/components/responses/OriginalURLFound'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /:
+    post:
+      summary: Create a short link (deprecated)
+      description: Accepts a plain text URL and returns a shortened URL (Deprecated)
       requestBody:
         description: Original URL to be shortened
         required: true
@@ -38,30 +76,15 @@ paths:
               format: uri
       responses:
         '201':
-          description: Short link created successfully
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Short URL
+          $ref: '#/components/responses/ShortLinkCreatedPlain'
         '400':
-          description: Bad Request
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Error message
+          $ref: '#/components/responses/BadRequestPlain'
         '500':
-          description: Internal Server Error
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Error message
+          $ref: '#/components/responses/InternalServerErrorPlain'
   '/{id}':
     get:
-      summary: Redirect to the original URL
-      description: Retrieves the original URL associated with the short code and redirects
+      summary: Redirect to the original URL (deprecated)
+      description: Retrieves the original URL associated with the given short code and redirects (Deprecated)
       parameters:
         - name: id
           in: path
@@ -79,16 +102,136 @@ paths:
                 type: string
                 format: uri
         '404':
-          description: Short link not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Error message
+          $ref: '#/components/responses/NotFoundPlain'
         '500':
-          description: Internal Server Error
-          content:
-            text/plain:
-              schema:
+          $ref: '#/components/responses/InternalServerErrorPlain'
+
+components:
+  responses:
+    ShortLinkCreated:
+      description: Short link created successfully
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
                 type: string
+                format: uri
+                description: The shortened URL
+              status:
+                type: string
+                example: "Created"
+                description: Status of the operation
+              code:
+                type: integer
+                example: 201
+                description: HTTP status code
+    ShortLinkCreatedPlain:
+      description: Short link created successfully (plain text)
+      content:
+        text/plain:
+          schema:
+            type: string
+            description: Shortened URL
+          example: "http://localhost:8080/EwHXdJfB"
+    OriginalURLFound:
+      description: Original URL found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
+                format: uri
+                description: The original URL
+              status:
+                type: string
+                example: "OK"
+                description: Status of the operation
+              code:
+                type: integer
+                example: 200
+                description: HTTP status code
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request method"
                 description: Error message
+              status:
+                type: string
+                example: "Bad Request"
+                description: Status of the operation
+              code:
+                type: integer
+                example: 400
+                description: HTTP status code
+    BadRequestPlain:
+      description: Bad Request (plain text)
+      content:
+        text/plain:
+          schema:
+            type: string
+            description: Error message
+          example: "Invalid request method"
+    NotFound:
+      description: Short link not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Shortened URL not found"
+                description: Error message
+              status:
+                type: string
+                example: "Not Found"
+                description: Status of the operation
+              code:
+                type: integer
+                example: 404
+                description: HTTP status code
+    NotFoundPlain:
+      description: Short link not found (plain text)
+      content:
+        text/plain:
+          schema:
+            type: string
+            description: Error message
+          example: "Shortened URL not found"
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+                description: Error message
+              status:
+                type: string
+                example: "Internal Server Error"
+                description: Status of the operation
+              code:
+                type: integer
+                example: 500
+                description: HTTP status code
+    InternalServerErrorPlain:
+      description: Internal Server Error (plain text)
+      content:
+        text/plain:
+          schema:
+            type: string
+            description: Error message
+          example: "Internal server error"

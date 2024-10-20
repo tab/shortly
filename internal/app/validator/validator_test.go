@@ -41,15 +41,15 @@ func Test_Validate(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			result := Validate(test.url)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Validate(tt.url)
 
-			if test.valid {
+			if tt.valid {
 				assert.NoError(t, result)
 			} else {
 				assert.Error(t, result)
-				assert.Equal(t, test.expected, result)
+				assert.Equal(t, tt.expected, result)
 			}
 		})
 	}

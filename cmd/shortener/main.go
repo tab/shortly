@@ -40,7 +40,7 @@ func run() error {
 func setupRouter(cfg *config.Config) http.Handler {
 	repo := repository.NewInMemoryRepository()
 	rand := service.NewSecureRandom()
-	shortener := service.NewURLService(repo, rand, cfg)
+	shortener := service.NewURLService(cfg, repo, rand)
 	handler := api.NewURLHandler(cfg, shortener)
 
 	router := chi.NewRouter()
@@ -59,8 +59,11 @@ func setupRouter(cfg *config.Config) http.Handler {
 		middleware.Heartbeat("/health"),
 	)
 
-	router.Post("/", handler.HandleCreateShortLink)
-	router.Get("/{id}", handler.HandleGetShortLink)
+	router.Post("/api/shorten", handler.HandleCreateShortLink)
+	router.Get("/api/shorten/{id}", handler.HandleGetShortLink)
+
+	router.Post("/", handler.DeprecatedHandleCreateShortLink)
+	router.Get("/{id}", handler.DeprecatedHandleGetShortLink)
 
 	return router
 }

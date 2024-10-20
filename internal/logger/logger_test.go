@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestGetLogger(t *testing.T) {
+func Test_GetLogger(t *testing.T) {
 	tests := []struct {
 		name          string
 		expectedLevel zerolog.Level
@@ -30,7 +30,7 @@ func TestGetLogger(t *testing.T) {
 	}
 }
 
-func TestRequestLogger(t *testing.T) {
+func Test_LoggerMiddleware(t *testing.T) {
 	type result struct {
 		path       string
 		method     string
@@ -81,7 +81,7 @@ func TestRequestLogger(t *testing.T) {
 			req.Host = "example.com"
 			w := httptest.NewRecorder()
 
-			handler := RequestLogger(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			handler := Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
 

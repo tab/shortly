@@ -41,20 +41,20 @@ func Test_LoadConfig(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			for key, value := range test.env {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for key, value := range tt.env {
 				os.Setenv(key, value)
 			}
 
-			flag.CommandLine = flag.NewFlagSet(test.name, flag.ContinueOnError)
+			flag.CommandLine = flag.NewFlagSet(tt.name, flag.ContinueOnError)
 			result := LoadConfig()
 
-			assert.Equal(t, test.expected.Addr, result.Addr)
-			assert.Equal(t, test.expected.BaseURL, result.BaseURL)
-			assert.Equal(t, test.expected.ClientURL, result.ClientURL)
+			assert.Equal(t, tt.expected.Addr, result.Addr)
+			assert.Equal(t, tt.expected.BaseURL, result.BaseURL)
+			assert.Equal(t, tt.expected.ClientURL, result.ClientURL)
 
-			for key := range test.env {
+			for key := range tt.env {
 				os.Unsetenv(key)
 			}
 		})

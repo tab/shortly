@@ -13,6 +13,7 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/compress"
 	"shortly/internal/logger"
 )
 
@@ -54,7 +55,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 		}),
 		// middleware.Logger,
 		logger.Middleware,
-		middleware.Compress(5, "application/json", "text/html"),
+		compress.Middleware,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),

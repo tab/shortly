@@ -59,6 +59,16 @@ func Test_CreateShortLink(t *testing.T) {
 			},
 		},
 		{
+			name:   "Empty Body",
+			body:   strings.NewReader(""),
+			before: func() {},
+			expected: result{
+				shortCode: "",
+				shortURL:  "",
+				error:     errors.ErrRequestBodyEmpty,
+			},
+		},
+		{
 			name:   "Invalid URL",
 			body:   strings.NewReader(`{"url":"not-a-url"}`),
 			before: func() {},

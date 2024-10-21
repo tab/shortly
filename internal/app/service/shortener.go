@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -34,14 +33,13 @@ type RequestParams struct {
 
 func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
 	var params RequestParams
-	var buf bytes.Buffer
 
-	_, err := buf.ReadFrom(r.Body)
-	if err != nil {
-		return "", err
+	if r.ContentLength == 0 {
+		return "", errors.ErrRequestBodyEmpty
 	}
 
-	if err = json.Unmarshal(buf.Bytes(), &params); err != nil {
+	err := json.NewDecoder(r.Body).Decode(&params)
+	if err != nil {
 		return "", err
 	}
 

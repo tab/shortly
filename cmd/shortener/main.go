@@ -13,6 +13,8 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/compress"
+	"shortly/internal/logger"
 )
 
 func main() {
@@ -39,7 +41,7 @@ func run() error {
 func setupRouter(cfg *config.Config) http.Handler {
 	repo := repository.NewInMemoryRepository()
 	rand := service.NewSecureRandom()
-	shortener := service.NewURLService(repo, rand, cfg)
+	shortener := service.NewURLService(cfg, repo, rand)
 	handler := api.NewURLHandler(cfg, shortener)
 
 	router := chi.NewRouter()
@@ -51,14 +53,19 @@ func setupRouter(cfg *config.Config) http.Handler {
 			AllowedHeaders: []string{"Content-Type"},
 			MaxAge:         300,
 		}),
-		middleware.Logger,
+		// middleware.Logger,
+		logger.Middleware,
+		compress.Middleware,
 		middleware.RequestID,
 		middleware.Recoverer,
 		middleware.Heartbeat("/health"),
 	)
 
-	router.Post("/", handler.HandleCreateShortLink)
-	router.Get("/{id}", handler.HandleGetShortLink)
+	router.Post("/api/shorten", handler.HandleCreateShortLink)
+	router.Get("/api/shorten/{id}", handler.HandleGetShortLink)
+
+	router.Post("/", handler.DeprecatedHandleCreateShortLink)
+	router.Get("/{id}", handler.DeprecatedHandleGetShortLink)
 
 	return router
 }

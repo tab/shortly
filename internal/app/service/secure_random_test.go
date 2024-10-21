@@ -69,23 +69,23 @@ func Test_SecureRandom_Hex(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			test.before()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
 
-			result, err := test.rand()
+			hex, err := tt.rand()
 
-			if test.expected.error != nil {
+			if tt.expected.error != nil {
 				assert.Error(t, err)
-				assert.Equal(t, test.expected.error, err)
+				assert.Equal(t, tt.expected.error, err)
 			} else {
 				assert.NoError(t, err)
 			}
 
-			if test.mocked {
-				assert.Equal(t, test.expected.hex, result)
+			if tt.mocked {
+				assert.Equal(t, tt.expected.hex, hex)
 			} else {
-				assert.NotEmpty(t, result)
+				assert.NotEmpty(t, hex)
 			}
 		})
 	}

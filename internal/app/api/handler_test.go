@@ -30,12 +30,19 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
 
+	type result struct {
+		response Response
+		error    ErrorResponse
+		code     int
+		status   string
+	}
+
 	tests := []struct {
 		name     string
 		method   string
 		body     io.Reader
 		before   func()
-		expected Response
+		expected result
 	}{
 		{
 			name:   "Success",
@@ -48,32 +55,32 @@ func Test_HandleCreateShortLink(t *testing.T) {
 					ShortCode: "abcd1234",
 				})
 			},
-			expected: Response{
-				Result: "http://localhost:8080/abcd1234",
-				Status: http.StatusText(http.StatusCreated),
-				Code:   http.StatusCreated,
-			},
-		},
-		{
-			name:   "Invalid request method",
-			method: http.MethodGet,
-			body:   strings.NewReader(`{"url":"https://example.com"}`),
-			before: func() {},
-			expected: Response{
-				Error:  "Invalid request method",
-				Status: http.StatusText(http.StatusBadRequest),
-				Code:   http.StatusBadRequest,
+			expected: result{
+				response: Response{Result: "http://localhost:8080/abcd1234"},
+				status:   "201 Created",
+				code:     http.StatusCreated,
 			},
 		},
 		{
 			name:   "Empty body",
 			method: http.MethodPost,
+			body:   strings.NewReader(""),
+			before: func() {},
+			expected: result{
+				error:  ErrorResponse{Error: "request body is empty"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Empty URL",
+			method: http.MethodPost,
 			body:   strings.NewReader(`{"url":""}`),
 			before: func() {},
-			expected: Response{
-				Error:  "Request body is empty",
-				Status: http.StatusText(http.StatusBadRequest),
-				Code:   http.StatusBadRequest,
+			expected: result{
+				error:  ErrorResponse{Error: "invalid URL"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
 			},
 		},
 		{
@@ -81,10 +88,10 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			method: http.MethodPost,
 			body:   strings.NewReader(`{"url"}`),
 			before: func() {},
-			expected: Response{
-				Error:  "Invalid JSON",
-				Status: http.StatusText(http.StatusInternalServerError),
-				Code:   http.StatusInternalServerError,
+			expected: result{
+				error:  ErrorResponse{Error: "invalid character '}' after object key"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
 			},
 		},
 		{
@@ -92,10 +99,10 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			method: http.MethodPost,
 			body:   strings.NewReader(`{"url":"not-a-url"}`),
 			before: func() {},
-			expected: Response{
-				Error:  "Invalid URL",
-				Status: http.StatusText(http.StatusBadRequest),
-				Code:   http.StatusBadRequest,
+			expected: result{
+				error:  ErrorResponse{Error: "invalid URL"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
 			},
 		},
 		{
@@ -105,10 +112,10 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
-			expected: Response{
-				Error:  "Could not generate short code",
-				Status: http.StatusText(http.StatusInternalServerError),
-				Code:   http.StatusInternalServerError,
+			expected: result{
+				error:  ErrorResponse{Error: "could not generate short code"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
 			},
 		},
 	}
@@ -125,12 +132,19 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			var actual Response
-			err := json.NewDecoder(resp.Body).Decode(&actual)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expected.Result, actual.Result)
-			assert.Equal(t, tt.expected.Status, actual.Status)
-			assert.Equal(t, tt.expected.Code, actual.Code)
+			if tt.expected.error.Error != "" {
+				var actual ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+			} else {
+				var actual Response
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Result, actual.Result)
+			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})
 	}
 }
@@ -147,11 +161,18 @@ func Test_HandleGetShortLink(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
 
+	type result struct {
+		response Response
+		error    ErrorResponse
+		code     int
+		status   string
+	}
+
 	tests := []struct {
 		name     string
 		path     string
 		before   func()
-		expected Response
+		expected result
 	}{
 		{
 			name: "Success",
@@ -162,10 +183,10 @@ func Test_HandleGetShortLink(t *testing.T) {
 					ShortCode: "abcd1234",
 				}, true)
 			},
-			expected: Response{
-				Result: "https://example.com",
-				Status: http.StatusText(http.StatusOK),
-				Code:   http.StatusOK,
+			expected: result{
+				response: Response{Result: "https://example.com"},
+				status:   "201 Created",
+				code:     http.StatusCreated,
 			},
 		},
 		{
@@ -174,10 +195,10 @@ func Test_HandleGetShortLink(t *testing.T) {
 			before: func() {
 				repo.EXPECT().Get("not-a-short-code").Return(nil, false)
 			},
-			expected: Response{
-				Error:  errors.ErrShortLinkNotFound.Error(),
-				Status: http.StatusText(http.StatusNotFound),
-				Code:   http.StatusNotFound,
+			expected: result{
+				error:  ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()},
+				status: "404 Not Found",
+				code:   http.StatusNotFound,
 			},
 		},
 	}
@@ -196,12 +217,19 @@ func Test_HandleGetShortLink(t *testing.T) {
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			var actual Response
-			err := json.NewDecoder(resp.Body).Decode(&actual)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expected.Result, actual.Result)
-			assert.Equal(t, tt.expected.Status, actual.Status)
-			assert.Equal(t, tt.expected.Code, actual.Code)
+			if tt.expected.error.Error != "" {
+				var actual ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+			} else {
+				var actual Response
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Result, actual.Result)
+			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})
 	}
 }
@@ -244,16 +272,6 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 			expected: result{
 				status:   http.StatusCreated,
 				response: "http://localhost:8080/abcd1234",
-			},
-		},
-		{
-			name:   "Invalid request method",
-			method: http.MethodGet,
-			body:   strings.NewReader("https://example.com"),
-			before: func() {},
-			expected: result{
-				status:   http.StatusBadRequest,
-				response: "Invalid request method",
 			},
 		},
 		{

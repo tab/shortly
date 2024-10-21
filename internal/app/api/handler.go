@@ -21,10 +21,11 @@ type Request struct {
 }
 
 type Response struct {
-	Result string `json:"result,omitempty"`
-	Error  string `json:"error,omitempty"`
-	Code   int    `json:"code"`
-	Status string `json:"status"`
+	Result string `json:"result"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
 }
 
 func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler {
@@ -32,105 +33,37 @@ func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler 
 }
 
 func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		response := Response{
-			Error:  "Invalid request method",
-			Status: http.StatusText(http.StatusBadRequest),
-			Code:   http.StatusBadRequest,
-		}
-		renderResponse(w, response)
-		return
-	}
+	w.Header().Set("Content-Type", "application/json")
 
 	shortURL, err := h.service.CreateShortLink(r)
 	if err != nil {
-		response := mapErrorToResponse(err)
-		renderResponse(w, response)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	response := Response{
-		Result: shortURL,
-		Status: http.StatusText(http.StatusCreated),
-		Code:   http.StatusCreated,
-	}
-	renderResponse(w, response)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(Response{Result: shortURL})
 }
 
 func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	shortCode := chi.URLParam(r, "id")
 
 	url, found := h.service.GetShortLink(shortCode)
 	if !found {
-		response := Response{
-			Error:  errors.ErrShortLinkNotFound.Error(),
-			Status: http.StatusText(http.StatusNotFound),
-			Code:   http.StatusNotFound,
-		}
-		renderResponse(w, response)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
 		return
 	}
 
-	response := Response{
-		Result: url.LongURL,
-		Status: http.StatusText(http.StatusOK),
-		Code:   http.StatusOK,
-	}
-	renderResponse(w, response)
-}
-
-func renderResponse(w http.ResponseWriter, response Response) {
-	w.Header().Set("Content-Type", "application/json")
-
-	resp, err := json.Marshal(response)
-	if err != nil {
-		http.Error(w, "Failed to marshal response", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(response.Code)
-	_, err = w.Write(resp)
-	if err != nil {
-		http.Error(w, "Failed to write response", http.StatusInternalServerError)
-	}
-}
-
-func mapErrorToResponse(err error) Response {
-	switch {
-	case errors.Is(err, errors.ErrRequestBodyEmpty):
-		return Response{
-			Error:  err.Error(),
-			Status: http.StatusText(http.StatusBadRequest),
-			Code:   http.StatusBadRequest,
-		}
-	case errors.Is(err, errors.ErrInvalidURL):
-		return Response{
-			Error:  err.Error(),
-			Status: http.StatusText(http.StatusBadRequest),
-			Code:   http.StatusBadRequest,
-		}
-	case errors.Is(err, errors.ErrCouldNotGenerateCode):
-		return Response{
-			Error:  err.Error(),
-			Status: http.StatusText(http.StatusInternalServerError),
-			Code:   http.StatusInternalServerError,
-		}
-	default:
-		return Response{
-			Error:  "Internal server error",
-			Status: http.StatusText(http.StatusInternalServerError),
-			Code:   http.StatusInternalServerError,
-		}
-	}
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(Response{Result: url.LongURL})
 }
 
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Invalid request method", http.StatusBadRequest)
-		return
-	}
-
 	shortURL, err := h.service.DeprecatedCreateShortLink(r)
 	if err != nil {
 		switch {

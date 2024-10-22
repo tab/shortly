@@ -113,7 +113,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
-				error:  ErrorResponse{Error: "could not generate short code"},
+				error:  ErrorResponse{Error: "failed to generate short code"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -303,7 +303,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 			},
 			expected: result{
 				status:   http.StatusInternalServerError,
-				response: errors.ErrCouldNotGenerateCode.Error(),
+				response: errors.ErrFailedToGenerateCode.Error(),
 			},
 		},
 	}

@@ -1,11 +1,12 @@
 package service
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+
+	"shortly/internal/app/errors"
 )
 
 func Test_SecureRandom_Hex(t *testing.T) {
@@ -57,14 +58,14 @@ func Test_SecureRandom_Hex(t *testing.T) {
 			name:   "Mocked failure",
 			mocked: true,
 			before: func() {
-				mockSecureRandom.EXPECT().Hex().Return("", errors.New("failed to generate secure random bytes"))
+				mockSecureRandom.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			rand: func() (string, error) {
 				return mockSecureRandom.Hex()
 			},
 			expected: result{
 				hex:   "",
-				error: errors.New("failed to generate secure random bytes"),
+				error: errors.ErrFailedToReadRandomBytes,
 			},
 		},
 	}

@@ -51,7 +51,7 @@ func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
 
 	shortCode, err := s.rand.Hex()
 	if err != nil {
-		return "", errors.ErrCouldNotGenerateCode
+		return "", errors.ErrFailedToGenerateCode
 	}
 
 	url := repository.URL{
@@ -79,7 +79,7 @@ func (s *URLService) DeprecatedCreateShortLink(r *http.Request) (string, error) 
 
 	shortCode, err := s.rand.Hex()
 	if err != nil {
-		return "", errors.ErrCouldNotGenerateCode
+		return "", errors.ErrFailedToGenerateCode
 	}
 
 	url := repository.URL{

@@ -49,12 +49,18 @@ func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
 		return "", err
 	}
 
+	uuid, err := s.rand.UUID()
+	if err != nil {
+		return "", errors.ErrFailedToGenerateUUID
+	}
+
 	shortCode, err := s.rand.Hex()
 	if err != nil {
 		return "", errors.ErrFailedToGenerateCode
 	}
 
 	url := repository.URL{
+		UUID:      uuid,
 		LongURL:   longURL,
 		ShortCode: shortCode,
 	}

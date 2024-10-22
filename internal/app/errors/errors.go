@@ -8,6 +8,7 @@ var (
 	ErrShortLinkNotFound       = errors.New("short link not found")
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
 	ErrFailedToGenerateCode    = errors.New("failed to generate short code")
+	ErrFailedToGenerateUUID    = errors.New("failed to generate UUID")
 )
 
 var (

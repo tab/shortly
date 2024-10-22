@@ -44,9 +44,11 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Success",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
+				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 
 				url := repository.URL{
+					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}
@@ -79,9 +81,22 @@ func Test_CreateShortLink(t *testing.T) {
 			},
 		},
 		{
+			name: "Error generating UUID",
+			body: strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
+			},
+			expected: result{
+				shortCode: "",
+				shortURL:  "",
+				error:     errors.ErrFailedToGenerateUUID,
+			},
+		},
+		{
 			name: "Error generating short code",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
+				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{

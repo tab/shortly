@@ -91,3 +91,86 @@ func Test_SecureRandom_Hex(t *testing.T) {
 		})
 	}
 }
+
+func Test_SecureRandom_UUID(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockSecureRandom := NewMockSecureRandomGenerator(ctrl)
+	secureRandom := NewSecureRandom()
+
+	type result struct {
+		uuid  string
+		error error
+	}
+
+	tests := []struct {
+		name     string
+		mocked   bool
+		before   func()
+		rand     func() (string, error)
+		expected result
+	}{
+		{
+			name:   "Success",
+			mocked: false,
+			before: func() {},
+			rand: func() (string, error) {
+				return secureRandom.UUID()
+			},
+			expected: result{
+				uuid:  "random-uuid-string",
+				error: nil,
+			},
+		},
+		{
+			name:   "Mocked success",
+			mocked: true,
+			before: func() {
+				mockSecureRandom.EXPECT().UUID().Return("abcd1234", nil)
+			},
+			rand: func() (string, error) {
+				return mockSecureRandom.UUID()
+			},
+			expected: result{
+				uuid:  "abcd1234",
+				error: nil,
+			},
+		},
+		{
+			name:   "Mocked failure",
+			mocked: true,
+			before: func() {
+				mockSecureRandom.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
+			},
+			rand: func() (string, error) {
+				return mockSecureRandom.UUID()
+			},
+			expected: result{
+				uuid:  "",
+				error: errors.ErrFailedToGenerateUUID,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			uuid, err := tt.rand()
+
+			if tt.expected.error != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.error, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			if tt.mocked {
+				assert.Equal(t, tt.expected.uuid, uuid)
+			} else {
+				assert.NotEmpty(t, uuid)
+			}
+		})
+	}
+}

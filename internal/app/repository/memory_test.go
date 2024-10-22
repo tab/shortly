@@ -1,104 +1,107 @@
 package repository
 
 import (
-	"testing"
+  "testing"
 
-	"github.com/stretchr/testify/assert"
+  "github.com/stretchr/testify/assert"
 )
 
 func Test_InMemoryRepository_Set(t *testing.T) {
-	store := NewInMemoryRepository()
+  store := NewInMemoryRepository()
 
-	tests := []struct {
-		name     string
-		url      URL
-		before   func()
-		expected bool
-	}{
-		{
-			name: "Add new URL",
-			url: URL{
-				LongURL:   "https://example.com",
-				ShortCode: "abcd1234",
-			},
-			before:   func() {},
-			expected: true,
-		},
-		{
-			name: "Overwrite existing URL",
-			url: URL{
-				LongURL:   "https://github.com",
-				ShortCode: "GitHub",
-			},
-			before: func() {
-				store.Set(URL{
-					LongURL:   "https://example.com",
-					ShortCode: "123456ab",
-				})
-			},
-			expected: true,
-		},
-	}
+  tests := []struct {
+    name     string
+    url      URL
+    before   func()
+    expected bool
+  }{
+    {
+      name: "Add new URL",
+      url: URL{
+        LongURL:   "https://example.com",
+        ShortCode: "abcd1234",
+      },
+      before:   func() {},
+      expected: true,
+    },
+    {
+      name: "Overwrite existing URL",
+      url: URL{
+        LongURL:   "https://github.com",
+        ShortCode: "GitHub",
+      },
+      before: func() {
+        store.Set(URL{
+          LongURL:   "https://example.com",
+          ShortCode: "123456ab",
+        })
+      },
+      expected: true,
+    },
+  }
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store.Set(tt.url)
+  for _, tt := range tests {
+    t.Run(tt.name, func(t *testing.T) {
+      err := store.Set(tt.url)
+      assert.NoError(t, err)
 
-			storedURL, found := store.Get(tt.url.ShortCode)
-			if tt.expected {
-				assert.True(t, found)
-				assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
-			} else {
-				assert.False(t, found)
-			}
-		})
-	}
+      storedURL, found := store.Get(tt.url.ShortCode)
+      if tt.expected {
+        assert.True(t, found)
+        assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
+      } else {
+        assert.False(t, found)
+      }
+    })
+  }
 }
 
 func Test_InMemoryRepository_Get(t *testing.T) {
-	store := NewInMemoryRepository()
-	store.Set(URL{
-		LongURL:   "https://example.com",
-		ShortCode: "abcd1234",
-	})
+  store := NewInMemoryRepository()
 
-	tests := []struct {
-		name     string
-		shortURL string
-		expected string
-		found    bool
-	}{
-		{
-			name:     "Success",
-			shortURL: "abcd1234",
-			expected: "https://example.com",
-			found:    true,
-		},
-		{
-			name:     "Not Found",
-			shortURL: "1234abcd",
-			expected: "",
-			found:    false,
-		},
-		{
-			name:     "Empty",
-			shortURL: "",
-			expected: "",
-			found:    false,
-		},
-	}
+  err := store.Set(URL{
+    LongURL:   "https://example.com",
+    ShortCode: "abcd1234",
+  })
+  assert.NoError(t, err)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			longURL, found := store.Get(tt.shortURL)
+  tests := []struct {
+    name     string
+    shortURL string
+    expected string
+    found    bool
+  }{
+    {
+      name:     "Success",
+      shortURL: "abcd1234",
+      expected: "https://example.com",
+      found:    true,
+    },
+    {
+      name:     "Not Found",
+      shortURL: "1234abcd",
+      expected: "",
+      found:    false,
+    },
+    {
+      name:     "Empty",
+      shortURL: "",
+      expected: "",
+      found:    false,
+    },
+  }
 
-			if tt.found {
-				assert.NotNil(t, longURL)
-				assert.Equal(t, tt.expected, longURL.LongURL)
-			} else {
-				assert.Nil(t, longURL)
-			}
-			assert.Equal(t, tt.found, found)
-		})
-	}
+  for _, tt := range tests {
+    t.Run(tt.name, func(t *testing.T) {
+      longURL, found := store.Get(tt.shortURL)
+
+      if tt.found {
+        assert.NotNil(t, longURL)
+        assert.Equal(t, tt.expected, longURL.LongURL)
+      } else {
+        assert.Nil(t, longURL)
+      }
+      assert.Equal(t, tt.found, found)
+    })
+  }
 }

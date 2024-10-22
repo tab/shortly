@@ -87,7 +87,7 @@ func Test_CreateShortLink(t *testing.T) {
 			expected: result{
 				shortCode: "",
 				shortURL:  "",
-				error:     errors.ErrCouldNotGenerateCode,
+				error:     errors.ErrFailedToGenerateCode,
 			},
 		},
 	}
@@ -178,7 +178,7 @@ func Test_DeprecatedCreateShortLink(t *testing.T) {
 			expected: result{
 				shortCode: "",
 				shortURL:  "",
-				error:     errors.ErrCouldNotGenerateCode,
+				error:     errors.ErrFailedToGenerateCode,
 			},
 		},
 	}

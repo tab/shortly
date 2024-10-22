@@ -71,7 +71,7 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		case errors.Is(err, errors.ErrInvalidURL):
 			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.Is(err, errors.ErrCouldNotGenerateCode):
+		case errors.Is(err, errors.ErrFailedToGenerateCode):
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		default:
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

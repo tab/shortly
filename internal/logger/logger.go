@@ -23,11 +23,11 @@ var (
 func GetLogger() zerolog.Logger {
 	once.Do(func() {
 		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
-		zerolog.TimeFieldFormat = time.RFC3339Nano
+		zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
 
 		var output io.Writer = zerolog.ConsoleWriter{
 			Out:        os.Stdout,
-			TimeFormat: time.RFC3339,
+			TimeFormat: zerolog.TimeFieldFormat,
 		}
 
 		log = zerolog.New(output).

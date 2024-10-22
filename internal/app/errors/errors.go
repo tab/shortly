@@ -9,6 +9,8 @@ var (
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
 	ErrFailedToGenerateCode    = errors.New("failed to generate short code")
 	ErrFailedToGenerateUUID    = errors.New("failed to generate UUID")
+	ErrFailedToOpenFile        = errors.New("failed to open file")
+	ErrFailedToWriteToFile     = errors.New("failed to write to file")
 )
 
 var (

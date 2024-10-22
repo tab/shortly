@@ -39,7 +39,7 @@ func run() error {
 }
 
 func setupRouter(cfg *config.Config) http.Handler {
-	repo := repository.NewInMemoryRepository()
+	repo := repository.NewFileStorageRepository(cfg.FileStoragePath)
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand)
 	handler := api.NewURLHandler(cfg, shortener)

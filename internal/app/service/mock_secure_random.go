@@ -52,3 +52,18 @@ func (mr *MockSecureRandomGeneratorMockRecorder) Hex() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hex", reflect.TypeOf((*MockSecureRandomGenerator)(nil).Hex))
 }
+
+// UUID mocks base method.
+func (m *MockSecureRandomGenerator) UUID() (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UUID")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UUID indicates an expected call of UUID.
+func (mr *MockSecureRandomGeneratorMockRecorder) UUID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UUID", reflect.TypeOf((*MockSecureRandomGenerator)(nil).UUID))
+}

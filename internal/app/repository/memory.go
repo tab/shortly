@@ -13,10 +13,12 @@ func NewInMemoryRepository() *InMemoryRepository {
 	}
 }
 
-func (store *InMemoryRepository) Set(url URL) {
+func (store *InMemoryRepository) Set(url URL) error {
 	store.Lock()
 	defer store.Unlock()
 	store.data[url.ShortCode] = url
+
+	return nil
 }
 
 func (store *InMemoryRepository) Get(shortCode string) (*URL, bool) {

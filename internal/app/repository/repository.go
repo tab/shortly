@@ -1,11 +1,12 @@
 package repository
 
 type URL struct {
-	LongURL   string
-	ShortCode string
+	UUID      string `json:"uuid"`
+	LongURL   string `json:"long_url"`
+	ShortCode string `json:"short_code"`
 }
 
 type URLRepository interface {
-	Set(url URL)
+	Set(url URL) error
 	Get(shortCode string) (*URL, bool)
 }

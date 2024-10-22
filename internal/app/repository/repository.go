@@ -6,6 +6,6 @@ type URL struct {
 }
 
 type URLRepository interface {
-	Set(url URL)
+	Set(url URL) error
 	Get(shortCode string) (*URL, bool)
 }

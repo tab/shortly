@@ -48,19 +48,21 @@ func (m *MockURLRepository) Get(shortCode string) (*URL, bool) {
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockURLRepositoryMockRecorder) Get(shortCode any) *gomock.Call {
+func (mr *MockURLRepositoryMockRecorder) Get(shortCode interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockURLRepository)(nil).Get), shortCode)
 }
 
 // Set mocks base method.
-func (m *MockURLRepository) Set(url URL) {
+func (m *MockURLRepository) Set(url URL) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Set", url)
+	ret := m.ctrl.Call(m, "Set", url)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Set indicates an expected call of Set.
-func (mr *MockURLRepositoryMockRecorder) Set(url any) *gomock.Call {
+func (mr *MockURLRepositoryMockRecorder) Set(url interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockURLRepository)(nil).Set), url)
 }

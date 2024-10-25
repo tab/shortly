@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,28 +26,7 @@ func NewURLService(cfg *config.Config, repo repository.URLRepository, rand Secur
 	}
 }
 
-type RequestParams struct {
-	URL string `json:"url"`
-}
-
-func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
-	if r.ContentLength == 0 {
-		return "", errors.ErrRequestBodyEmpty
-	}
-
-	var params RequestParams
-
-	err := json.NewDecoder(r.Body).Decode(&params)
-	if err != nil {
-		return "", err
-	}
-
-	longURL := strings.Trim(strings.TrimSpace(params.URL), "\"")
-
-	if err = validator.Validate(longURL); err != nil {
-		return "", err
-	}
-
+func (s *URLService) CreateShortLink(longURL string) (string, error) {
 	uuid, err := s.rand.UUID()
 	if err != nil {
 		return "", errors.ErrFailedToGenerateUUID

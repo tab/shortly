@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/service"
 )
@@ -16,18 +17,6 @@ type URLHandler struct {
 	service *service.URLService
 }
 
-type Request struct {
-	URL string `json:"url"`
-}
-
-type Response struct {
-	Result string `json:"result"`
-}
-
-type ErrorResponse struct {
-	Error string `json:"error"`
-}
-
 func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler {
 	return &URLHandler{cfg: cfg, service: service}
 }
@@ -35,15 +24,29 @@ func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler 
 func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	shortURL, err := h.service.CreateShortLink(r)
-	if err != nil {
+	var params dto.CreateShortLinkParams
+
+	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: err.Error()})
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if err := params.Validate(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	shortURL, err := h.service.CreateShortLink(params.URL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(Response{Result: shortURL})
+	json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
 }
 
 func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +57,12 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 	url, found := h.service.GetShortLink(shortCode)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(Response{Result: url.LongURL})
+	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: url.LongURL})
 }
 
 // NOTE: text/plain request is deprecated

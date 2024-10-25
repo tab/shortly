@@ -39,6 +39,7 @@ func run() error {
 }
 
 func setupRouter(cfg *config.Config) http.Handler {
+	appLogger := logger.NewLogger()
 	repo := repository.NewFileStorageRepository(cfg.FileStoragePath)
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand)
@@ -54,7 +55,7 @@ func setupRouter(cfg *config.Config) http.Handler {
 			MaxAge:         300,
 		}),
 		// middleware.Logger,
-		logger.Middleware,
+		appLogger.Middleware,
 		compress.Middleware,
 		middleware.RequestID,
 		middleware.Recoverer,

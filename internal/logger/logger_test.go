@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_GetLogger(t *testing.T) {
+func Test_NewLogger(t *testing.T) {
 	tests := []struct {
 		name          string
 		expectedLevel zerolog.Level
@@ -22,9 +22,9 @@ func Test_GetLogger(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			logger := GetLogger()
+			logger := NewLogger()
 
-			assert.Equal(t, tt.expectedLevel, logger.GetLevel())
+			assert.Equal(t, tt.expectedLevel, logger.log.GetLevel())
 			assert.NotNil(t, logger)
 		})
 	}
@@ -71,17 +71,15 @@ func Test_LoggerMiddleware(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			var buf bytes.Buffer
-			logger := GetLogger()
-			logger = logger.Output(&buf)
-
-			log = logger
+			logger := NewLogger()
+			logger.log = logger.log.Output(&buf)
 
 			req := httptest.NewRequest(tt.method, tt.path, nil)
 			req.RemoteAddr = "127.0.0.1:1234"
 			req.Host = "example.com"
 			w := httptest.NewRecorder()
 
-			handler := Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			handler := logger.Middleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 				w.WriteHeader(http.StatusOK)
 			}))
 

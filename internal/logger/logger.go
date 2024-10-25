@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"sync"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -15,39 +14,42 @@ const (
 	LogLevel = 1
 )
 
-var (
-	log  zerolog.Logger
-	once sync.Once
-)
-
-func GetLogger() zerolog.Logger {
-	once.Do(func() {
-		zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
-		zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
-
-		var output io.Writer = zerolog.ConsoleWriter{
-			Out:        os.Stdout,
-			TimeFormat: zerolog.TimeFieldFormat,
-		}
-
-		log = zerolog.New(output).
-			Level(zerolog.Level(LogLevel)).
-			With().
-			Timestamp().
-			Logger()
-	})
-
-	return log
+type Logger struct {
+	log zerolog.Logger
 }
 
-func Middleware(next http.Handler) http.Handler {
+func NewLogger() *Logger {
+	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
+	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
+
+	var output io.Writer = zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: zerolog.TimeFieldFormat,
+	}
+
+	log := zerolog.New(output).
+		Level(zerolog.Level(LogLevel)).
+		With().
+		Timestamp().
+		Logger()
+
+	return &Logger{log: log}
+}
+
+func (l *Logger) Info() *zerolog.Event {
+	return l.log.Info()
+}
+
+func (l *Logger) Error() *zerolog.Event {
+	return l.log.Error()
+}
+
+func (l *Logger) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		log := GetLogger()
-
 		defer func() {
-			log.Info().
+			l.Info().
 				Str("method", r.Method).
 				Str("path", r.URL.Path).
 				Dur("duration", time.Since(start)).

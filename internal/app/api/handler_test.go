@@ -13,6 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
@@ -31,8 +32,8 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {
-		response Response
-		error    ErrorResponse
+		response dto.CreateShortLinkResponse
+		error    dto.ErrorResponse
 		code     int
 		status   string
 	}
@@ -59,7 +60,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 				})
 			},
 			expected: result{
-				response: Response{Result: "http://localhost:8080/abcd1234"},
+				response: dto.CreateShortLinkResponse{Result: "http://localhost:8080/abcd1234"},
 				status:   "201 Created",
 				code:     http.StatusCreated,
 			},
@@ -67,10 +68,10 @@ func Test_HandleCreateShortLink(t *testing.T) {
 		{
 			name:   "Empty body",
 			method: http.MethodPost,
-			body:   strings.NewReader(""),
+			body:   strings.NewReader("{}"),
 			before: func() {},
 			expected: result{
-				error:  ErrorResponse{Error: "request body is empty"},
+				error:  dto.ErrorResponse{Error: "request body is empty"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -81,7 +82,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader(`{"url":""}`),
 			before: func() {},
 			expected: result{
-				error:  ErrorResponse{Error: "invalid URL"},
+				error:  dto.ErrorResponse{Error: "request body is empty"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -92,7 +93,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader(`{"url"}`),
 			before: func() {},
 			expected: result{
-				error:  ErrorResponse{Error: "invalid character '}' after object key"},
+				error:  dto.ErrorResponse{Error: "invalid character '}' after object key"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -103,7 +104,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader(`{"url":"not-a-url"}`),
 			before: func() {},
 			expected: result{
-				error:  ErrorResponse{Error: "invalid URL"},
+				error:  dto.ErrorResponse{Error: "invalid URL"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -116,9 +117,9 @@ func Test_HandleCreateShortLink(t *testing.T) {
 				rand.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
 			},
 			expected: result{
-				error:  ErrorResponse{Error: "failed to generate UUID"},
-				status: "400 Bad Request",
-				code:   http.StatusBadRequest,
+				error:  dto.ErrorResponse{Error: "failed to generate UUID"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
 			},
 		},
 		{
@@ -130,9 +131,9 @@ func Test_HandleCreateShortLink(t *testing.T) {
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
-				error:  ErrorResponse{Error: "failed to generate short code"},
-				status: "400 Bad Request",
-				code:   http.StatusBadRequest,
+				error:  dto.ErrorResponse{Error: "failed to generate short code"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
 			},
 		},
 	}
@@ -150,12 +151,12 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			defer resp.Body.Close()
 
 			if tt.expected.error.Error != "" {
-				var actual ErrorResponse
+				var actual dto.ErrorResponse
 				err := json.NewDecoder(resp.Body).Decode(&actual)
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.error.Error, actual.Error)
 			} else {
-				var actual Response
+				var actual dto.CreateShortLinkResponse
 				err := json.NewDecoder(resp.Body).Decode(&actual)
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.response.Result, actual.Result)
@@ -179,8 +180,8 @@ func Test_HandleGetShortLink(t *testing.T) {
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {
-		response Response
-		error    ErrorResponse
+		response dto.CreateShortLinkResponse
+		error    dto.ErrorResponse
 		code     int
 		status   string
 	}
@@ -201,7 +202,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 				}, true)
 			},
 			expected: result{
-				response: Response{Result: "https://example.com"},
+				response: dto.CreateShortLinkResponse{Result: "https://example.com"},
 				status:   "201 Created",
 				code:     http.StatusCreated,
 			},
@@ -213,7 +214,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 				repo.EXPECT().Get("not-a-short-code").Return(nil, false)
 			},
 			expected: result{
-				error:  ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()},
+				error:  dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()},
 				status: "404 Not Found",
 				code:   http.StatusNotFound,
 			},
@@ -235,12 +236,12 @@ func Test_HandleGetShortLink(t *testing.T) {
 			defer resp.Body.Close()
 
 			if tt.expected.error.Error != "" {
-				var actual ErrorResponse
+				var actual dto.ErrorResponse
 				err := json.NewDecoder(resp.Body).Decode(&actual)
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.error.Error, actual.Error)
 			} else {
-				var actual Response
+				var actual dto.CreateShortLinkResponse
 				err := json.NewDecoder(resp.Body).Decode(&actual)
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.response.Result, actual.Result)

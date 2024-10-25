@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 )
@@ -61,26 +63,6 @@ func Test_CreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Empty Body",
-			body:   strings.NewReader(""),
-			before: func() {},
-			expected: result{
-				shortCode: "",
-				shortURL:  "",
-				error:     errors.ErrRequestBodyEmpty,
-			},
-		},
-		{
-			name:   "Invalid URL",
-			body:   strings.NewReader(`{"url":"not-a-url"}`),
-			before: func() {},
-			expected: result{
-				shortCode: "",
-				shortURL:  "",
-				error:     errors.ErrInvalidURL,
-			},
-		},
-		{
 			name: "Error generating UUID",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
@@ -111,8 +93,12 @@ func Test_CreateShortLink(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			req, _ := http.NewRequest(http.MethodPost, "/", tt.body)
-			shortURL, err := service.CreateShortLink(req)
+			r, _ := http.NewRequest(http.MethodPost, "/", tt.body)
+			var req dto.CreateShortLinkParams
+			err := json.NewDecoder(r.Body).Decode(&req)
+			assert.NoError(t, err)
+
+			shortURL, err := service.CreateShortLink(req.URL)
 
 			assert.Equal(t, tt.expected.shortURL, shortURL)
 			assert.Equal(t, tt.expected.error, err)

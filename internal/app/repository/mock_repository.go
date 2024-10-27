@@ -66,3 +66,17 @@ func (mr *MockURLRepositoryMockRecorder) Set(url interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockURLRepository)(nil).Set), url)
 }
+
+// GetAll mocks base method.
+func (m *MockURLRepository) GetAll() []URL {
+  m.ctrl.T.Helper()
+  ret := m.ctrl.Call(m, "GetAll")
+  ret0, _ := ret[0].([]URL)
+  return ret0
+}
+
+// GetAll indicates an expected call of GetAll.
+func (mr *MockURLRepositoryMockRecorder) GetAll() *gomock.Call {
+  mr.mock.ctrl.T.Helper()
+  return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockURLRepository)(nil).GetAll))
+}

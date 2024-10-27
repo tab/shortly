@@ -9,4 +9,5 @@ type URL struct {
 type URLRepository interface {
 	Set(url URL) error
 	Get(shortCode string) (*URL, bool)
+	GetAll() []URL
 }

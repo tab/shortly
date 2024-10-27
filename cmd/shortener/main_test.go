@@ -1,7 +1,11 @@
 package main
 
 import (
+	"context"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"testing"
 	"time"
 
@@ -9,10 +13,15 @@ import (
 )
 
 func Test_Run(t *testing.T) {
+	os.Setenv("FILE_STORAGE_PATH", "store-test.json")
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	errCh := make(chan error, 1)
 
 	go func() {
-		err := run()
+		err := run(ctx)
 
 		if err != nil && err != http.ErrServerClosed {
 			errCh <- err
@@ -30,4 +39,9 @@ func Test_Run(t *testing.T) {
 	defer resp.Body.Close()
 
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
+
+	t.Cleanup(func() {
+		os.Unsetenv("FILE_STORAGE_PATH")
+		os.RemoveAll("store-test.json")
+	})
 }

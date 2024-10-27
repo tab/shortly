@@ -24,3 +24,4 @@ vendor/
 
 # FileStorageRepository
 store.json
+store-test.json

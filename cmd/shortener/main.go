@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -11,6 +16,7 @@ import (
 
 	"shortly/internal/app/api"
 	"shortly/internal/app/config"
+	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
 	"shortly/internal/compress"
@@ -18,14 +24,22 @@ import (
 )
 
 func main() {
-	if err := run(); err != nil {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+
+	if err := run(ctx); err != nil {
+		stop()
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
-func run() error {
+func run(ctx context.Context) error {
+	appLogger := logger.NewLogger()
 	cfg := config.LoadConfig()
-	router := setupRouter(cfg)
+	repo, err := repository.NewFileStorageRepository(ctx, cfg.FileStoragePath)
+	if err != nil {
+		return errors.ErrFailedToInitializeRepository
+	}
+	router := setupRouter(cfg, *appLogger, repo)
 
 	server := &http.Server{
 		Addr:         cfg.Addr,
@@ -35,12 +49,38 @@ func run() error {
 		IdleTimeout:  120 * time.Second,
 	}
 
-	return server.ListenAndServe()
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- server.ListenAndServe()
+	}()
+
+	appLogger.Info().Msgf("Listening on %s", cfg.Addr)
+
+	select {
+	case <-ctx.Done():
+		appLogger.Info().Msg("Shutting down server...")
+
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err = server.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("server shutdown failed: %w", err)
+		}
+
+		appLogger.Info().Msg("Server gracefully stopped")
+
+		repo.Wait()
+		appLogger.Info().Msg("Repository shutdown completed")
+		return nil
+	case err = <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			return fmt.Errorf("server error: %w", err)
+		}
+		return err
+	}
 }
 
-func setupRouter(cfg *config.Config) http.Handler {
-	appLogger := logger.NewLogger()
-	repo := repository.NewFileStorageRepository(cfg.FileStoragePath)
+func setupRouter(cfg *config.Config, appLogger logger.Logger, repo *repository.FileStorageRepository) http.Handler {
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand)
 	handler := api.NewURLHandler(cfg, shortener)

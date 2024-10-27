@@ -4,7 +4,7 @@ import "sync"
 
 type InMemoryRepository struct {
 	data map[string]URL
-	sync.RWMutex
+	mu   sync.RWMutex
 }
 
 func NewInMemoryRepository() *InMemoryRepository {
@@ -14,20 +14,31 @@ func NewInMemoryRepository() *InMemoryRepository {
 }
 
 func (store *InMemoryRepository) Set(url URL) error {
-	store.Lock()
-	defer store.Unlock()
+	store.mu.Lock()
+	defer store.mu.Unlock()
 	store.data[url.ShortCode] = url
 
 	return nil
 }
 
 func (store *InMemoryRepository) Get(shortCode string) (*URL, bool) {
-	store.RLock()
-	defer store.RUnlock()
+	store.mu.RLock()
+	defer store.mu.RUnlock()
 
 	url, found := store.data[shortCode]
 	if !found {
 		return nil, false
 	}
 	return &url, true
+}
+
+func (store *InMemoryRepository) GetAll() []URL {
+	store.mu.RLock()
+	defer store.mu.RUnlock()
+
+	results := make([]URL, 0, len(store.data))
+	for _, v := range store.data {
+		results = append(results, v)
+	}
+	return results
 }

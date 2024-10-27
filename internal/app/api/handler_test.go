@@ -203,8 +203,8 @@ func Test_HandleGetShortLink(t *testing.T) {
 			},
 			expected: result{
 				response: dto.CreateShortLinkResponse{Result: "https://example.com"},
-				status:   "201 Created",
-				code:     http.StatusCreated,
+				status:   "200 OK",
+				code:     http.StatusOK,
 			},
 		},
 		{

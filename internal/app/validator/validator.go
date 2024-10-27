@@ -1,18 +1,17 @@
 package validator
 
 import (
-	"regexp"
+	"net/url"
 
 	"shortly/internal/app/errors"
 )
 
-const URLRegex = `^(https?:\/\/)([a-zA-Z0-9-]{1,63}\.)+[a-zA-Z]{2,6}([\/\w .-]*)*\/?$`
+func Validate(rawURL string) error {
+	parsedURL, err := url.ParseRequestURI(rawURL)
 
-var urlRegex = regexp.MustCompile(URLRegex)
-
-func Validate(url string) error {
-	if !urlRegex.MatchString(url) {
+	if err != nil || parsedURL.Scheme == "" || parsedURL.Host == "" {
 		return errors.ErrInvalidURL
 	}
+
 	return nil
 }

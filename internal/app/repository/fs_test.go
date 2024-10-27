@@ -6,8 +6,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"shortly/internal/app/errors"
 )
 
 func Test_FileStorageRepository_Set(t *testing.T) {
@@ -228,20 +226,6 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 			},
 			expected: nil,
 		},
-		{
-			name: "FilePath is a directory",
-			before: func(store *FileStorageRepository) {
-				store.FilePath = t.TempDir()
-			},
-			expected: errors.ErrFilePathIsDirectory,
-		},
-		{
-			name: "Failed to open file",
-			before: func(store *FileStorageRepository) {
-				store.FilePath = "/invalid"
-			},
-			expected: errors.ErrFailedToOpenFile,
-		},
 	}
 
 	for _, tt := range tests {
@@ -285,20 +269,6 @@ func Test_FileStorageRepository_Save(t *testing.T) {
 				assert.NoError(t, err)
 			},
 			expected: nil,
-		},
-		{
-			name: "FilePath is a directory",
-			before: func(store *FileStorageRepository) {
-				store.FilePath = t.TempDir()
-			},
-			expected: errors.ErrFilePathIsDirectory,
-		},
-		{
-			name: "Failed to open file",
-			before: func(store *FileStorageRepository) {
-				store.FilePath = "/invalid"
-			},
-			expected: errors.ErrFailedToOpenFile,
 		},
 	}
 

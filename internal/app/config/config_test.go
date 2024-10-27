@@ -33,13 +33,13 @@ func Test_LoadConfig(t *testing.T) {
 				"SERVER_ADDRESS":    "localhost:3000",
 				"BASE_URL":          "http://localhost:3000",
 				"CLIENT_URL":        "http://localhost:6000",
-				"FILE_STORAGE_PATH": "store.json",
+				"FILE_STORAGE_PATH": "store-test.json",
 			},
 			expected: &Config{
 				Addr:            "localhost:3000",
 				BaseURL:         "http://localhost:3000",
 				ClientURL:       "http://localhost:6000",
-				FileStoragePath: "store.json",
+				FileStoragePath: "store-test.json",
 			},
 		},
 	}
@@ -57,9 +57,11 @@ func Test_LoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.BaseURL, result.BaseURL)
 			assert.Equal(t, tt.expected.ClientURL, result.ClientURL)
 
-			for key := range tt.env {
-				os.Unsetenv(key)
-			}
+			t.Cleanup(func() {
+				for key := range tt.env {
+					os.Unsetenv(key)
+				}
+			})
 		})
 	}
 }

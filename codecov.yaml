@@ -22,3 +22,6 @@ coverage:
 ignore:
   - "**/mock_*.go"
   - "**/*_test.go"
+
+flags:
+  - ignore_warnings: true

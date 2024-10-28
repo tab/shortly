@@ -1,38 +1,44 @@
 package dto
 
 import (
-  "strings"
+	"encoding/json"
+	"io"
+	"strings"
 
-  "shortly/internal/app/errors"
-  "shortly/internal/app/validator"
+	"shortly/internal/app/errors"
+	"shortly/internal/app/validator"
 )
 
 type CreateShortLinkParams struct {
-  URL string `json:"url"`
+	URL string `json:"url"`
 }
 
 type CreateShortLinkResponse struct {
-  Result string `json:"result"`
+	Result string `json:"result"`
 }
 
 type GetShortLinkResponse struct {
-  Result string `json:"result"`
+	Result string `json:"result"`
 }
 
 type ErrorResponse struct {
-  Error string `json:"error"`
+	Error string `json:"error"`
 }
 
-func (r *CreateShortLinkParams) Validate() error {
-  r.URL = strings.TrimSpace(r.URL)
+func (params *CreateShortLinkParams) Validate(body io.Reader) error {
+	if err := json.NewDecoder(body).Decode(params); err != nil {
+		return err
+	}
 
-  if r.URL == "" {
-    return errors.ErrRequestBodyEmpty
-  }
+	params.URL = strings.TrimSpace(params.URL)
 
-  if err := validator.Validate(r.URL); err != nil {
-    return err
-  }
+	if params.URL == "" {
+		return errors.ErrRequestBodyEmpty
+	}
 
-  return nil
+	if err := validator.Validate(params.URL); err != nil {
+		return err
+	}
+
+	return nil
 }

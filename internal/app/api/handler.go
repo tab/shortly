@@ -26,13 +26,7 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 
 	var params dto.CreateShortLinkParams
 
-	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
-		return
-	}
-
-	if err := params.Validate(); err != nil {
+	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return

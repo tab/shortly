@@ -26,7 +26,7 @@ func Test_CreateShortLink(t *testing.T) {
 		ClientURL: "http://localhost:8080",
 	}
 
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
 
@@ -116,7 +116,7 @@ func Test_DeprecatedCreateShortLink(t *testing.T) {
 		ClientURL: "http://localhost:8080",
 	}
 
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
 
@@ -208,7 +208,7 @@ func Test_GetShortLink(t *testing.T) {
 		ClientURL: "http://localhost:8080",
 	}
 
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
 

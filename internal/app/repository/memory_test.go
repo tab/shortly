@@ -144,7 +144,7 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 			before: func(_ *InMemoryRepository) {},
 			expected: result{
 				memento: &Memento{
-					State: []URL{},
+					State: []URL(nil),
 				},
 				err: nil,
 			},
@@ -200,7 +200,7 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 			},
 			expected: result{
 				memento: &Memento{
-					State: []URL{},
+					State: []URL(nil),
 				},
 				err: nil,
 			},

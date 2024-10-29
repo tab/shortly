@@ -45,7 +45,7 @@ func (f *FileStorageRepository) Load() (*Memento, error) {
 	return memento, nil
 }
 
-func (f *FileStorageRepository) Save(m *Memento) error {
+func (f *FileStorageRepository) Save(memento *Memento) error {
 	file, err := os.OpenFile(f.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.ErrFailedToOpenFile
@@ -53,7 +53,7 @@ func (f *FileStorageRepository) Save(m *Memento) error {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	for _, row := range m.State {
+	for _, row := range memento.State {
 		if err = encoder.Encode(row); err != nil {
 			return errors.ErrFailedToWriteToFile
 		}

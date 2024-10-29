@@ -3,53 +3,50 @@ package repository
 import "sync"
 
 type InMemoryRepository struct {
-	data map[string]URL
-	mu   sync.RWMutex
+	data sync.Map
 }
 
 func NewInMemoryRepository() *InMemoryRepository {
-	return &InMemoryRepository{
-		data: make(map[string]URL),
-	}
+	return &InMemoryRepository{}
 }
 
-func (store *InMemoryRepository) Set(url URL) error {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-	store.data[url.ShortCode] = url
-
+func (m *InMemoryRepository) Set(url URL) error {
+	m.data.Store(url.ShortCode, url)
 	return nil
 }
 
-func (store *InMemoryRepository) Get(shortCode string) (*URL, bool) {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
-
-	url, found := store.data[shortCode]
-	if !found {
+func (m *InMemoryRepository) Get(shortCode string) (*URL, bool) {
+	value, ok := m.data.Load(shortCode)
+	if !ok {
 		return nil, false
 	}
+
+	url, ok := value.(URL)
+	if !ok {
+		return nil, false
+	}
+
 	return &url, true
 }
 
-func (store *InMemoryRepository) CreateMemento() *Memento {
-	store.mu.RLock()
-	defer store.mu.RUnlock()
+func (m *InMemoryRepository) CreateMemento() *Memento {
+	var results []URL
 
-	results := make([]URL, 0, len(store.data))
-	for _, v := range store.data {
-		results = append(results, v)
-	}
+	m.data.Range(func(_, value interface{}) bool {
+		url, ok := value.(URL)
+		if ok {
+			results = append(results, url)
+		}
+		return true
+	})
 
 	return &Memento{State: results}
 }
 
-func (store *InMemoryRepository) Restore(m *Memento) {
-	store.mu.Lock()
-	defer store.mu.Unlock()
+func (m *InMemoryRepository) Restore(memento *Memento) {
+	m.data = sync.Map{}
 
-	store.data = make(map[string]URL)
-	for _, url := range m.State {
-		store.data[url.ShortCode] = url
+	for _, url := range memento.State {
+		m.data.Store(url.ShortCode, url)
 	}
 }

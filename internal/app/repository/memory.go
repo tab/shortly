@@ -32,7 +32,7 @@ func (store *InMemoryRepository) Get(shortCode string) (*URL, bool) {
 	return &url, true
 }
 
-func (store *InMemoryRepository) GetAll() []URL {
+func (store *InMemoryRepository) CreateMemento() *Memento {
 	store.mu.RLock()
 	defer store.mu.RUnlock()
 
@@ -40,5 +40,16 @@ func (store *InMemoryRepository) GetAll() []URL {
 	for _, v := range store.data {
 		results = append(results, v)
 	}
-	return results
+
+	return &Memento{State: results}
+}
+
+func (store *InMemoryRepository) Restore(m *Memento) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	store.data = make(map[string]URL)
+	for _, url := range m.State {
+		store.data[url.ShortCode] = url
+	}
 }

@@ -106,64 +106,48 @@ func Test_InMemoryRepository_Get(t *testing.T) {
 	}
 }
 
-func Test_InMemoryRepository_GetAll(t *testing.T) {
+func Test_InMemoryRepository_CreateMemento(t *testing.T) {
+	type result struct {
+		memento *Memento
+		err     error
+	}
+
 	tests := []struct {
 		name     string
 		before   func(store *InMemoryRepository)
-		expected []URL
+		expected result
 	}{
 		{
 			name: "Success",
 			before: func(store *InMemoryRepository) {
-				err := store.Set(URL{
+				store.Set(URL{
 					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
-					LongURL:   "https://example.com",
+					LongURL:   "http://example.com",
 					ShortCode: "abcd1234",
 				})
-				assert.NoError(t, err)
 			},
-			expected: []URL{
-				{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
-					LongURL:   "https://example.com",
-					ShortCode: "abcd1234",
+			expected: result{
+				memento: &Memento{
+					State: []URL{
+						{
+							UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+							LongURL:   "http://example.com",
+							ShortCode: "abcd1234",
+						},
+					},
 				},
+				err: nil,
 			},
 		},
 		{
-			name: "Multiple URLs",
-			before: func(store *InMemoryRepository) {
-				err := store.Set(URL{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
-					LongURL:   "https://example.com",
-					ShortCode: "abcd1234",
-				})
-				assert.NoError(t, err)
-
-				err = store.Set(URL{
-					UUID:      "3dc48b80-5072-4e23-963c-f5b942ed1a31",
-					LongURL:   "https://github.com",
-					ShortCode: "ab12ab12",
-				})
-				assert.NoError(t, err)
-			},
-			expected: []URL{
-				{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
-					LongURL:   "https://example.com",
-					ShortCode: "abcd1234",
+			name:   "Empty",
+			before: func(_ *InMemoryRepository) {},
+			expected: result{
+				memento: &Memento{
+					State: []URL{},
 				},
-				{
-					UUID:      "3dc48b80-5072-4e23-963c-f5b942ed1a31",
-					LongURL:   "https://github.com",
-					ShortCode: "ab12ab12",
-				},
+				err: nil,
 			},
-		},
-		{
-			name:     "Empty",
-			before:   func(_ *InMemoryRepository) {},
-			expected: []URL{},
 		},
 	}
 
@@ -172,10 +156,65 @@ func Test_InMemoryRepository_GetAll(t *testing.T) {
 			store := NewInMemoryRepository()
 			tt.before(store)
 
-			results := store.GetAll()
+			memento := store.CreateMemento()
+			assert.Equal(t, tt.expected.memento, memento)
+		})
+	}
+}
 
-			assert.NotNil(t, results)
-			assert.ElementsMatch(t, tt.expected, results)
+func Test_InMemoryRepository_Restore(t *testing.T) {
+	type result struct {
+		memento *Memento
+		err     error
+	}
+
+	tests := []struct {
+		name     string
+		before   func(store *InMemoryRepository)
+		expected result
+	}{
+		{
+			name:   "Success",
+			before: func(_ *InMemoryRepository) {},
+			expected: result{
+				memento: &Memento{
+					State: []URL{
+						{
+							UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+							LongURL:   "http://example.com",
+							ShortCode: "abcd1234",
+						},
+					},
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "Empty",
+			before: func(store *InMemoryRepository) {
+				store.Set(URL{
+					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+					LongURL:   "http://example.com",
+					ShortCode: "abcd1234",
+				})
+			},
+			expected: result{
+				memento: &Memento{
+					State: []URL{},
+				},
+				err: nil,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewInMemoryRepository()
+			tt.before(store)
+
+			store.Restore(tt.expected.memento)
+			memento := store.CreateMemento()
+			assert.Equal(t, tt.expected.memento, memento)
 		})
 	}
 }

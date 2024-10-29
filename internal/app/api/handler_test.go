@@ -26,7 +26,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -174,7 +174,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -259,7 +259,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -351,7 +351,7 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)

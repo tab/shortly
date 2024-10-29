@@ -6,8 +6,17 @@ type URL struct {
 	ShortCode string `json:"short_code"`
 }
 
-type URLRepository interface {
+type Memento struct {
+	State []URL `json:"state"`
+}
+
+type Repository interface {
 	Set(url URL) error
 	Get(shortCode string) (*URL, bool)
-	GetAll() []URL
+	CreateMemento() *Memento
+	Restore(m *Memento)
+}
+
+func NewRepository() Repository {
+	return NewInMemoryRepository()
 }

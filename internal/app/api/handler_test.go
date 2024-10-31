@@ -1,16 +1,19 @@
 package api
 
 import (
-	"github.com/go-chi/chi/v5"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
@@ -23,9 +26,242 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(repo, rand, cfg)
+	srv := service.NewURLService(cfg, repo, rand)
+	handler := NewURLHandler(cfg, srv)
+
+	type result struct {
+		response dto.CreateShortLinkResponse
+		error    dto.ErrorResponse
+		code     int
+		status   string
+	}
+
+	tests := []struct {
+		name     string
+		method   string
+		body     io.Reader
+		before   func()
+		expected result
+	}{
+		{
+			name:   "Success",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
+				rand.EXPECT().Hex().Return("abcd1234", nil)
+
+				repo.EXPECT().Set(repository.URL{
+					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				})
+			},
+			expected: result{
+				response: dto.CreateShortLinkResponse{Result: "http://localhost:8080/abcd1234"},
+				status:   "201 Created",
+				code:     http.StatusCreated,
+			},
+		},
+		{
+			name:   "Empty body",
+			method: http.MethodPost,
+			body:   strings.NewReader("{}"),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "request body is empty"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Empty URL",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":""}`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "request body is empty"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Invalid JSON",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url"}`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "invalid character '}' after object key"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Invalid URL",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":"not-a-url"}`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "invalid URL"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Error generating UUID",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "failed to generate UUID"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+		{
+			name:   "Error generating short code",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "failed to generate short code"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			req := httptest.NewRequest(tt.method, "/api/shorten", tt.body)
+			w := httptest.NewRecorder()
+
+			handler.HandleCreateShortLink(w, req)
+
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			if tt.expected.error.Error != "" {
+				var actual dto.ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+			} else {
+				var actual dto.CreateShortLinkResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Result, actual.Result)
+			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+		})
+	}
+}
+
+func Test_HandleGetShortLink(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockRepository(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	srv := service.NewURLService(cfg, repo, rand)
+	handler := NewURLHandler(cfg, srv)
+
+	type result struct {
+		response dto.CreateShortLinkResponse
+		error    dto.ErrorResponse
+		code     int
+		status   string
+	}
+
+	tests := []struct {
+		name     string
+		path     string
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			path: "/api/shorten/abcd1234",
+			before: func() {
+				repo.EXPECT().Get("abcd1234").Return(&repository.URL{
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}, true)
+			},
+			expected: result{
+				response: dto.CreateShortLinkResponse{Result: "https://example.com"},
+				status:   "200 OK",
+				code:     http.StatusOK,
+			},
+		},
+		{
+			name: "Not Found",
+			path: "/api/shorten/not-a-short-code",
+			before: func() {
+				repo.EXPECT().Get("not-a-short-code").Return(nil, false)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()},
+				status: "404 Not Found",
+				code:   http.StatusNotFound,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
+			w := httptest.NewRecorder()
+
+			r := chi.NewRouter()
+			r.Get("/api/shorten/{id}", handler.HandleGetShortLink)
+			r.ServeHTTP(w, req)
+
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			if tt.expected.error.Error != "" {
+				var actual dto.ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+			} else {
+				var actual dto.CreateShortLinkResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Result, actual.Result)
+			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+		})
+	}
+}
+
+func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockRepository(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {
@@ -36,14 +272,14 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	tests := []struct {
 		name     string
 		method   string
-		body     string
+		body     io.Reader
 		before   func()
 		expected result
 	}{
 		{
 			name:   "Success",
 			method: http.MethodPost,
-			body:   "https://example.com",
+			body:   strings.NewReader("https://example.com"),
 			before: func() {
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 				repo.EXPECT().Set(repository.URL{
@@ -57,19 +293,9 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Invalid request method",
-			method: http.MethodGet,
-			body:   "",
-			before: func() {},
-			expected: result{
-				status:   http.StatusBadRequest,
-				response: "Invalid request method",
-			},
-		},
-		{
 			name:   "Empty body",
 			method: http.MethodPost,
-			body:   "",
+			body:   strings.NewReader(""),
 			before: func() {},
 			expected: result{
 				status:   http.StatusBadRequest,
@@ -79,7 +305,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 		{
 			name:   "Invalid URL",
 			method: http.MethodPost,
-			body:   "not-a-url",
+			body:   strings.NewReader("not-a-url"),
 			before: func() {},
 			expected: result{
 				status:   http.StatusBadRequest,
@@ -89,45 +315,45 @@ func Test_HandleCreateShortLink(t *testing.T) {
 		{
 			name:   "Error generating short code",
 			method: http.MethodPost,
-			body:   "https://example.com",
+			body:   strings.NewReader("https://example.com"),
 			before: func() {
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
 				status:   http.StatusInternalServerError,
-				response: errors.ErrCouldNotGenerateCode.Error(),
+				response: errors.ErrFailedToGenerateCode.Error(),
 			},
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			test.before()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
 
-			req := httptest.NewRequest(test.method, "/", strings.NewReader(test.body))
+			req := httptest.NewRequest(tt.method, "/", tt.body)
 			w := httptest.NewRecorder()
 
-			handler.HandleCreateShortLink(w, req)
+			handler.DeprecatedHandleCreateShortLink(w, req)
 
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			assert.Equal(t, test.expected.status, resp.StatusCode)
-			assert.Equal(t, test.expected.response, strings.TrimSpace(w.Body.String()))
+			assert.Equal(t, tt.expected.status, resp.StatusCode)
+			assert.Equal(t, tt.expected.response, strings.TrimSpace(w.Body.String()))
 		})
 	}
 }
 
-func Test_HandleGetShortLink(t *testing.T) {
+func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockURLRepository(ctrl)
+	repo := repository.NewMockRepository(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(repo, rand, cfg)
+	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {
@@ -169,25 +395,25 @@ func Test_HandleGetShortLink(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			test.before()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
 
-			req := httptest.NewRequest(http.MethodGet, test.path, nil)
+			req := httptest.NewRequest(http.MethodGet, tt.path, nil)
 			w := httptest.NewRecorder()
 
 			r := chi.NewRouter()
-			r.Get("/{id}", handler.HandleGetShortLink)
+			r.Get("/{id}", handler.DeprecatedHandleGetShortLink)
 			r.ServeHTTP(w, req)
 
 			resp := w.Result()
 			defer resp.Body.Close()
 
-			assert.Equal(t, test.expected.status, resp.StatusCode)
-			if test.expected.status == http.StatusTemporaryRedirect {
-				assert.Equal(t, test.expected.header, w.Header().Get("Location"))
+			assert.Equal(t, tt.expected.status, resp.StatusCode)
+			if tt.expected.status == http.StatusTemporaryRedirect {
+				assert.Equal(t, tt.expected.header, w.Header().Get("Location"))
 			} else {
-				assert.Equal(t, test.expected.response, strings.TrimSpace(w.Body.String()))
+				assert.Equal(t, tt.expected.response, strings.TrimSpace(w.Body.String()))
 			}
 		})
 	}

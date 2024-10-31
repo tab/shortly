@@ -13,36 +13,62 @@ import (
 )
 
 type URLService struct {
-	repo repository.URLRepository
-	rand SecureRandomGenerator
 	cfg  *config.Config
+	repo URLRepository
+	rand SecureRandomGenerator
 }
 
-func NewURLService(repo repository.URLRepository, rand SecureRandomGenerator, cfg *config.Config) *URLService {
+type URLRepository interface {
+	Set(url repository.URL) error
+	Get(shortCode string) (*repository.URL, bool)
+}
+
+func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGenerator) *URLService {
 	return &URLService{
+		cfg:  cfg,
 		repo: repo,
 		rand: rand,
-		cfg:  cfg,
 	}
 }
 
-func (s *URLService) CreateShortLink(r *http.Request) (string, error) {
+func (s *URLService) CreateShortLink(longURL string) (string, error) {
+	uuid, err := s.rand.UUID()
+	if err != nil {
+		return "", errors.ErrFailedToGenerateUUID
+	}
+
+	shortCode, err := s.rand.Hex()
+	if err != nil {
+		return "", errors.ErrFailedToGenerateCode
+	}
+
+	url := repository.URL{
+		UUID:      uuid,
+		LongURL:   longURL,
+		ShortCode: shortCode,
+	}
+	s.repo.Set(url)
+
+	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
+}
+
+// NOTE: text/plain request is deprecated
+func (s *URLService) DeprecatedCreateShortLink(r *http.Request) (string, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil || len(body) == 0 {
 		return "", errors.ErrRequestBodyEmpty
 	}
 	defer r.Body.Close()
 
-	longURL := strings.TrimSpace(string(body))
-	longURL = strings.Trim(longURL, "\"")
+	longURL := strings.Trim(strings.TrimSpace(string(body)), "\"")
 
-	if err := validator.Validate(longURL); err != nil {
+	if err = validator.Validate(longURL); err != nil {
 		return "", err
 	}
 
 	shortCode, err := s.rand.Hex()
 	if err != nil {
-		return "", errors.ErrCouldNotGenerateCode
+		return "", errors.ErrFailedToGenerateCode
 	}
 
 	url := repository.URL{

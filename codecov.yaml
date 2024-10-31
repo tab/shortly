@@ -20,5 +20,5 @@ coverage:
         target: 80%
 
 ignore:
-  - "**/mock_*.go"
+  - "**/*_mock.go"
   - "**/*_test.go"

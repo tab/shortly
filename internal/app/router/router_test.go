@@ -1,46 +1,25 @@
-package main
+package router
 
 import (
 	"net/http"
 	"net/http/httptest"
-	"shortly/internal/app/repository"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+
 	"shortly/internal/app/config"
+	"shortly/internal/app/repository"
+	"shortly/internal/logger"
 )
-
-func Test_Run(t *testing.T) {
-	errCh := make(chan error, 1)
-
-	go func() {
-		err := run()
-
-		if err != nil && err != http.ErrServerClosed {
-			errCh <- err
-		}
-
-		close(errCh)
-	}()
-
-	time.Sleep(100 * time.Millisecond)
-
-	resp, err := http.Get("http://localhost:8080/health")
-	if err != nil {
-		t.Fatalf("Failed to send GET request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-}
 
 func Test_HealthCheck(t *testing.T) {
 	cfg := &config.Config{
 		ClientURL: "http://localhost:8080",
 	}
-	router := setupRouter(cfg)
+	repo := repository.NewRepository()
+	appLogger := logger.NewLogger()
+	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
@@ -55,9 +34,11 @@ func Test_HealthCheck(t *testing.T) {
 
 func Test_CreateShortLink(t *testing.T) {
 	cfg := &config.Config{
-		Addr: "localhost:8080",
+		ClientURL: "http://localhost:8080",
 	}
-	router := setupRouter(cfg)
+	repo := repository.NewRepository()
+	appLogger := logger.NewLogger()
+	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
 	w := httptest.NewRecorder()
@@ -72,10 +53,11 @@ func Test_CreateShortLink(t *testing.T) {
 
 func Test_GetShortLink(t *testing.T) {
 	cfg := &config.Config{
-		Addr: "localhost:8080",
+		ClientURL: "http://localhost:8080",
 	}
-	repo := repository.NewInMemoryRepository()
-	router := setupRouter(cfg)
+	repo := repository.NewRepository()
+	appLogger := logger.NewLogger()
+	router := NewRouter(cfg, appLogger, repo)
 
 	repo.Set(repository.URL{
 		LongURL:   "https://example.com",

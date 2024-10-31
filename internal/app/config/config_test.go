@@ -20,43 +20,48 @@ func Test_LoadConfig(t *testing.T) {
 			args: []string{},
 			env:  map[string]string{},
 			expected: &Config{
-				Addr:      ServerAddress,
-				BaseURL:   BaseURL,
-				ClientURL: ClientURL,
+				Addr:            ServerAddress,
+				BaseURL:         BaseURL,
+				ClientURL:       ClientURL,
+				FileStoragePath: FileStoragePath,
 			},
 		},
 		{
 			name: "Use env vars",
 			args: []string{"-a", "localhost:5000", "-b", "http://localhost:5000", "-c", "http://localhost:6000"},
 			env: map[string]string{
-				"SERVER_ADDRESS": "localhost:3000",
-				"BASE_URL":       "http://localhost:3000",
-				"CLIENT_URL":     "http://localhost:6000",
+				"SERVER_ADDRESS":    "localhost:3000",
+				"BASE_URL":          "http://localhost:3000",
+				"CLIENT_URL":        "http://localhost:6000",
+				"FILE_STORAGE_PATH": "store-test.json",
 			},
 			expected: &Config{
-				Addr:      "localhost:3000",
-				BaseURL:   "http://localhost:3000",
-				ClientURL: "http://localhost:6000",
+				Addr:            "localhost:3000",
+				BaseURL:         "http://localhost:3000",
+				ClientURL:       "http://localhost:6000",
+				FileStoragePath: "store-test.json",
 			},
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			for key, value := range test.env {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for key, value := range tt.env {
 				os.Setenv(key, value)
 			}
 
-			flag.CommandLine = flag.NewFlagSet(test.name, flag.ContinueOnError)
+			flag.CommandLine = flag.NewFlagSet(tt.name, flag.ContinueOnError)
 			result := LoadConfig()
 
-			assert.Equal(t, test.expected.Addr, result.Addr)
-			assert.Equal(t, test.expected.BaseURL, result.BaseURL)
-			assert.Equal(t, test.expected.ClientURL, result.ClientURL)
+			assert.Equal(t, tt.expected.Addr, result.Addr)
+			assert.Equal(t, tt.expected.BaseURL, result.BaseURL)
+			assert.Equal(t, tt.expected.ClientURL, result.ClientURL)
 
-			for key := range test.env {
-				os.Unsetenv(key)
-			}
+			t.Cleanup(func() {
+				for key := range tt.env {
+					os.Unsetenv(key)
+				}
+			})
 		})
 	}
 }

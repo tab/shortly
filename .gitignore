@@ -21,3 +21,7 @@ vendor/
 # IDEs directories
 .idea
 .vscode
+
+# FileStorageRepository
+store.json
+store-test.json

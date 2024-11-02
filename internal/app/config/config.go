@@ -10,6 +10,7 @@ const (
 	ClientURL       = "http://localhost:3000"
 	ServerAddress   = "localhost:8080"
 	FileStoragePath = "store.json"
+	DatabaseDSN     = "postgres://postgres:postgres@localhost:5432/shortly-development?sslmode=disable"
 )
 
 type Config struct {
@@ -17,6 +18,7 @@ type Config struct {
 	BaseURL         string
 	ClientURL       string
 	FileStoragePath string
+	DatabaseDSN     string
 }
 
 func LoadConfig() *Config {
@@ -24,6 +26,7 @@ func LoadConfig() *Config {
 	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
 	flagClientURL := flag.String("c", ClientURL, "frontend client URL")
 	flagFileStoragePath := flag.String("f", FileStoragePath, "path to the file storage")
+	flagDatabaseDSN := flag.String("d", DatabaseDSN, "database DSN")
 	flag.Parse()
 
 	return &Config{
@@ -31,6 +34,7 @@ func LoadConfig() *Config {
 		BaseURL:         getEnvOrFlag("BASE_URL", *flagBaseURL),
 		ClientURL:       getEnvOrFlag("CLIENT_URL", *flagClientURL),
 		FileStoragePath: getEnvOrFlag("FILE_STORAGE_PATH", *flagFileStoragePath),
+		DatabaseDSN:     getEnvOrFlag("DATABASE_DSN", *flagDatabaseDSN),
 	}
 }
 

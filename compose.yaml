@@ -20,6 +20,7 @@ services:
         - BASE_URL=http://localhost:8080
         - CLIENT_URL=http://localhost:3000
         - FILE_STORAGE_PATH=/app/store.json
+        - DATABASE_DSN=postgres://postgres:postgres@localhost:5432/shortly-development?sslmode=disable
     networks:
       - shortly-network
 

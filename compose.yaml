@@ -23,7 +23,21 @@ services:
     networks:
       - shortly-network
 
+  database:
+    image: postgres:16.4-alpine
+    volumes:
+      - shortly-database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PORT: 5432
+
 networks:
   shortly-network:
     name: shortly-network
     external: false
+
+volumes:
+  shortly-database:

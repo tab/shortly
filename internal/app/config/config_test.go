@@ -24,22 +24,31 @@ func Test_LoadConfig(t *testing.T) {
 				BaseURL:         BaseURL,
 				ClientURL:       ClientURL,
 				FileStoragePath: FileStoragePath,
+				DatabaseDSN:     DatabaseDSN,
 			},
 		},
 		{
 			name: "Use env vars",
-			args: []string{"-a", "localhost:5000", "-b", "http://localhost:5000", "-c", "http://localhost:6000"},
+			args: []string{
+				"-a", "localhost:5000",
+				"-b", "http://localhost:5000",
+				"-c", "http://localhost:6000",
+				"-f", "store-test.json",
+				"-d", "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+			},
 			env: map[string]string{
 				"SERVER_ADDRESS":    "localhost:3000",
 				"BASE_URL":          "http://localhost:3000",
 				"CLIENT_URL":        "http://localhost:6000",
 				"FILE_STORAGE_PATH": "store-test.json",
+				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 			},
 			expected: &Config{
 				Addr:            "localhost:3000",
 				BaseURL:         "http://localhost:3000",
 				ClientURL:       "http://localhost:6000",
 				FileStoragePath: "store-test.json",
+				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 			},
 		},
 	}
@@ -56,6 +65,8 @@ func Test_LoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.Addr, result.Addr)
 			assert.Equal(t, tt.expected.BaseURL, result.BaseURL)
 			assert.Equal(t, tt.expected.ClientURL, result.ClientURL)
+			assert.Equal(t, tt.expected.FileStoragePath, result.FileStoragePath)
+			assert.Equal(t, tt.expected.DatabaseDSN, result.DatabaseDSN)
 
 			t.Cleanup(func() {
 				for key := range tt.env {

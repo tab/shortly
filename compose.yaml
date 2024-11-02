@@ -1,0 +1,43 @@
+name: shortly
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base-backend
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./cmd:/app/cmd
+      - ./internal:/app/internal
+      - ./go.mod:/app/go.mod
+      - ./go.sum:/app/go.sum
+      - ./store.json:/app/store.json
+    ports:
+      - "8080:8080"
+    environment:
+        - SERVER_ADDRESS=0.0.0.0:8080
+        - BASE_URL=http://localhost:8080
+        - CLIENT_URL=http://localhost:3000
+        - FILE_STORAGE_PATH=/app/store.json
+    networks:
+      - shortly-network
+
+  database:
+    image: postgres:16.4-alpine
+    volumes:
+      - shortly-database:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PORT: 5432
+
+networks:
+  shortly-network:
+    name: shortly-network
+    external: false
+
+volumes:
+  shortly-database:

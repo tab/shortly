@@ -63,7 +63,7 @@ func (a *Application) Run(ctx context.Context) error {
 			return err
 		}
 
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 		if err = a.server.Shutdown(shutdownCtx); err != nil {
 			return err

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -14,11 +15,16 @@ import (
 )
 
 func Test_HealthCheck(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		ClientURL:   config.ClientURL,
+		DatabaseDSN: config.DatabaseDSN,
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -33,11 +39,16 @@ func Test_HealthCheck(t *testing.T) {
 }
 
 func Test_CreateShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		ClientURL:   config.ClientURL,
+		DatabaseDSN: config.DatabaseDSN,
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -52,11 +63,16 @@ func Test_CreateShortLink(t *testing.T) {
 }
 
 func Test_GetShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		ClientURL:   config.ClientURL,
+		DatabaseDSN: config.DatabaseDSN,
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
 	repo.Set(repository.URL{

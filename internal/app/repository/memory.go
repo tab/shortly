@@ -1,6 +1,9 @@
 package repository
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
 type InMemoryRepository struct {
 	data sync.Map
@@ -49,4 +52,8 @@ func (m *InMemoryRepository) Restore(memento *Memento) {
 	for _, url := range memento.State {
 		m.data.Store(url.ShortCode, url)
 	}
+}
+
+func (m *InMemoryRepository) Ping(_ context.Context) error {
+	return nil
 }

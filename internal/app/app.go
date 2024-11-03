@@ -20,11 +20,13 @@ type Application struct {
 	server             *server.Server
 }
 
-func NewApplication() (*Application, error) {
+func NewApplication(ctx context.Context) (*Application, error) {
 	cfg := config.LoadConfig()
 	appLogger := logger.NewLogger()
-
-	repo := repository.NewRepository()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	fileRepo := repository.NewFileRepository(cfg.FileStoragePath)
 	persistenceManager := persistence.NewPersistenceManager(repo, fileRepo, appLogger)
 

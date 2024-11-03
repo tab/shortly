@@ -1,12 +1,15 @@
 package app
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewApplicaton(t *testing.T) {
+func Test_NewApplication(t *testing.T) {
+	ctx := context.Background()
+
 	tests := []struct {
 		name     string
 		expected Application
@@ -19,7 +22,7 @@ func Test_NewApplicaton(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app, err := NewApplication()
+			app, err := NewApplication(ctx)
 			assert.NoError(t, err)
 
 			assert.NotNil(t, app)

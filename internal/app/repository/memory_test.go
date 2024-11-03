@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -217,4 +218,12 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 			assert.Equal(t, tt.expected.memento, memento)
 		})
 	}
+}
+
+func Test_InMemoryRepository_Ping(t *testing.T) {
+	store := NewInMemoryRepository()
+	ctx := context.Background()
+
+	err := store.Ping(ctx)
+	assert.NoError(t, err)
 }

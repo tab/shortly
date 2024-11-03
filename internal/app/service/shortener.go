@@ -14,16 +14,11 @@ import (
 
 type URLService struct {
 	cfg  *config.Config
-	repo URLRepository
+	repo repository.Repository
 	rand SecureRandomGenerator
 }
 
-type URLRepository interface {
-	Set(url repository.URL) error
-	Get(shortCode string) (*repository.URL, bool)
-}
-
-func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGenerator) *URLService {
+func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator) *URLService {
 	return &URLService{
 		cfg:  cfg,
 		repo: repo,

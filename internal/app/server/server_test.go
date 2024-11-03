@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -13,11 +14,16 @@ import (
 )
 
 func Test_NewServer(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		ClientURL:   config.ClientURL,
+		DatabaseDSN: config.DatabaseDSN,
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	appRouter := router.NewRouter(cfg, appLogger, repo)
 
 	tests := []struct {

@@ -10,7 +10,7 @@ const (
 	ClientURL       = "http://localhost:3000"
 	ServerAddress   = "localhost:8080"
 	FileStoragePath = "store.json"
-	DatabaseDSN     = "postgres://postgres:postgres@localhost:5432/shortly-development?sslmode=disable"
+	DatabaseDSN     = "" // postgres://postgres:postgres@localhost:5432/shortly-development?sslmode=disable
 )
 
 type Config struct {

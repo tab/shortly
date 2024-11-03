@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-
 	"shortly/internal/logger"
 )
 
@@ -38,10 +37,12 @@ func NewRepository(ctx context.Context, factory Builder) (Repository, error) {
 }
 
 func (f *Factory) CreateRepository(ctx context.Context) (Repository, error) {
-	db, err := NewDatabaseRepository(ctx, f.DSN)
-	if err == nil {
-		f.Logger.Info().Msg("Using PostgreSQL database")
-		return db, nil
+	if f.DSN != "" {
+		db, err := NewDatabaseRepository(ctx, f.DSN)
+		if err == nil {
+			f.Logger.Info().Msg("Using PostgreSQL database")
+			return db, nil
+		}
 	}
 
 	f.Logger.Info().Msg("Using in-memory repository")

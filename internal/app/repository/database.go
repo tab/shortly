@@ -3,11 +3,17 @@ package repository
 import (
 	"context"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type PgxPool interface {
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+	Close()
+}
+
 type DatabaseRepository struct {
-	db *pgxpool.Pool
+	db PgxPool
 }
 
 func NewDatabaseRepository(ctx context.Context, dsn string) (*DatabaseRepository, error) {
@@ -38,8 +44,4 @@ func (d DatabaseRepository) Restore(_ *Memento) {
 func (d DatabaseRepository) Ping(ctx context.Context) error {
 	var result int
 	return d.db.QueryRow(ctx, "SELECT 1").Scan(&result)
-}
-
-func (d DatabaseRepository) Close() {
-	d.db.Close()
 }

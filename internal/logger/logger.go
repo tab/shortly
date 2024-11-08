@@ -40,6 +40,10 @@ func (l *Logger) Info() *zerolog.Event {
 	return l.log.Info()
 }
 
+func (l *Logger) Warn() *zerolog.Event {
+	return l.log.Warn()
+}
+
 func (l *Logger) Error() *zerolog.Event {
 	return l.log.Error()
 }

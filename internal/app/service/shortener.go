@@ -1,29 +1,21 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
 
 	"shortly/internal/app/config"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
-	"shortly/internal/app/validator"
 )
 
 type URLService struct {
 	cfg  *config.Config
-	repo URLRepository
+	repo repository.Repository
 	rand SecureRandomGenerator
 }
 
-type URLRepository interface {
-	Set(url repository.URL) error
-	Get(shortCode string) (*repository.URL, bool)
-}
-
-func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGenerator) *URLService {
+func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator) *URLService {
 	return &URLService{
 		cfg:  cfg,
 		repo: repo,
@@ -31,7 +23,7 @@ func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGene
 	}
 }
 
-func (s *URLService) CreateShortLink(longURL string) (string, error) {
+func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (string, error) {
 	uuid, err := s.rand.UUID()
 	if err != nil {
 		return "", errors.ErrFailedToGenerateUUID
@@ -47,39 +39,14 @@ func (s *URLService) CreateShortLink(longURL string) (string, error) {
 		LongURL:   longURL,
 		ShortCode: shortCode,
 	}
-	s.repo.Set(url)
-
-	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
-}
-
-// NOTE: text/plain request is deprecated
-func (s *URLService) DeprecatedCreateShortLink(r *http.Request) (string, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil || len(body) == 0 {
-		return "", errors.ErrRequestBodyEmpty
-	}
-	defer r.Body.Close()
-
-	longURL := strings.Trim(strings.TrimSpace(string(body)), "\"")
-
-	if err = validator.Validate(longURL); err != nil {
-		return "", err
-	}
-
-	shortCode, err := s.rand.Hex()
+	err = s.repo.Set(ctx, url)
 	if err != nil {
-		return "", errors.ErrFailedToGenerateCode
+		return "", errors.ErrFailedToSaveURL
 	}
-
-	url := repository.URL{
-		LongURL:   longURL,
-		ShortCode: shortCode,
-	}
-	s.repo.Set(url)
 
 	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
 }
 
-func (s *URLService) GetShortLink(shortCode string) (*repository.URL, bool) {
-	return s.repo.Get(shortCode)
+func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
+	return s.repo.Get(ctx, shortCode)
 }

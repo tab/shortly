@@ -1,11 +1,13 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"shortly/internal/app/config"
@@ -14,11 +16,15 @@ import (
 )
 
 func Test_HealthCheck(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		DatabaseDSN: "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -33,11 +39,15 @@ func Test_HealthCheck(t *testing.T) {
 }
 
 func Test_CreateShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		DatabaseDSN: "",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -52,14 +62,21 @@ func Test_CreateShortLink(t *testing.T) {
 }
 
 func Test_GetShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		DatabaseDSN: "",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	router := NewRouter(cfg, appLogger, repo)
 
-	repo.Set(repository.URL{
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
+	repo.Set(ctx, repository.URL{
+		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})

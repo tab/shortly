@@ -16,6 +16,7 @@ type Config struct {
 	BaseURL         string
 	ClientURL       string
 	FileStoragePath string
+	DatabaseDSN     string
 }
 
 func LoadConfig() *Config {
@@ -51,6 +52,7 @@ func LoadConfig() *Config {
 		BaseURL:         getEnvOrFlag("BASE_URL", *flagBaseURL),
 		ClientURL:       getEnvOrFlag("CLIENT_URL", *flagClientURL),
 		FileStoragePath: getEnvOrFlag("FILE_STORAGE_PATH", *flagFileStoragePath),
+		DatabaseDSN:     getEnvOrFlag("DATABASE_DSN", *flagDatabaseDSN),
 	}
 }
 

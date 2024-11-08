@@ -1,28 +1,97 @@
 package persistence
 
 import (
+	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"shortly/internal/app/config"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/logger"
 )
 
+func Test_NewPersistenceManager(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	filePath := t.TempDir() + "/store-test.json"
+	appLogger := logger.NewLogger()
+
+	inMemoryRepo := repository.NewInMemoryRepository()
+	fileRepo := repository.NewFileRepository(filePath)
+	notInMemoryRepo := repository.NewMockRepository(ctrl)
+
+	tests := []struct {
+		name         string
+		cfg          *config.Config
+		repo         repository.Repository
+		expectedType interface{}
+	}{
+		{
+			name: "InMemory repo",
+			cfg: &config.Config{
+				FileStoragePath: filePath,
+			},
+			repo: inMemoryRepo,
+			expectedType: &manager{
+				repo:      inMemoryRepo,
+				file:      fileRepo,
+				appLogger: appLogger,
+			},
+		},
+		{
+			name: "Not InMemory repo",
+			cfg: &config.Config{
+				FileStoragePath: filePath,
+			},
+			repo:         notInMemoryRepo,
+			expectedType: &manager{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			pm := NewPersistenceManager(tt.cfg, appLogger, tt.repo)
+			assert.NotNil(t, pm)
+			assert.IsType(t, tt.expectedType, pm)
+		})
+	}
+}
+
+func Test_noOpManager_Load(t *testing.T) {
+	n := &noOpManager{}
+	err := n.Load()
+	assert.NoError(t, err)
+}
+
+func Test_noOpManager_Save(t *testing.T) {
+	n := &noOpManager{}
+	err := n.Save()
+	assert.NoError(t, err)
+}
+
 func Test_PersistenceManager_Load(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockRepo := repository.NewMockRepository(ctrl)
+	filePath := t.TempDir() + "/store-test.json"
+	cfg := &config.Config{
+		FileStoragePath: filePath,
+	}
+	mockRepo := repository.NewMockInMemory(ctrl)
 	mockFileRepo := repository.NewMockFileRepository(ctrl)
 	appLogger := logger.NewLogger()
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	snapshot := &repository.Memento{
 		State: []repository.URL{
 			{
-				UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+				UUID:      UUID,
 				LongURL:   "http://example.com",
 				ShortCode: "abcd1234",
 			},
@@ -53,10 +122,18 @@ func Test_PersistenceManager_Load(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			pm := NewPersistenceManager(mockRepo, mockFileRepo, appLogger)
+			pm := &manager{
+				repo:      mockRepo,
+				file:      mockFileRepo,
+				appLogger: appLogger,
+			}
 			err := pm.Load()
 
 			assert.NoError(t, err)
+
+			t.Cleanup(func() {
+				os.RemoveAll(cfg.FileStoragePath)
+			})
 		})
 	}
 }
@@ -65,14 +142,20 @@ func Test_PersistenceManager_Save(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	filePath := t.TempDir() + "/store-test.json"
+	cfg := &config.Config{
+		FileStoragePath: filePath,
+	}
 	mockRepo := repository.NewMockRepository(ctrl)
 	mockFileRepo := repository.NewMockFileRepository(ctrl)
 	appLogger := logger.NewLogger()
 
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
 	snapshot := &repository.Memento{
 		State: []repository.URL{
 			{
-				UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+				UUID:      UUID,
 				LongURL:   "http://example.com",
 				ShortCode: "abcd1234",
 			},
@@ -104,10 +187,18 @@ func Test_PersistenceManager_Save(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			pm := NewPersistenceManager(mockRepo, mockFileRepo, appLogger)
+			pm := &manager{
+				repo:      mockRepo,
+				file:      mockFileRepo,
+				appLogger: appLogger,
+			}
 			err := pm.Save()
 
 			assert.NoError(t, err)
+
+			t.Cleanup(func() {
+				os.RemoveAll(cfg.FileStoragePath)
+			})
 		})
 	}
 }

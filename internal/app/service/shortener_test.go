@@ -1,12 +1,14 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -26,9 +28,12 @@ func Test_CreateShortLink(t *testing.T) {
 		ClientURL: "http://localhost:8080",
 	}
 
+	ctx := context.Background()
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
 		shortCode string
@@ -46,15 +51,15 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Success",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
-				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
+				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 
 				url := repository.URL{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+					UUID:      UUID,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}
-				repo.EXPECT().Set(url)
+				repo.EXPECT().Set(ctx, url)
 			},
 			expected: result{
 				shortCode: "abcd1234",
@@ -66,7 +71,7 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Error generating UUID",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
-				rand.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
+				rand.EXPECT().UUID().Return(uuid.UUID{}, errors.ErrFailedToGenerateUUID)
 			},
 			expected: result{
 				shortCode: "",
@@ -78,7 +83,7 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Error generating short code",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
-				rand.EXPECT().UUID().Return("6455bd07-e431-4851-af3c-4f703f726639", nil)
+				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{
@@ -98,104 +103,12 @@ func Test_CreateShortLink(t *testing.T) {
 			err := json.NewDecoder(r.Body).Decode(&req)
 			assert.NoError(t, err)
 
-			shortURL, err := service.CreateShortLink(req.URL)
+			shortURL, err := service.CreateShortLink(ctx, req.URL)
 
 			assert.Equal(t, tt.expected.shortURL, shortURL)
 			assert.Equal(t, tt.expected.error, err)
 		})
 	}
-}
-
-func Test_DeprecatedCreateShortLink(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	cfg := &config.Config{
-		Addr:      "localhost:8080",
-		BaseURL:   "http://localhost:8080",
-		ClientURL: "http://localhost:8080",
-	}
-
-	repo := repository.NewMockRepository(ctrl)
-	rand := NewMockSecureRandomGenerator(ctrl)
-	service := NewURLService(cfg, repo, rand)
-
-	type result struct {
-		shortCode string
-		shortURL  string
-		error     error
-	}
-
-	tests := []struct {
-		name     string
-		body     io.Reader
-		before   func()
-		expected result
-	}{
-		{
-			name: "Success",
-			body: strings.NewReader("https://example.com"),
-			before: func() {
-				rand.EXPECT().Hex().Return("abcd1234", nil)
-
-				url := repository.URL{
-					LongURL:   "https://example.com",
-					ShortCode: "abcd1234",
-				}
-				repo.EXPECT().Set(url)
-			},
-			expected: result{
-				shortCode: "abcd1234",
-				shortURL:  "http://localhost:8080/abcd1234",
-				error:     nil,
-			},
-		},
-		{
-			name:   "Empty Body",
-			body:   strings.NewReader(""),
-			before: func() {},
-			expected: result{
-				shortCode: "",
-				shortURL:  "",
-				error:     errors.ErrRequestBodyEmpty,
-			},
-		},
-		{
-			name:   "Invalid URL",
-			body:   strings.NewReader("not-a-url"),
-			before: func() {},
-			expected: result{
-				shortCode: "",
-				shortURL:  "",
-				error:     errors.ErrInvalidURL,
-			},
-		},
-		{
-			name: "Error generating short code",
-			body: strings.NewReader("https://example.com"),
-			before: func() {
-				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
-			},
-			expected: result{
-				shortCode: "",
-				shortURL:  "",
-				error:     errors.ErrFailedToGenerateCode,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.before()
-
-			req, _ := http.NewRequest(http.MethodPost, "/", tt.body)
-			shortURL, err := service.DeprecatedCreateShortLink(req)
-
-			assert.Equal(t, tt.expected.shortURL, shortURL)
-			assert.Equal(t, tt.expected.error, err)
-		})
-	}
-
 }
 
 func Test_GetShortLink(t *testing.T) {
@@ -208,6 +121,7 @@ func Test_GetShortLink(t *testing.T) {
 		ClientURL: "http://localhost:8080",
 	}
 
+	ctx := context.Background()
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
@@ -245,9 +159,9 @@ func Test_GetShortLink(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo.EXPECT().Get(tt.shortCode).Return(tt.expected.url, tt.expected.found)
+			repo.EXPECT().Get(ctx, tt.shortCode).Return(tt.expected.url, tt.expected.found)
 
-			url, found := service.GetShortLink(tt.shortCode)
+			url, found := service.GetShortLink(ctx, tt.shortCode)
 
 			assert.Equal(t, tt.expected.url, url)
 			assert.Equal(t, tt.expected.found, found)

@@ -12,6 +12,9 @@ var (
 	ErrFailedToOpenFile        = errors.New("failed to open file")
 	ErrorFailedToReadFromFile  = errors.New("failed to read from file")
 	ErrFailedToWriteToFile     = errors.New("failed to write to file")
+	ErrFailedToSaveURL         = errors.New("failed to save URL")
+	ErrFileStoragePathNotSet   = errors.New("file storage path not set")
+	ErrMementoNotImplemented   = errors.New("memento not implemented")
 )
 
 var (

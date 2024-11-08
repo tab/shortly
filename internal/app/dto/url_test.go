@@ -52,3 +52,46 @@ func Test_Validate(t *testing.T) {
 		})
 	}
 }
+
+func Test_DeprecatedValidate(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     io.Reader
+		expected error
+	}{
+		{
+			name:     "Success",
+			body:     strings.NewReader("https://www.google.com"),
+			expected: nil,
+		},
+		{
+			name:     "Success (URL with extra spaces)",
+			body:     strings.NewReader(" https://www.google.com "),
+			expected: nil,
+		},
+		{
+			name:     "Empty",
+			body:     strings.NewReader(""),
+			expected: errors.ErrRequestBodyEmpty,
+		},
+		{
+			name:     "URL without scheme",
+			body:     strings.NewReader("www.google.com"),
+			expected: errors.ErrInvalidURL,
+		},
+		{
+			name:     "Invalid URL",
+			body:     strings.NewReader("not-a-url"),
+			expected: errors.ErrInvalidURL,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params CreateShortLinkParams
+			err := params.DeprecatedValidate(tt.body)
+
+			assert.Equal(t, tt.expected, err)
+		})
+	}
+}

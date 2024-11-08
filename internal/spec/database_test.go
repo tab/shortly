@@ -1,4 +1,4 @@
-package app
+package spec
 
 import (
 	"context"
@@ -7,28 +7,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_NewApplication(t *testing.T) {
+func Test_TruncateTables(t *testing.T) {
 	ctx := context.Background()
 
 	tests := []struct {
 		name     string
-		expected Application
+		dsn      string
+		expected error
 	}{
 		{
 			name:     "Success",
-			expected: Application{},
+			dsn:      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+			expected: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app, err := NewApplication(ctx)
+			err := TruncateTables(ctx, tt.dsn)
 			assert.NoError(t, err)
-
-			assert.NotNil(t, app)
-			assert.NotNil(t, app.cfg)
-			assert.NotNil(t, app.logger)
-			assert.NotNil(t, app.server)
 		})
 	}
 }

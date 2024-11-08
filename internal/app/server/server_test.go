@@ -1,6 +1,8 @@
 package server
 
 import (
+	"context"
+	"net/http"
 	"testing"
 	"time"
 
@@ -13,11 +15,15 @@ import (
 )
 
 func Test_NewServer(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		DatabaseDSN: "",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
 	appRouter := router.NewRouter(cfg, appLogger, repo)
 
 	tests := []struct {
@@ -42,4 +48,31 @@ func Test_NewServer(t *testing.T) {
 			assert.Equal(t, 120*time.Second, srv.httpServer.IdleTimeout)
 		})
 	}
+}
+
+func Test_Server_RunAndShutdown(t *testing.T) {
+	cfg := &config.Config{
+		Addr: "localhost:5000",
+	}
+	handler := http.NewServeMux()
+	srv := NewServer(cfg, handler)
+
+	runErrCh := make(chan error, 1)
+	go func() {
+		err := srv.Run()
+		if err != nil && err != http.ErrServerClosed {
+			runErrCh <- err
+		}
+		close(runErrCh)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	err := srv.Shutdown(ctx)
+	assert.NoError(t, err)
+
+	err = <-runErrCh
+	assert.NoError(t, err)
 }

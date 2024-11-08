@@ -30,6 +30,21 @@ func (params *CreateShortLinkParams) Validate(body io.Reader) error {
 		return err
 	}
 
+	return params.validateURL()
+}
+
+func (params *CreateShortLinkParams) DeprecatedValidate(body io.Reader) error {
+	raw, err := io.ReadAll(body)
+	if err != nil {
+		return err
+	}
+
+	params.URL = strings.Trim(strings.TrimSpace(string(raw)), "\"")
+
+	return params.validateURL()
+}
+
+func (params *CreateShortLinkParams) validateURL() error {
 	params.URL = strings.TrimSpace(params.URL)
 
 	if params.URL == "" {

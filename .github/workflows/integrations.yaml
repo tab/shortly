@@ -3,11 +3,6 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     branches:
-      - iter6
-      - iter7
-      - iter8
-      - iter9
-      - iter10
       - iter11
       - iter12
       - iter13
@@ -25,11 +20,6 @@ on:
   push:
     branches:
       - main
-      - iter6
-      - iter7
-      - iter8
-      - iter9
-      - iter10
       - iter11
       - iter12
       - iter13
@@ -47,22 +37,40 @@ on:
 jobs:
   shortenertest:
     runs-on: ubuntu-latest
-    container: golang:1.22
+    env:
+      GO_ENV: ci
     services:
       postgres:
         image: postgres
         env:
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: praktikum
+          POSTGRES_DB: shortly-test
         options: >-
           --health-cmd pg_isready
-          --health-interval 5s
+          --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.7'
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Load schema.sql
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d shortly-test -f db/schema.sql
 
       - name: Download autotests binaries
         uses: robinraju/release-downloader@v1.11
@@ -140,50 +148,17 @@ jobs:
               -file-storage-path=$TEMP_FILE
 
       - name: "Code increment #10"
-        if: |
-          github.ref == 'refs/heads/main' ||
-          github.head_ref == 'iter10' ||
-          github.head_ref == 'iter11' ||
-          github.head_ref == 'iter12' ||
-          github.head_ref == 'iter13' ||
-          github.head_ref == 'iter14' ||
-          github.head_ref == 'iter15' ||
-          github.head_ref == 'iter16' ||
-          github.head_ref == 'iter17' ||
-          github.head_ref == 'iter18' ||
-          github.head_ref == 'iter19' ||
-          github.head_ref == 'iter20' ||
-          github.head_ref == 'iter21' ||
-          github.head_ref == 'iter22' ||
-          github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration10$ \
               -binary-path=cmd/shortener/shortener \
               -source-path=. \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #11"
-        if: |
-          github.ref == 'refs/heads/main' ||
-          github.head_ref == 'iter11' ||
-          github.head_ref == 'iter12' ||
-          github.head_ref == 'iter13' ||
-          github.head_ref == 'iter14' ||
-          github.head_ref == 'iter15' ||
-          github.head_ref == 'iter16' ||
-          github.head_ref == 'iter17' ||
-          github.head_ref == 'iter18' ||
-          github.head_ref == 'iter19' ||
-          github.head_ref == 'iter20' ||
-          github.head_ref == 'iter21' ||
-          github.head_ref == 'iter22' ||
-          github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration11$ \
               -binary-path=cmd/shortener/shortener \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #12"
         if: |
@@ -204,7 +179,7 @@ jobs:
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration12$ \
               -binary-path=cmd/shortener/shortener \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #13"
         if: |
@@ -224,7 +199,7 @@ jobs:
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration13$ \
               -binary-path=cmd/shortener/shortener \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #14"
         if: |
@@ -243,7 +218,7 @@ jobs:
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration14$ \
               -binary-path=cmd/shortener/shortener \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #15"
         if: |
@@ -261,7 +236,7 @@ jobs:
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration15$ \
               -binary-path=cmd/shortener/shortener \
-              -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
+              -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #16"
         if: |

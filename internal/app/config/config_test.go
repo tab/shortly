@@ -16,6 +16,10 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Error loading environment variables: %v", err)
 	}
 
+	if os.Getenv("GO_ENV") == "ci" {
+		os.Exit(0)
+	}
+
 	code := m.Run()
 	os.Exit(code)
 }

@@ -10,6 +10,11 @@ import (
 	"shortly/internal/logger"
 )
 
+const (
+	BaseURL       = "http://localhost:8080"
+	ServerAddress = "localhost:8080"
+)
+
 type Config struct {
 	AppEnv          string
 	Addr            string
@@ -39,8 +44,8 @@ func LoadConfig() *Config {
 		}
 	}
 
-	flagAddr := flag.String("a", "", "address and port to run server")
-	flagBaseURL := flag.String("b", "", "base address of the resulting shortened URL")
+	flagAddr := flag.String("a", ServerAddress, "address and port to run server")
+	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
 	flagClientURL := flag.String("c", "", "frontend client URL")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")

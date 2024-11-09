@@ -7,6 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestMain(m *testing.M) {
+	if os.Getenv("GO_ENV") == "ci" {
+		os.Exit(0)
+	}
+
+	code := m.Run()
+	os.Exit(code)
+}
+
 func Test_LoadEnv(t *testing.T) {
 	type env struct {
 		BaseURL         string

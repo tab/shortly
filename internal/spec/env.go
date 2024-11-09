@@ -27,7 +27,7 @@ func LoadEnv() error {
 	}
 	for _, file := range envFiles {
 		if err = godotenv.Overload(file); err != nil {
-			log.Printf("No %s file found, skipping", file)
+			log.Printf("%s file not found, skipping", file)
 		}
 	}
 

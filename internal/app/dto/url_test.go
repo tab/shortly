@@ -45,7 +45,45 @@ func Test_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var params CreateShortLinkParams
+			var params CreateShortLinkRequest
+			err := params.Validate(tt.body)
+
+			assert.Equal(t, tt.expected, err)
+		})
+	}
+}
+
+func Test_BatchValidate(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     io.Reader
+		expected error
+	}{
+		{
+			name:     "Success",
+			body:     strings.NewReader(`[{"correlation_id": "1234", "original_url": "https://www.google.com"}]`),
+			expected: nil,
+		},
+		{
+			name:     "Empty URL",
+			body:     strings.NewReader(`[{"correlation_id": "1234", "original_url": ""}]`),
+			expected: errors.ErrInvalidURL,
+		},
+		{
+			name:     "URL without scheme",
+			body:     strings.NewReader(`[{"correlation_id": "1234", "original_url": "www.google.com"}]`),
+			expected: errors.ErrInvalidURL,
+		},
+		{
+			name:     "Invalid URL",
+			body:     strings.NewReader(`[{"correlation_id": "1234", "original_url": "not-a-url"}]`),
+			expected: errors.ErrInvalidURL,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var params BatchCreateShortLinkRequest
 			err := params.Validate(tt.body)
 
 			assert.Equal(t, tt.expected, err)
@@ -88,7 +126,7 @@ func Test_DeprecatedValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var params CreateShortLinkParams
+			var params CreateShortLinkRequest
 			err := params.DeprecatedValidate(tt.body)
 
 			assert.Equal(t, tt.expected, err)

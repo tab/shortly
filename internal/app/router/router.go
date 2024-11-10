@@ -37,6 +37,7 @@ func NewRouter(cfg *config.Config, appLogger *logger.Logger, repo repository.Rep
 	router.Get("/ping", healthHandler.HandlePing)
 	router.Post("/api/shorten", shortenerHandler.HandleCreateShortLink)
 	router.Get("/api/shorten/{id}", shortenerHandler.HandleGetShortLink)
+	router.Post("/api/shorten/batch", shortenerHandler.HandleBatchCreateShortLink)
 	router.Post("/", shortenerHandler.DeprecatedHandleCreateShortLink)
 	router.Get("/{id}", shortenerHandler.DeprecatedHandleGetShortLink)
 

@@ -104,9 +104,23 @@ func (m *MockRepository) CreateURL(ctx context.Context, url URL) error {
 }
 
 // CreateURL indicates an expected call of CreateURL.
-func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url URL) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockRepository)(nil).CreateURL), url)
+}
+
+// CreateURLs mocks base method.
+func (m *MockRepository) CreateURLs(ctx context.Context, urls []URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLs", urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateURLs indicates an expected call of CreateURLs.
+func (mr *MockRepositoryMockRecorder) CreateURLs(ctx context.Context, urls []URL) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockRepository)(nil).CreateURLs), urls)
 }
 
 // MockBuilder is a mock of Builder interface.

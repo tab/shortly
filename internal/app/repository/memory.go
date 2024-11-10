@@ -24,6 +24,13 @@ func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) error {
 	return nil
 }
 
+func (m *InMemoryRepo) CreateURLs(_ context.Context, urls []URL) error {
+	for _, url := range urls {
+		m.data.Store(url.ShortCode, url)
+	}
+	return nil
+}
+
 func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*URL, bool) {
 	value, ok := m.data.Load(shortCode)
 	if !ok {

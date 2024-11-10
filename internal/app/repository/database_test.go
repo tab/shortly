@@ -71,6 +71,61 @@ func Test_DatabaseRepository_CreateURL(t *testing.T) {
 	}
 }
 
+func Test_DatabaseRepository_CreateURLs(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+
+	tests := []struct {
+		name     string
+		urls     []URL
+		expected bool
+	}{
+		{
+			name: "Success",
+			urls: []URL{
+				{
+					UUID:      UUID1,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd0001",
+				},
+				{
+					UUID:      UUID2,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd0002",
+				},
+			},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err = store.CreateURLs(ctx, tt.urls)
+			assert.NoError(t, err)
+
+			for _, url := range tt.urls {
+				storedURL, found := store.GetURLByShortCode(ctx, url.ShortCode)
+				if tt.expected {
+					assert.True(t, found)
+					assert.Equal(t, url.LongURL, storedURL.LongURL)
+				} else {
+					assert.False(t, found)
+				}
+			}
+
+			t.Cleanup(func() {
+				err = spec.TruncateTables(ctx, dsn)
+				require.NoError(t, err)
+			})
+		})
+	}
+}
+
 func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 	ctx := context.Background()
 	dsn := os.Getenv("DATABASE_DSN")

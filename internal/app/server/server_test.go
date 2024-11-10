@@ -17,7 +17,7 @@ import (
 func Test_NewServer(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{
-		DatabaseDSN: "",
+		Addr: "localhost:8080",
 	}
 	appLogger := logger.NewLogger()
 	repo, _ := repository.NewRepository(ctx, &repository.Factory{
@@ -26,28 +26,17 @@ func Test_NewServer(t *testing.T) {
 	})
 	appRouter := router.NewRouter(cfg, appLogger, repo)
 
-	tests := []struct {
-		name     string
-		expected Server
-	}{
-		{
-			name:     "Success",
-			expected: Server{},
-		},
-	}
+	srv := NewServer(cfg, appRouter)
+	assert.NotNil(t, srv)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			srv := NewServer(cfg, appRouter)
+	s, ok := srv.(*server)
+	assert.True(t, ok)
 
-			assert.NotNil(t, srv)
-			assert.Equal(t, cfg.Addr, srv.httpServer.Addr)
-			assert.Equal(t, appRouter, srv.httpServer.Handler)
-			assert.Equal(t, 5*time.Second, srv.httpServer.ReadTimeout)
-			assert.Equal(t, 10*time.Second, srv.httpServer.WriteTimeout)
-			assert.Equal(t, 120*time.Second, srv.httpServer.IdleTimeout)
-		})
-	}
+	assert.Equal(t, cfg.Addr, s.httpServer.Addr)
+	assert.Equal(t, appRouter, s.httpServer.Handler)
+	assert.Equal(t, 5*time.Second, s.httpServer.ReadTimeout)
+	assert.Equal(t, 10*time.Second, s.httpServer.WriteTimeout)
+	assert.Equal(t, 120*time.Second, s.httpServer.IdleTimeout)
 }
 
 func Test_Server_RunAndShutdown(t *testing.T) {

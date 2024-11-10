@@ -17,7 +17,7 @@ type Application struct {
 	cfg                *config.Config
 	logger             *logger.Logger
 	persistenceManager persistence.Manager
-	server             *server.Server
+	server             server.Server
 }
 
 func NewApplication(ctx context.Context) (*Application, error) {
@@ -49,7 +49,7 @@ func (a *Application) Run(ctx context.Context) error {
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		if err = a.server.Run(); err != nil && err != http.ErrServerClosed {
+		if err := a.server.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()

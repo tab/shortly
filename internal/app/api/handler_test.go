@@ -172,6 +172,152 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	}
 }
 
+func Test_HandleBatchCreateShortLink(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockRepository(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	srv := service.NewURLService(cfg, repo, rand)
+	handler := NewURLHandler(cfg, srv)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+
+	type result struct {
+		response dto.BatchCreateShortLinkResponses
+		error    dto.ErrorResponse
+		code     int
+		status   string
+	}
+
+	tests := []struct {
+		name     string
+		method   string
+		body     io.Reader
+		before   func()
+		expected result
+	}{
+		{
+			name:   "Success",
+			method: http.MethodPost,
+			body: strings.NewReader(`[
+				{"correlation_id": "0001", "original_url": "https://github.com"},
+				{"correlation_id": "0002", "original_url": "https://google.com"}
+			]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID1, nil)
+				rand.EXPECT().UUID().Return(UUID2, nil)
+				rand.EXPECT().Hex().Return("abcd0001", nil)
+				rand.EXPECT().Hex().Return("abcd0002", nil)
+
+				urls := []repository.URL{
+					{
+						UUID:      UUID1,
+						LongURL:   "https://github.com",
+						ShortCode: "abcd0001",
+					},
+					{
+						UUID:      UUID2,
+						LongURL:   "https://google.com",
+						ShortCode: "abcd0002",
+					},
+				}
+				repo.EXPECT().CreateURLs(ctx, urls)
+			},
+			expected: result{
+				response: dto.BatchCreateShortLinkResponses{
+					{CorrelationID: "0001", ShortURL: "http://localhost:8080/abcd0001"},
+					{CorrelationID: "0002", ShortURL: "http://localhost:8080/abcd0002"},
+				},
+				status: "201 Created",
+				code:   http.StatusCreated,
+			},
+		},
+		{
+			name:   "Invalid JSON",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{}]`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "invalid URL"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Invalid URL",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id": "0001", "original_url": "not-a-url"}]`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "invalid URL"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "Error generating UUID",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id": "0001", "original_url": "https://github.com"}]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(uuid.UUID{}, errors.ErrFailedToGenerateUUID)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "failed to generate UUID"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+		{
+			name:   "Error generating short code",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id": "0001", "original_url": "https://github.com"}]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID1, nil)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "failed to generate short code"},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			req := httptest.NewRequest(http.MethodPost, "/api/shorten/batch", tt.body)
+			w := httptest.NewRecorder()
+
+			handler.HandleBatchCreateShortLink(w, req)
+
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			if tt.expected.error.Error != "" {
+				var actual dto.ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+			} else {
+				var actual dto.BatchCreateShortLinkResponses
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response, actual)
+			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+		})
+	}
+}
+
 func Test_HandleGetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

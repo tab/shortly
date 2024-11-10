@@ -9,13 +9,27 @@ import (
 	"shortly/internal/app/validator"
 )
 
-type CreateShortLinkParams struct {
+type CreateShortLinkRequest struct {
 	URL string `json:"url"`
 }
 
 type CreateShortLinkResponse struct {
 	Result string `json:"result"`
 }
+
+type BatchCreateShortLinkParams struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type BatchCreateShortLinkRequest []BatchCreateShortLinkParams
+
+type BatchCreateShortLinkResponse struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
+type BatchCreateShortLinkResponses []BatchCreateShortLinkResponse
 
 type GetShortLinkResponse struct {
 	Result string `json:"result"`
@@ -25,7 +39,7 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
-func (params *CreateShortLinkParams) Validate(body io.Reader) error {
+func (params *CreateShortLinkRequest) Validate(body io.Reader) error {
 	if err := json.NewDecoder(body).Decode(params); err != nil {
 		return err
 	}
@@ -33,7 +47,26 @@ func (params *CreateShortLinkParams) Validate(body io.Reader) error {
 	return params.validateURL()
 }
 
-func (params *CreateShortLinkParams) DeprecatedValidate(body io.Reader) error {
+func (params *BatchCreateShortLinkRequest) Validate(body io.Reader) error {
+	decoder := json.NewDecoder(body)
+	if err := decoder.Decode(params); err != nil {
+		return err
+	}
+
+	if len(*params) == 0 {
+		return errors.ErrRequestBodyEmpty
+	}
+
+	for _, p := range *params {
+		if err := validator.Validate(p.OriginalURL); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (params *CreateShortLinkRequest) DeprecatedValidate(body io.Reader) error {
 	raw, err := io.ReadAll(body)
 	if err != nil {
 		return err
@@ -44,7 +77,7 @@ func (params *CreateShortLinkParams) DeprecatedValidate(body io.Reader) error {
 	return params.validateURL()
 }
 
-func (params *CreateShortLinkParams) validateURL() error {
+func (params *CreateShortLinkRequest) validateURL() error {
 	params.URL = strings.TrimSpace(params.URL)
 
 	if params.URL == "" {

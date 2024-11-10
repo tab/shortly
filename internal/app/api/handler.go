@@ -24,7 +24,7 @@ func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler 
 func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var params dto.CreateShortLinkParams
+	var params dto.CreateShortLinkRequest
 
 	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -41,6 +41,28 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
+}
+
+func (h *URLHandler) HandleBatchCreateShortLink(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var params dto.BatchCreateShortLinkRequest
+
+	if err := params.Validate(r.Body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	results, err := h.service.CreateShortLinks(r.Context(), params)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(results)
 }
 
 func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +83,7 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
-	var params dto.CreateShortLinkParams
+	var params dto.CreateShortLinkRequest
 
 	if err := params.DeprecatedValidate(r.Body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

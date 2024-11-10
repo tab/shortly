@@ -90,7 +90,21 @@ func (m *MockInMemory) CreateURL(ctx context.Context, url URL) error {
 }
 
 // CreateURL indicates an expected call of CreateURL.
-func (mr *MockInMemoryMockRecorder) CreateURL(ctx, url any) *gomock.Call {
+func (mr *MockInMemoryMockRecorder) CreateURL(ctx, url URL) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockInMemory)(nil).CreateURL), ctx, url)
+}
+
+// CreateURLs mocks base method.
+func (m *MockInMemory) CreateURLs(ctx context.Context, urls []URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLs", ctx, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateURLs indicates an expected call of CreateURLs.
+func (mr *MockInMemoryMockRecorder) CreateURLs(ctx context.Context, urls []URL) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockInMemory)(nil).CreateURLs), ctx, urls)
 }

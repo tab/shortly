@@ -59,6 +59,46 @@ func Test_InMemoryRepository_CreateURL(t *testing.T) {
 	}
 }
 
+func Test_InMemoryRepository_CreateURLs(t *testing.T) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	tests := []struct {
+		name     string
+		urls     []URL
+		expected int
+	}{
+		{
+			name: "Add new URLs",
+			urls: []URL{
+				{
+					LongURL:   "https://example.com",
+					ShortCode: "abcd0001",
+				},
+				{
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+				},
+				{
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0003",
+				},
+			},
+			expected: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := store.CreateURLs(ctx, tt.urls)
+			assert.NoError(t, err)
+
+			snapshot := store.CreateMemento()
+			assert.Equal(t, tt.expected, len(snapshot.State))
+		})
+	}
+}
+
 func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()

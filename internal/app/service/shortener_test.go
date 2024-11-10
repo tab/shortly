@@ -99,7 +99,7 @@ func Test_CreateShortLink(t *testing.T) {
 			tt.before()
 
 			r, _ := http.NewRequest(http.MethodPost, "/", tt.body)
-			var req dto.CreateShortLinkParams
+			var req dto.CreateShortLinkRequest
 			err := json.NewDecoder(r.Body).Decode(&req)
 			assert.NoError(t, err)
 
@@ -107,6 +107,125 @@ func Test_CreateShortLink(t *testing.T) {
 
 			assert.Equal(t, tt.expected.shortURL, shortURL)
 			assert.Equal(t, tt.expected.error, err)
+		})
+	}
+}
+
+func TestURLService_CreateShortLinks(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		Addr:      "localhost:8080",
+		BaseURL:   "http://localhost:8080",
+		ClientURL: "http://localhost:8080",
+	}
+
+	ctx := context.Background()
+	repo := repository.NewMockRepository(ctrl)
+	rand := NewMockSecureRandomGenerator(ctrl)
+	service := NewURLService(cfg, repo, rand)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+
+	type result struct {
+		shortCode string
+		shortURL  string
+		error     error
+	}
+
+	tests := []struct {
+		name     string
+		body     io.Reader
+		before   func()
+		expected []result
+	}{
+		{
+			name: "Success",
+			body: strings.NewReader(`[
+				{"correlation_id": "0001", "original_url": "https://github.com"},
+				{"correlation_id": "0002", "original_url": "https://google.com"}
+			]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID1, nil)
+				rand.EXPECT().UUID().Return(UUID2, nil)
+				rand.EXPECT().Hex().Return("abcd0001", nil)
+				rand.EXPECT().Hex().Return("abcd0002", nil)
+
+				urls := []repository.URL{
+					{
+						UUID:      UUID1,
+						LongURL:   "https://github.com",
+						ShortCode: "abcd0001",
+					},
+					{
+						UUID:      UUID2,
+						LongURL:   "https://google.com",
+						ShortCode: "abcd0002",
+					},
+				}
+				repo.EXPECT().CreateURLs(ctx, urls)
+			},
+			expected: []result{
+				{
+					shortCode: "abcd0001",
+					shortURL:  "http://localhost:8080/abcd0001",
+					error:     nil,
+				},
+				{
+					shortCode: "abcd0002",
+					shortURL:  "http://localhost:8080/abcd0002",
+					error:     nil,
+				},
+			},
+		},
+		{
+			name: "Error generating UUID",
+			body: strings.NewReader(`[{"correlation_id": "0001", "original_url": "https://github.com"}]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(uuid.UUID{}, errors.ErrFailedToGenerateUUID)
+			},
+			expected: []result{
+				{
+					shortCode: "",
+					shortURL:  "",
+					error:     errors.ErrFailedToGenerateUUID,
+				},
+			},
+		},
+		{
+			name: "Error generating short code",
+			body: strings.NewReader(`[{"correlation_id": "0001", "original_url": "https://github.com"}]`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID1, nil)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
+			},
+			expected: []result{
+				{
+					shortCode: "",
+					shortURL:  "",
+					error:     errors.ErrFailedToGenerateCode,
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			r, _ := http.NewRequest(http.MethodPost, "/", tt.body)
+			var req dto.BatchCreateShortLinkRequest
+			err := json.NewDecoder(r.Body).Decode(&req)
+			assert.NoError(t, err)
+
+			shortURLs, err := service.CreateShortLinks(ctx, req)
+
+			for i, shortURL := range shortURLs {
+				assert.Equal(t, tt.expected[i].shortURL, shortURL.ShortURL)
+				assert.Equal(t, tt.expected[i].error, err)
+			}
 		})
 	}
 }

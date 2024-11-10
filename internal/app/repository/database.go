@@ -43,6 +43,29 @@ func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) error {
 	return err
 }
 
+func (d *DatabaseRepo) CreateURLs(ctx context.Context, urls []URL) error {
+	tx, err := d.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	q := d.queries.WithTx(tx)
+
+	for _, url := range urls {
+		_, err := q.CreateURL(ctx, db.CreateURLParams{
+			UUID:      url.UUID,
+			LongURL:   url.LongURL,
+			ShortCode: url.ShortCode,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	url, err := d.queries.GetURLByShortCode(ctx, shortCode)
 	if err != nil {

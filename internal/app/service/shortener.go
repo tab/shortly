@@ -39,7 +39,7 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 		LongURL:   longURL,
 		ShortCode: shortCode,
 	}
-	err = s.repo.Set(ctx, url)
+	err = s.repo.CreateURL(ctx, url)
 	if err != nil {
 		return "", errors.ErrFailedToSaveURL
 	}
@@ -48,5 +48,5 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 }
 
 func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
-	return s.repo.Get(ctx, shortCode)
+	return s.repo.GetURLByShortCode(ctx, shortCode)
 }

@@ -75,7 +75,7 @@ func Test_GetShortLink(t *testing.T) {
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
-	repo.Set(ctx, repository.URL{
+	repo.CreateURL(ctx, repository.URL{
 		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",

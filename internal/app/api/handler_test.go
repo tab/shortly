@@ -58,7 +58,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 
-				repo.EXPECT().Set(ctx, repository.URL{
+				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
@@ -202,7 +202,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 			name: "Success",
 			path: "/api/shorten/abcd1234",
 			before: func() {
-				repo.EXPECT().Get(ctx, "abcd1234").Return(&repository.URL{
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(&repository.URL{
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}, true)
@@ -217,7 +217,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 			name: "Not Found",
 			path: "/api/shorten/not-a-short-code",
 			before: func() {
-				repo.EXPECT().Get(ctx, "not-a-short-code").Return(nil, false)
+				repo.EXPECT().GetURLByShortCode(ctx, "not-a-short-code").Return(nil, false)
 			},
 			expected: result{
 				error:  dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()},
@@ -293,7 +293,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 
-				repo.EXPECT().Set(ctx, repository.URL{
+				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
@@ -398,7 +398,7 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 			name: "Success",
 			path: "/abcd1234",
 			before: func() {
-				repo.EXPECT().Get(ctx, "abcd1234").Return(&repository.URL{
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(&repository.URL{
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}, true)
@@ -412,7 +412,7 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 			name: "Not Found",
 			path: "/not-a-short-code",
 			before: func() {
-				repo.EXPECT().Get(ctx, "not-a-short-code").Return(nil, false)
+				repo.EXPECT().GetURLByShortCode(ctx, "not-a-short-code").Return(nil, false)
 			},
 			expected: result{
 				status:   http.StatusNotFound,

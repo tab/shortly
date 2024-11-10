@@ -26,7 +26,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func Test_DatabaseRepository_Set(t *testing.T) {
+func Test_DatabaseRepository_CreateURL(t *testing.T) {
 	ctx := context.Background()
 	dsn := os.Getenv("DATABASE_DSN")
 	store, err := NewDatabaseRepository(ctx, dsn)
@@ -52,10 +52,10 @@ func Test_DatabaseRepository_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err = store.Set(ctx, tt.url)
+			err = store.CreateURL(ctx, tt.url)
 			assert.NoError(t, err)
 
-			storedURL, found := store.Get(ctx, tt.url.ShortCode)
+			storedURL, found := store.GetURLByShortCode(ctx, tt.url.ShortCode)
 			if tt.expected {
 				assert.True(t, found)
 				assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
@@ -71,7 +71,7 @@ func Test_DatabaseRepository_Set(t *testing.T) {
 	}
 }
 
-func Test_DatabaseRepository_Get(t *testing.T) {
+func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 	ctx := context.Background()
 	dsn := os.Getenv("DATABASE_DSN")
 	store, err := NewDatabaseRepository(ctx, dsn)
@@ -79,7 +79,7 @@ func Test_DatabaseRepository_Get(t *testing.T) {
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
-	err = store.Set(ctx, URL{
+	err = store.CreateURL(ctx, URL{
 		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
@@ -114,7 +114,7 @@ func Test_DatabaseRepository_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			longURL, found := store.Get(ctx, tt.shortURL)
+			longURL, found := store.GetURLByShortCode(ctx, tt.shortURL)
 
 			if tt.found {
 				assert.NotNil(t, longURL)

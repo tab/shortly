@@ -59,7 +59,7 @@ func Test_CreateShortLink(t *testing.T) {
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}
-				repo.EXPECT().Set(ctx, url)
+				repo.EXPECT().CreateURL(ctx, url)
 			},
 			expected: result{
 				shortCode: "abcd1234",
@@ -159,7 +159,7 @@ func Test_GetShortLink(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo.EXPECT().Get(ctx, tt.shortCode).Return(tt.expected.url, tt.expected.found)
+			repo.EXPECT().GetURLByShortCode(ctx, tt.shortCode).Return(tt.expected.url, tt.expected.found)
 
 			url, found := service.GetShortLink(ctx, tt.shortCode)
 

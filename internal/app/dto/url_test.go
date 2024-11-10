@@ -29,7 +29,7 @@ func Test_Validate(t *testing.T) {
 		{
 			name:     "Empty URL",
 			body:     strings.NewReader(`{"url": ""}`),
-			expected: errors.ErrRequestBodyEmpty,
+			expected: errors.ErrOriginalURLEmpty,
 		},
 		{
 			name:     "URL without scheme",
@@ -65,8 +65,13 @@ func Test_BatchValidate(t *testing.T) {
 			expected: nil,
 		},
 		{
-			name:     "Empty URL",
-			body:     strings.NewReader(`[{"correlation_id": "1234", "original_url": ""}]`),
+			name:     "No correlation ID",
+			body:     strings.NewReader(`[{"original_url": "https://www.google.com"}]`),
+			expected: errors.ErrCorrelationIDEmpty,
+		},
+		{
+			name:     "No original URL",
+			body:     strings.NewReader(`[{"correlation_id": "1234"}]`),
 			expected: errors.ErrInvalidURL,
 		},
 		{
@@ -110,7 +115,7 @@ func Test_DeprecatedValidate(t *testing.T) {
 		{
 			name:     "Empty",
 			body:     strings.NewReader(""),
-			expected: errors.ErrRequestBodyEmpty,
+			expected: errors.ErrOriginalURLEmpty,
 		},
 		{
 			name:     "URL without scheme",

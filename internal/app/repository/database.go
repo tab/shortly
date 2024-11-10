@@ -14,7 +14,7 @@ type Database interface {
 	Close()
 }
 
-type databaseRepo struct {
+type DatabaseRepo struct {
 	queries *db.Queries
 	db      *pgxpool.Pool
 }
@@ -27,13 +27,13 @@ func NewDatabaseRepository(ctx context.Context, dsn string) (Database, error) {
 
 	queries := db.New(pool)
 
-	return &databaseRepo{
+	return &DatabaseRepo{
 		db:      pool,
 		queries: queries,
 	}, nil
 }
 
-func (d *databaseRepo) Set(ctx context.Context, url URL) error {
+func (d *DatabaseRepo) Set(ctx context.Context, url URL) error {
 	_, err := d.queries.CreateURL(ctx, db.CreateURLParams{
 		UUID:      url.UUID,
 		LongURL:   url.LongURL,
@@ -43,7 +43,7 @@ func (d *databaseRepo) Set(ctx context.Context, url URL) error {
 	return err
 }
 
-func (d *databaseRepo) Get(ctx context.Context, shortCode string) (*URL, bool) {
+func (d *DatabaseRepo) Get(ctx context.Context, shortCode string) (*URL, bool) {
 	url, err := d.queries.GetURLByShortCode(ctx, shortCode)
 	if err != nil {
 		return nil, false
@@ -56,11 +56,11 @@ func (d *databaseRepo) Get(ctx context.Context, shortCode string) (*URL, bool) {
 	}, true
 }
 
-func (d *databaseRepo) Ping(ctx context.Context) error {
+func (d *DatabaseRepo) Ping(ctx context.Context) error {
 	_, err := d.queries.HealthCheck(ctx)
 	return err
 }
 
-func (d *databaseRepo) Close() {
+func (d *DatabaseRepo) Close() {
 	d.db.Close()
 }

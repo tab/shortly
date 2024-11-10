@@ -20,17 +20,15 @@ type manager struct {
 }
 
 func NewPersistenceManager(cfg *config.Config, logger *logger.Logger, repo repository.Repository) Manager {
-	noOp := &noOpManager{}
-
 	inMemoryRepo, ok := repo.(repository.InMemory)
 	if !ok {
 		logger.Warn().Msg("Persistence manager initialization skipped, not an in-memory repository")
-		return noOp
+		return &noOpManager{}
 	}
 
 	if cfg.FileStoragePath == "" {
 		logger.Warn().Msg("Persistence manager initialization skipped, file is not set")
-		return noOp
+		return &noOpManager{}
 	}
 
 	fileRepo := repository.NewFileRepository(cfg.FileStoragePath)

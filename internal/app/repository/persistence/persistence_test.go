@@ -21,9 +21,9 @@ func Test_NewPersistenceManager(t *testing.T) {
 	filePath := t.TempDir() + "/store-test.json"
 	appLogger := logger.NewLogger()
 
+	databaseMockRepo := repository.NewMockRepository(ctrl)
 	inMemoryRepo := repository.NewInMemoryRepository()
 	fileRepo := repository.NewFileRepository(filePath)
-	notInMemoryRepo := repository.NewMockRepository(ctrl)
 
 	tests := []struct {
 		name         string
@@ -32,7 +32,7 @@ func Test_NewPersistenceManager(t *testing.T) {
 		expectedType interface{}
 	}{
 		{
-			name: "InMemory repo",
+			name: "InMemory repo with file path",
 			cfg: &config.Config{
 				FileStoragePath: filePath,
 			},
@@ -44,12 +44,28 @@ func Test_NewPersistenceManager(t *testing.T) {
 			},
 		},
 		{
-			name: "Not InMemory repo",
+			name: "InMemory repo without file path",
+			cfg: &config.Config{
+				FileStoragePath: "",
+			},
+			repo:         inMemoryRepo,
+			expectedType: &noOpManager{},
+		},
+		{
+			name: "Database with file path",
 			cfg: &config.Config{
 				FileStoragePath: filePath,
 			},
-			repo:         notInMemoryRepo,
+			repo:         databaseMockRepo,
 			expectedType: &manager{},
+		},
+		{
+			name: "Database without file path",
+			cfg: &config.Config{
+				FileStoragePath: "",
+			},
+			repo:         databaseMockRepo,
+			expectedType: &noOpManager{},
 		},
 	}
 

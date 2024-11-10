@@ -37,6 +37,7 @@ func Test_NewHealthService(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := NewHealthService(tt.repo)
@@ -51,40 +52,52 @@ func Test_HealthService_Ping(t *testing.T) {
 	defer ctrl.Finish()
 
 	ctx := context.Background()
-	repo := repository.NewMockRepository(ctrl)
+	mockDatabaseRepo := repository.NewMockRepository(ctrl)
+	inMemoryRepo := repository.NewInMemoryRepository()
 
 	tests := []struct {
 		name     string
+		repo     repository.Repository
 		before   func()
 		expected error
 	}{
 		{
 			name: "Success",
+			repo: mockDatabaseRepo,
 			before: func() {
-				repo.EXPECT().Ping(ctx).Return(nil)
+				mockDatabaseRepo.EXPECT().Ping(ctx).Return(nil)
 			},
 			expected: nil,
 		},
 		{
 			name: "Failure",
+			repo: mockDatabaseRepo,
 			before: func() {
-				repo.EXPECT().Ping(ctx).Return(errors.New("failed to connect error"))
+				mockDatabaseRepo.EXPECT().Ping(ctx).Return(errors.New("failed to connect error"))
 			},
 			expected: errors.New("failed to connect error"),
 		},
 		{
 			name: "Cancelled",
+			repo: mockDatabaseRepo,
 			before: func() {
-				repo.EXPECT().Ping(gomock.Any()).Return(context.Canceled)
+				mockDatabaseRepo.EXPECT().Ping(gomock.Any()).Return(context.Canceled)
 			},
 			expected: context.Canceled,
 		},
+		{
+			name:     "InMemoryRepository",
+			repo:     inMemoryRepo,
+			before:   func() {},
+			expected: nil,
+		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			service := NewHealthService(repo)
+			service := NewHealthService(tt.repo)
 			result := service.Ping(ctx)
 
 			assert.Equal(t, tt.expected, result)

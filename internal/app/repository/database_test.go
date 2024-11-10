@@ -131,3 +131,22 @@ func Test_DatabaseRepository_Get(t *testing.T) {
 		})
 	}
 }
+
+func Test_DatabaseRepository_Ping(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	err = store.Ping(ctx)
+	assert.NoError(t, err)
+}
+
+func TestDatabaseRepo_Close(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	store.Close()
+}

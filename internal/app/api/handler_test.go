@@ -76,7 +76,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader("{}"),
 			before: func() {},
 			expected: result{
-				error:  dto.ErrorResponse{Error: "request body is empty"},
+				error:  dto.ErrorResponse{Error: "original URL is required"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -87,7 +87,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader(`{"url":""}`),
 			before: func() {},
 			expected: result{
-				error:  dto.ErrorResponse{Error: "request body is empty"},
+				error:  dto.ErrorResponse{Error: "original URL is required"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},
@@ -239,9 +239,20 @@ func Test_HandleBatchCreateShortLink(t *testing.T) {
 			},
 		},
 		{
-			name:   "Invalid JSON",
+			name:   "No correlation ID",
 			method: http.MethodPost,
-			body:   strings.NewReader(`[{}]`),
+			body:   strings.NewReader(`[{"original_url": "not-a-url"}]`),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: "correlation id is required"},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name:   "No original URL",
+			method: http.MethodPost,
+			body:   strings.NewReader(`[{"correlation_id": "0001"}]`),
 			before: func() {},
 			expected: result{
 				error:  dto.ErrorResponse{Error: "invalid URL"},
@@ -457,7 +468,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				status:   http.StatusBadRequest,
-				response: errors.ErrRequestBodyEmpty.Error(),
+				response: errors.ErrOriginalURLEmpty.Error(),
 			},
 		},
 		{

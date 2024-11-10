@@ -4,7 +4,8 @@ import "errors"
 
 var (
 	ErrInvalidURL              = errors.New("invalid URL")
-	ErrRequestBodyEmpty        = errors.New("request body is empty")
+	ErrOriginalURLEmpty        = errors.New("original URL is required")
+	ErrCorrelationIDEmpty      = errors.New("correlation id is required")
 	ErrShortLinkNotFound       = errors.New("short link not found")
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
 	ErrFailedToGenerateCode    = errors.New("failed to generate short code")
@@ -13,8 +14,6 @@ var (
 	ErrorFailedToReadFromFile  = errors.New("failed to read from file")
 	ErrFailedToWriteToFile     = errors.New("failed to write to file")
 	ErrFailedToSaveURL         = errors.New("failed to save URL")
-	ErrFileStoragePathNotSet   = errors.New("file storage path not set")
-	ErrMementoNotImplemented   = errors.New("memento not implemented")
 )
 
 var (

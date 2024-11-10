@@ -53,11 +53,12 @@ func (params *BatchCreateShortLinkRequest) Validate(body io.Reader) error {
 		return err
 	}
 
-	if len(*params) == 0 {
-		return errors.ErrRequestBodyEmpty
-	}
-
 	for _, p := range *params {
+		p.CorrelationID = strings.TrimSpace(p.CorrelationID)
+		if p.CorrelationID == "" {
+			return errors.ErrCorrelationIDEmpty
+		}
+
 		if err := validator.Validate(p.OriginalURL); err != nil {
 			return err
 		}
@@ -81,7 +82,7 @@ func (params *CreateShortLinkRequest) validateURL() error {
 	params.URL = strings.TrimSpace(params.URL)
 
 	if params.URL == "" {
-		return errors.ErrRequestBodyEmpty
+		return errors.ErrOriginalURLEmpty
 	}
 
 	if err := validator.Validate(params.URL); err != nil {

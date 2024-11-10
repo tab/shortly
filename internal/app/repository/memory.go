@@ -19,12 +19,12 @@ func NewInMemoryRepository() InMemory {
 	return &InMemoryRepo{}
 }
 
-func (m *InMemoryRepo) Set(_ context.Context, url URL) error {
+func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) error {
 	m.data.Store(url.ShortCode, url)
 	return nil
 }
 
-func (m *InMemoryRepo) Get(_ context.Context, shortCode string) (*URL, bool) {
+func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*URL, bool) {
 	value, ok := m.data.Load(shortCode)
 	if !ok {
 		return nil, false

@@ -54,19 +54,19 @@ func (mr *MockRepositoryMockRecorder) CreateMemento() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMemento", reflect.TypeOf((*MockRepository)(nil).CreateMemento))
 }
 
-// Get mocks base method.
-func (m *MockRepository) Get(ctx context.Context, shortCode string) (*URL, bool) {
+// GetURLByShortCode mocks base method.
+func (m *MockRepository) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", shortCode)
+	ret := m.ctrl.Call(m, "GetURLByShortCode", shortCode)
 	ret0, _ := ret[0].(*URL)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockRepositoryMockRecorder) Get(ctx context.Context, shortCode any) *gomock.Call {
+// GetURLByShortCode indicates an expected call of GetURLByShortCode.
+func (mr *MockRepositoryMockRecorder) GetURLByShortCode(ctx context.Context, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockRepository)(nil).Get), shortCode)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockRepository)(nil).GetURLByShortCode), shortCode)
 }
 
 // Ping mocks base method.
@@ -95,18 +95,18 @@ func (mr *MockRepositoryMockRecorder) Restore(m any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockRepository)(nil).Restore), m)
 }
 
-// Set mocks base method.
-func (m *MockRepository) Set(ctx context.Context, url URL) error {
+// CreateURL mocks base method.
+func (m *MockRepository) CreateURL(ctx context.Context, url URL) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", url)
+	ret := m.ctrl.Call(m, "CreateURL", url)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Set indicates an expected call of Set.
-func (mr *MockRepositoryMockRecorder) Set(ctx context.Context, url any) *gomock.Call {
+// CreateURL indicates an expected call of CreateURL.
+func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockRepository)(nil).Set), url)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockRepository)(nil).CreateURL), url)
 }
 
 // MockBuilder is a mock of Builder interface.

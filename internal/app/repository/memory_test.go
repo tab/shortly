@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_InMemoryRepository_Set(t *testing.T) {
+func Test_InMemoryRepository_CreateURL(t *testing.T) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()
 
@@ -34,7 +34,7 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 				ShortCode: "GitHub",
 			},
 			before: func() {
-				store.Set(ctx, URL{
+				store.CreateURL(ctx, URL{
 					LongURL:   "https://example.com",
 					ShortCode: "123456ab",
 				})
@@ -45,10 +45,10 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := store.Set(ctx, tt.url)
+			err := store.CreateURL(ctx, tt.url)
 			assert.NoError(t, err)
 
-			storedURL, found := store.Get(ctx, tt.url.ShortCode)
+			storedURL, found := store.GetURLByShortCode(ctx, tt.url.ShortCode)
 			if tt.expected {
 				assert.True(t, found)
 				assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
@@ -59,11 +59,11 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 	}
 }
 
-func Test_InMemoryRepository_Get(t *testing.T) {
+func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()
 
-	err := store.Set(ctx, URL{
+	err := store.CreateURL(ctx, URL{
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})
@@ -97,7 +97,7 @@ func Test_InMemoryRepository_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			longURL, found := store.Get(ctx, tt.shortURL)
+			longURL, found := store.GetURLByShortCode(ctx, tt.shortURL)
 
 			if tt.found {
 				assert.NotNil(t, longURL)
@@ -128,7 +128,7 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 		{
 			name: "Success",
 			before: func(store InMemory) {
-				store.Set(ctx, URL{
+				store.CreateURL(ctx, URL{
 					UUID:      UUID,
 					LongURL:   "http://example.com",
 					ShortCode: "abcd1234",
@@ -204,7 +204,7 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 		{
 			name: "Empty",
 			before: func(store InMemory) {
-				store.Set(ctx, URL{
+				store.CreateURL(ctx, URL{
 					UUID:      UUID,
 					LongURL:   "http://example.com",
 					ShortCode: "abcd1234",

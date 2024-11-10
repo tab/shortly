@@ -33,7 +33,7 @@ func NewDatabaseRepository(ctx context.Context, dsn string) (Database, error) {
 	}, nil
 }
 
-func (d *DatabaseRepo) Set(ctx context.Context, url URL) error {
+func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) error {
 	_, err := d.queries.CreateURL(ctx, db.CreateURLParams{
 		UUID:      url.UUID,
 		LongURL:   url.LongURL,
@@ -43,7 +43,7 @@ func (d *DatabaseRepo) Set(ctx context.Context, url URL) error {
 	return err
 }
 
-func (d *DatabaseRepo) Get(ctx context.Context, shortCode string) (*URL, bool) {
+func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	url, err := d.queries.GetURLByShortCode(ctx, shortCode)
 	if err != nil {
 		return nil, false

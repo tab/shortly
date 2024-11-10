@@ -19,8 +19,8 @@ type Memento struct {
 }
 
 type Repository interface {
-	Set(ctx context.Context, url URL) error
-	Get(ctx context.Context, shortCode string) (*URL, bool)
+	CreateURL(ctx context.Context, url URL) error
+	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool)
 }
 
 type HealthChecker interface {

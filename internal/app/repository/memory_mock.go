@@ -54,19 +54,19 @@ func (mr *MockInMemoryMockRecorder) CreateMemento() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMemento", reflect.TypeOf((*MockInMemory)(nil).CreateMemento))
 }
 
-// Get mocks base method.
-func (m *MockInMemory) Get(ctx context.Context, shortCode string) (*URL, bool) {
+// GetURLByShortCode mocks base method.
+func (m *MockInMemory) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, shortCode)
+	ret := m.ctrl.Call(m, "GetURLByShortCode", ctx, shortCode)
 	ret0, _ := ret[0].(*URL)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockInMemoryMockRecorder) Get(ctx, shortCode any) *gomock.Call {
+// GetURLByShortCode indicates an expected call of GetURLByShortCode.
+func (mr *MockInMemoryMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockInMemory)(nil).Get), ctx, shortCode)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockInMemory)(nil).GetURLByShortCode), ctx, shortCode)
 }
 
 // Restore mocks base method.
@@ -81,16 +81,16 @@ func (mr *MockInMemoryMockRecorder) Restore(m any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockInMemory)(nil).Restore), m)
 }
 
-// Set mocks base method.
-func (m *MockInMemory) Set(ctx context.Context, url URL) error {
+// CreateURL mocks base method.
+func (m *MockInMemory) CreateURL(ctx context.Context, url URL) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Set", ctx, url)
+	ret := m.ctrl.Call(m, "CreateURL", ctx, url)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Set indicates an expected call of Set.
-func (mr *MockInMemoryMockRecorder) Set(ctx, url any) *gomock.Call {
+// CreateURL indicates an expected call of CreateURL.
+func (mr *MockInMemoryMockRecorder) CreateURL(ctx, url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockInMemory)(nil).Set), ctx, url)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockInMemory)(nil).CreateURL), ctx, url)
 }

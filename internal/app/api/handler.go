@@ -34,6 +34,12 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 
 	shortURL, err := h.service.CreateShortLink(r.Context(), params.URL)
 	if err != nil {
+		if errors.Is(err, errors.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
+			return
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
@@ -83,6 +89,8 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+
 	var params dto.CreateShortLinkRequest
 
 	if err := params.DeprecatedValidate(r.Body); err != nil {
@@ -92,11 +100,19 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 
 	shortURL, err := h.service.CreateShortLink(r.Context(), params.URL)
 	if err != nil {
+		if errors.Is(err, errors.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+			_, err = w.Write([]byte(shortURL))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {

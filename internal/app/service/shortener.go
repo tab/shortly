@@ -40,9 +40,14 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 		LongURL:   longURL,
 		ShortCode: shortCode,
 	}
-	err = s.repo.CreateURL(ctx, url)
+
+	record, err := s.repo.CreateURL(ctx, url)
 	if err != nil {
 		return "", errors.ErrFailedToSaveURL
+	}
+
+	if record.ShortCode != shortCode {
+		return fmt.Sprintf("%s/%s", s.cfg.BaseURL, record.ShortCode), errors.ErrURLAlreadyExists
 	}
 
 	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil

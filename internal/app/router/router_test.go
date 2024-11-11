@@ -39,15 +39,11 @@ func Test_HealthCheck(t *testing.T) {
 }
 
 func Test_CreateShortLink(t *testing.T) {
-	ctx := context.Background()
 	cfg := &config.Config{
-		DatabaseDSN: "",
+		BaseURL: "http://localhost:8080",
 	}
 	appLogger := logger.NewLogger()
-	repo, _ := repository.NewRepository(ctx, &repository.Factory{
-		DSN:    cfg.DatabaseDSN,
-		Logger: appLogger,
-	})
+	repo := repository.NewInMemoryRepository()
 	router := NewRouter(cfg, appLogger, repo)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -64,22 +60,20 @@ func Test_CreateShortLink(t *testing.T) {
 func Test_GetShortLink(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{
-		DatabaseDSN: "",
+		BaseURL: "http://localhost:8080",
 	}
 	appLogger := logger.NewLogger()
-	repo, _ := repository.NewRepository(ctx, &repository.Factory{
-		DSN:    cfg.DatabaseDSN,
-		Logger: appLogger,
-	})
+	repo := repository.NewInMemoryRepository()
 	router := NewRouter(cfg, appLogger, repo)
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
-	repo.CreateURL(ctx, repository.URL{
+	_, err := repo.CreateURL(ctx, repository.URL{
 		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})
+	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/abcd1234", nil)
 	w := httptest.NewRecorder()

@@ -33,14 +33,22 @@ func NewDatabaseRepository(ctx context.Context, dsn string) (Database, error) {
 	}, nil
 }
 
-func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) error {
-	_, err := d.queries.CreateURL(ctx, db.CreateURLParams{
+func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) (*URL, error) {
+	row, err := d.queries.CreateURL(ctx, db.CreateURLParams{
 		UUID:      url.UUID,
 		LongURL:   url.LongURL,
 		ShortCode: url.ShortCode,
 	})
 
-	return err
+	if err != nil {
+		return nil, err
+	}
+
+	return &URL{
+		UUID:      row.UUID,
+		LongURL:   row.LongURL,
+		ShortCode: row.ShortCode,
+	}, nil
 }
 
 func (d *DatabaseRepo) CreateURLs(ctx context.Context, urls []URL) error {
@@ -67,15 +75,15 @@ func (d *DatabaseRepo) CreateURLs(ctx context.Context, urls []URL) error {
 }
 
 func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
-	url, err := d.queries.GetURLByShortCode(ctx, shortCode)
+	row, err := d.queries.GetURLByShortCode(ctx, shortCode)
 	if err != nil {
 		return nil, false
 	}
 
 	return &URL{
-		UUID:      url.UUID,
-		LongURL:   url.LongURL,
-		ShortCode: url.ShortCode,
+		UUID:      row.UUID,
+		LongURL:   row.LongURL,
+		ShortCode: row.ShortCode,
 	}, true
 }
 

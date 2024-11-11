@@ -45,7 +45,7 @@ func Test_InMemoryRepository_CreateURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := store.CreateURL(ctx, tt.url)
+			_, err := store.CreateURL(ctx, tt.url)
 			assert.NoError(t, err)
 
 			storedURL, found := store.GetURLByShortCode(ctx, tt.url.ShortCode)
@@ -103,7 +103,7 @@ func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()
 
-	err := store.CreateURL(ctx, URL{
+	_, err := store.CreateURL(ctx, URL{
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})

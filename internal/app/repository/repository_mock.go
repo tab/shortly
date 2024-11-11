@@ -40,37 +40,76 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
-// CreateMemento mocks base method.
-func (m *MockRepository) CreateMemento() *Memento {
+// CreateURL mocks base method.
+func (m *MockRepository) CreateURL(ctx context.Context, url URL) (*URL, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateMemento")
-	ret0, _ := ret[0].(*Memento)
+	ret := m.ctrl.Call(m, "CreateURL", ctx, url)
+	ret0, _ := ret[0].(*URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateURL indicates an expected call of CreateURL.
+func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url URL) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockRepository)(nil).CreateURL), ctx, url)
+}
+
+// CreateURLs mocks base method.
+func (m *MockRepository) CreateURLs(ctx context.Context, urls []URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLs", ctx, urls)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// CreateMemento indicates an expected call of CreateMemento.
-func (mr *MockRepositoryMockRecorder) CreateMemento() *gomock.Call {
+// CreateURLs indicates an expected call of CreateURLs.
+func (mr *MockRepositoryMockRecorder) CreateURLs(ctx, urls any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMemento", reflect.TypeOf((*MockRepository)(nil).CreateMemento))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockRepository)(nil).CreateURLs), ctx, urls)
 }
 
 // GetURLByShortCode mocks base method.
 func (m *MockRepository) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetURLByShortCode", shortCode)
+	ret := m.ctrl.Call(m, "GetURLByShortCode", ctx, shortCode)
 	ret0, _ := ret[0].(*URL)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
 // GetURLByShortCode indicates an expected call of GetURLByShortCode.
-func (mr *MockRepositoryMockRecorder) GetURLByShortCode(ctx context.Context, shortCode any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockRepository)(nil).GetURLByShortCode), shortCode)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockRepository)(nil).GetURLByShortCode), ctx, shortCode)
+}
+
+// MockHealthChecker is a mock of HealthChecker interface.
+type MockHealthChecker struct {
+	ctrl     *gomock.Controller
+	recorder *MockHealthCheckerMockRecorder
+	isgomock struct{}
+}
+
+// MockHealthCheckerMockRecorder is the mock recorder for MockHealthChecker.
+type MockHealthCheckerMockRecorder struct {
+	mock *MockHealthChecker
+}
+
+// NewMockHealthChecker creates a new mock instance.
+func NewMockHealthChecker(ctrl *gomock.Controller) *MockHealthChecker {
+	mock := &MockHealthChecker{ctrl: ctrl}
+	mock.recorder = &MockHealthCheckerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockHealthChecker) EXPECT() *MockHealthCheckerMockRecorder {
+	return m.recorder
 }
 
 // Ping mocks base method.
-func (m *MockRepository) Ping(ctx context.Context) error {
+func (m *MockHealthChecker) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ping", ctx)
 	ret0, _ := ret[0].(error)
@@ -78,86 +117,7 @@ func (m *MockRepository) Ping(ctx context.Context) error {
 }
 
 // Ping indicates an expected call of Ping.
-func (mr *MockRepositoryMockRecorder) Ping(ctx any) *gomock.Call {
+func (mr *MockHealthCheckerMockRecorder) Ping(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockRepository)(nil).Ping), ctx)
-}
-
-// Restore mocks base method.
-func (mr *MockRepository) Restore(m *Memento) {
-	mr.ctrl.T.Helper()
-	mr.ctrl.Call(mr, "Restore", m)
-}
-
-// Restore indicates an expected call of Restore.
-func (mr *MockRepositoryMockRecorder) Restore(m any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockRepository)(nil).Restore), m)
-}
-
-// CreateURL mocks base method.
-func (m *MockRepository) CreateURL(ctx context.Context, url URL) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateURL", url)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateURL indicates an expected call of CreateURL.
-func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url URL) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockRepository)(nil).CreateURL), url)
-}
-
-// CreateURLs mocks base method.
-func (m *MockRepository) CreateURLs(ctx context.Context, urls []URL) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateURLs", urls)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateURLs indicates an expected call of CreateURLs.
-func (mr *MockRepositoryMockRecorder) CreateURLs(ctx context.Context, urls []URL) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockRepository)(nil).CreateURLs), urls)
-}
-
-// MockBuilder is a mock of Builder interface.
-type MockBuilder struct {
-	ctrl     *gomock.Controller
-	recorder *MockBuilderMockRecorder
-	isgomock struct{}
-}
-
-// MockBuilderMockRecorder is the mock recorder for MockBuilder.
-type MockBuilderMockRecorder struct {
-	mock *MockBuilder
-}
-
-// NewMockBuilder creates a new mock instance.
-func NewMockBuilder(ctrl *gomock.Controller) *MockBuilder {
-	mock := &MockBuilder{ctrl: ctrl}
-	mock.recorder = &MockBuilderMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBuilder) EXPECT() *MockBuilderMockRecorder {
-	return m.recorder
-}
-
-// CreateRepository mocks base method.
-func (m *MockBuilder) CreateRepository(ctx context.Context) (Repository, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateRepository", ctx)
-	ret0, _ := ret[0].(Repository)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// CreateRepository indicates an expected call of CreateRepository.
-func (mr *MockBuilderMockRecorder) CreateRepository(ctx any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRepository", reflect.TypeOf((*MockBuilder)(nil).CreateRepository), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockHealthChecker)(nil).Ping), ctx)
 }

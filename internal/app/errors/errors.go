@@ -14,6 +14,7 @@ var (
 	ErrorFailedToReadFromFile  = errors.New("failed to read from file")
 	ErrFailedToWriteToFile     = errors.New("failed to write to file")
 	ErrFailedToSaveURL         = errors.New("failed to save URL")
+	ErrURLAlreadyExists        = errors.New("URL already exists")
 )
 
 var (

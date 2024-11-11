@@ -35,33 +35,58 @@ func Test_DatabaseRepository_CreateURL(t *testing.T) {
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	tests := []struct {
-		name     string
-		url      URL
-		expected bool
+		name       string
+		before     func()
+		attributes URL
+		expected   URL
 	}{
 		{
 			name: "Success",
-			url: URL{
+			attributes: URL{
 				UUID:      UUID,
 				LongURL:   "https://example.com",
 				ShortCode: "abcd1234",
 			},
-			expected: true,
+			expected: URL{
+				UUID:      UUID,
+				LongURL:   "https://example.com",
+				ShortCode: "abcd1234",
+			},
+		},
+		{
+			name: "Not unique",
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				})
+				assert.NoError(t, err)
+			},
+			attributes: URL{
+				UUID:      UUID,
+				LongURL:   "https://example.com",
+				ShortCode: "abcd0001",
+			},
+			expected: URL{
+				UUID:      UUID,
+				LongURL:   "https://example.com",
+				ShortCode: "abcd1234",
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err = store.CreateURL(ctx, tt.url)
+			row, err := store.CreateURL(ctx, tt.attributes)
 			assert.NoError(t, err)
+			assert.Equal(t, tt.attributes.LongURL, row.LongURL)
 
-			storedURL, found := store.GetURLByShortCode(ctx, tt.url.ShortCode)
-			if tt.expected {
-				assert.True(t, found)
-				assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
-			} else {
-				assert.False(t, found)
-			}
+			storedURL, found := store.GetURLByShortCode(ctx, tt.attributes.ShortCode)
+			assert.True(t, found)
+			assert.Equal(t, tt.attributes.UUID, storedURL.UUID)
+			assert.Equal(t, tt.attributes.LongURL, storedURL.LongURL)
+			assert.Equal(t, tt.attributes.ShortCode, storedURL.ShortCode)
 
 			t.Cleanup(func() {
 				err = spec.TruncateTables(ctx, dsn)
@@ -90,12 +115,12 @@ func Test_DatabaseRepository_CreateURLs(t *testing.T) {
 			urls: []URL{
 				{
 					UUID:      UUID1,
-					LongURL:   "https://example.com",
+					LongURL:   "https://google.com",
 					ShortCode: "abcd0001",
 				},
 				{
 					UUID:      UUID2,
-					LongURL:   "https://example.com",
+					LongURL:   "https://github.com",
 					ShortCode: "abcd0002",
 				},
 			},
@@ -134,7 +159,7 @@ func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
-	err = store.CreateURL(ctx, URL{
+	_, err = store.CreateURL(ctx, URL{
 		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
@@ -169,13 +194,13 @@ func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			longURL, found := store.GetURLByShortCode(ctx, tt.shortURL)
+			row, found := store.GetURLByShortCode(ctx, tt.shortURL)
 
 			if tt.found {
-				assert.NotNil(t, longURL)
-				assert.Equal(t, tt.expected, longURL.LongURL)
+				assert.NotNil(t, row)
+				assert.Equal(t, tt.expected, row.LongURL)
 			} else {
-				assert.Nil(t, longURL)
+				assert.Nil(t, row)
 			}
 			assert.Equal(t, tt.found, found)
 

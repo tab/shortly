@@ -3,7 +3,6 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     branches:
-      - iter12
       - iter13
       - iter14
       - iter15
@@ -19,7 +18,6 @@ on:
   push:
     branches:
       - main
-      - iter12
       - iter13
       - iter14
       - iter15
@@ -165,20 +163,6 @@ jobs:
               -database-dsn='postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable'
 
       - name: "Code increment #13"
-        if: |
-          github.ref == 'refs/heads/main' ||
-          github.head_ref == 'iter13' ||
-          github.head_ref == 'iter14' ||
-          github.head_ref == 'iter15' ||
-          github.head_ref == 'iter16' ||
-          github.head_ref == 'iter17' ||
-          github.head_ref == 'iter18' ||
-          github.head_ref == 'iter19' ||
-          github.head_ref == 'iter20' ||
-          github.head_ref == 'iter21' ||
-          github.head_ref == 'iter22' ||
-          github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
         run: |
           shortenertestbeta -test.v -test.run=^TestIteration13$ \
               -binary-path=cmd/shortener/shortener \

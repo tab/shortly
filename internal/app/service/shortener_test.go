@@ -54,6 +54,7 @@ func Test_CreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID1, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				url := repository.URL{
 					UUID:      UUID1,
@@ -74,6 +75,7 @@ func Test_CreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID2, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				existingURL := repository.URL{
 					UUID:      UUID1,
@@ -178,6 +180,8 @@ func TestURLService_CreateShortLinks(t *testing.T) {
 				rand.EXPECT().UUID().Return(UUID2, nil)
 				rand.EXPECT().Hex().Return("abcd0001", nil)
 				rand.EXPECT().Hex().Return("abcd0002", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd0001").Return(nil, false)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd0002").Return(nil, false)
 
 				urls := []repository.URL{
 					{

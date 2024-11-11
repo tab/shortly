@@ -52,7 +52,7 @@ func Test_HealthService_Ping(t *testing.T) {
 	defer ctrl.Finish()
 
 	ctx := context.Background()
-	mockDatabaseRepo := repository.NewMockRepository(ctrl)
+	mockDatabaseRepo := repository.NewMockDatabase(ctrl)
 	inMemoryRepo := repository.NewInMemoryRepository()
 
 	tests := []struct {

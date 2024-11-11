@@ -19,9 +19,9 @@ func NewInMemoryRepository() InMemory {
 	return &InMemoryRepo{}
 }
 
-func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) error {
+func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) (*URL, error) {
 	m.data.Store(url.ShortCode, url)
-	return nil
+	return &url, nil
 }
 
 func (m *InMemoryRepo) CreateURLs(_ context.Context, urls []URL) error {

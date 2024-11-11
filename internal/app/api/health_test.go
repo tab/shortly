@@ -18,7 +18,7 @@ func TestHealthHandler_HandlePing(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := service.NewMockHealthServiceInterface(ctrl)
+	mockService := service.NewMockHealthChecker(ctrl)
 	handler := NewHealthHandler(mockService)
 
 	type result struct {

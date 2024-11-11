@@ -16,32 +16,32 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockHealthServiceInterface is a mock of HealthServiceInterface interface.
-type MockHealthServiceInterface struct {
+// MockHealthChecker is a mock of HealthChecker interface.
+type MockHealthChecker struct {
 	ctrl     *gomock.Controller
-	recorder *MockHealthServiceInterfaceMockRecorder
+	recorder *MockHealthCheckerMockRecorder
 	isgomock struct{}
 }
 
-// MockHealthServiceInterfaceMockRecorder is the mock recorder for MockHealthServiceInterface.
-type MockHealthServiceInterfaceMockRecorder struct {
-	mock *MockHealthServiceInterface
+// MockHealthCheckerMockRecorder is the mock recorder for MockHealthChecker.
+type MockHealthCheckerMockRecorder struct {
+	mock *MockHealthChecker
 }
 
-// NewMockHealthServiceInterface creates a new mock instance.
-func NewMockHealthServiceInterface(ctrl *gomock.Controller) *MockHealthServiceInterface {
-	mock := &MockHealthServiceInterface{ctrl: ctrl}
-	mock.recorder = &MockHealthServiceInterfaceMockRecorder{mock}
+// NewMockHealthChecker creates a new mock instance.
+func NewMockHealthChecker(ctrl *gomock.Controller) *MockHealthChecker {
+	mock := &MockHealthChecker{ctrl: ctrl}
+	mock.recorder = &MockHealthCheckerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockHealthServiceInterface) EXPECT() *MockHealthServiceInterfaceMockRecorder {
+func (m *MockHealthChecker) EXPECT() *MockHealthCheckerMockRecorder {
 	return m.recorder
 }
 
 // Ping mocks base method.
-func (m *MockHealthServiceInterface) Ping(ctx context.Context) error {
+func (m *MockHealthChecker) Ping(ctx context.Context) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Ping", ctx)
 	ret0, _ := ret[0].(error)
@@ -49,7 +49,7 @@ func (m *MockHealthServiceInterface) Ping(ctx context.Context) error {
 }
 
 // Ping indicates an expected call of Ping.
-func (mr *MockHealthServiceInterfaceMockRecorder) Ping(ctx any) *gomock.Call {
+func (mr *MockHealthCheckerMockRecorder) Ping(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockHealthServiceInterface)(nil).Ping), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockHealthChecker)(nil).Ping), ctx)
 }

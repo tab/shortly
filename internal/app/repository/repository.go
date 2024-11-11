@@ -19,7 +19,7 @@ type Memento struct {
 }
 
 type Repository interface {
-	CreateURL(ctx context.Context, url URL) error
+	CreateURL(ctx context.Context, url URL) (*URL, error)
 	CreateURLs(ctx context.Context, urls []URL) error
 	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool)
 }

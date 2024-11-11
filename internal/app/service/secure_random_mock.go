@@ -12,7 +12,7 @@ package service
 import (
 	reflect "reflect"
 
-	"github.com/google/uuid"
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 

@@ -33,7 +33,8 @@ func Test_CreateShortLink(t *testing.T) {
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
 
 	type result struct {
 		shortCode string
@@ -51,20 +52,45 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Success",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
-				rand.EXPECT().UUID().Return(UUID, nil)
+				rand.EXPECT().UUID().Return(UUID1, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
 
 				url := repository.URL{
-					UUID:      UUID,
+					UUID:      UUID1,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
 				}
-				repo.EXPECT().CreateURL(ctx, url)
+				repo.EXPECT().CreateURL(ctx, url).Return(&url, nil)
 			},
 			expected: result{
 				shortCode: "abcd1234",
 				shortURL:  "http://localhost:8080/abcd1234",
 				error:     nil,
+			},
+		},
+		{
+			name: "URL already exists",
+			body: strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID2, nil)
+				rand.EXPECT().Hex().Return("abcd1234", nil)
+
+				existingURL := repository.URL{
+					UUID:      UUID1,
+					LongURL:   "https://example.com",
+					ShortCode: "abab0001",
+				}
+
+				repo.EXPECT().CreateURL(ctx, repository.URL{
+					UUID:      UUID2,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}).Return(&existingURL, nil)
+			},
+			expected: result{
+				shortCode: "abab0001",
+				shortURL:  "http://localhost:8080/abab0001",
+				error:     errors.ErrURLAlreadyExists,
 			},
 		},
 		{
@@ -83,7 +109,7 @@ func Test_CreateShortLink(t *testing.T) {
 			name: "Error generating short code",
 			body: strings.NewReader(`{"url":"https://example.com"}`),
 			before: func() {
-				rand.EXPECT().UUID().Return(UUID, nil)
+				rand.EXPECT().UUID().Return(UUID1, nil)
 				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
 			},
 			expected: result{

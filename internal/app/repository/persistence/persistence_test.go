@@ -1,6 +1,8 @@
 package persistence
 
 import (
+	"context"
+	"log"
 	"os"
 	"testing"
 
@@ -12,7 +14,21 @@ import (
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/logger"
+	"shortly/internal/spec"
 )
+
+func TestMain(m *testing.M) {
+	if err := spec.LoadEnv(); err != nil {
+		log.Fatalf("Error loading environment variables: %v", err)
+	}
+
+	if os.Getenv("GO_ENV") == "ci" {
+		os.Exit(0)
+	}
+
+	code := m.Run()
+	os.Exit(code)
+}
 
 func Test_NewPersistenceManager(t *testing.T) {
 	ctrl := gomock.NewController(t)
@@ -21,7 +37,9 @@ func Test_NewPersistenceManager(t *testing.T) {
 	filePath := t.TempDir() + "/store-test.json"
 	appLogger := logger.NewLogger()
 
-	databaseMockRepo := repository.NewMockRepository(ctrl)
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	databaseRepo, _ := repository.NewDatabaseRepository(ctx, dsn)
 	inMemoryRepo := repository.NewInMemoryRepository()
 	fileRepo := repository.NewFileRepository(filePath)
 
@@ -56,15 +74,15 @@ func Test_NewPersistenceManager(t *testing.T) {
 			cfg: &config.Config{
 				FileStoragePath: filePath,
 			},
-			repo:         databaseMockRepo,
-			expectedType: &manager{},
+			repo:         databaseRepo,
+			expectedType: &noOpManager{},
 		},
 		{
 			name: "Database without file path",
 			cfg: &config.Config{
 				FileStoragePath: "",
 			},
-			repo:         databaseMockRepo,
+			repo:         databaseRepo,
 			expectedType: &noOpManager{},
 		},
 	}
@@ -99,7 +117,7 @@ func Test_PersistenceManager_Load(t *testing.T) {
 		FileStoragePath: filePath,
 	}
 	mockRepo := repository.NewMockInMemory(ctrl)
-	mockFileRepo := repository.NewMockFileRepository(ctrl)
+	mockFileRepo := repository.NewMockFile(ctrl)
 	appLogger := logger.NewLogger()
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
@@ -162,8 +180,8 @@ func Test_PersistenceManager_Save(t *testing.T) {
 	cfg := &config.Config{
 		FileStoragePath: filePath,
 	}
-	mockRepo := repository.NewMockRepository(ctrl)
-	mockFileRepo := repository.NewMockFileRepository(ctrl)
+	mockRepo := repository.NewMockInMemory(ctrl)
+	mockFileRepo := repository.NewMockFile(ctrl)
 	appLogger := logger.NewLogger()
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")

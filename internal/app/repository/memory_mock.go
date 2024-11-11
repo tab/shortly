@@ -54,6 +54,35 @@ func (mr *MockInMemoryMockRecorder) CreateMemento() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateMemento", reflect.TypeOf((*MockInMemory)(nil).CreateMemento))
 }
 
+// CreateURL mocks base method.
+func (m *MockInMemory) CreateURL(ctx context.Context, url URL) (*URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURL", ctx, url)
+	ret0, _ := ret[0].(*URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateURL indicates an expected call of CreateURL.
+func (mr *MockInMemoryMockRecorder) CreateURL(ctx, url any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockInMemory)(nil).CreateURL), ctx, url)
+}
+
+// CreateURLs mocks base method.
+func (m *MockInMemory) CreateURLs(ctx context.Context, urls []URL) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateURLs", ctx, urls)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateURLs indicates an expected call of CreateURLs.
+func (mr *MockInMemoryMockRecorder) CreateURLs(ctx, urls any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockInMemory)(nil).CreateURLs), ctx, urls)
+}
+
 // GetURLByShortCode mocks base method.
 func (m *MockInMemory) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()
@@ -70,41 +99,13 @@ func (mr *MockInMemoryMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomoc
 }
 
 // Restore mocks base method.
-func (mr *MockInMemory) Restore(m *Memento) {
-	mr.ctrl.T.Helper()
-	mr.ctrl.Call(mr, "Restore", m)
+func (m_2 *MockInMemory) Restore(m *Memento) {
+	m_2.ctrl.T.Helper()
+	m_2.ctrl.Call(m_2, "Restore", m)
 }
 
 // Restore indicates an expected call of Restore.
 func (mr *MockInMemoryMockRecorder) Restore(m any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Restore", reflect.TypeOf((*MockInMemory)(nil).Restore), m)
-}
-
-// CreateURL mocks base method.
-func (m *MockInMemory) CreateURL(ctx context.Context, url URL) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateURL", ctx, url)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateURL indicates an expected call of CreateURL.
-func (mr *MockInMemoryMockRecorder) CreateURL(ctx, url URL) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockInMemory)(nil).CreateURL), ctx, url)
-}
-
-// CreateURLs mocks base method.
-func (m *MockInMemory) CreateURLs(ctx context.Context, urls []URL) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateURLs", ctx, urls)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateURLs indicates an expected call of CreateURLs.
-func (mr *MockInMemoryMockRecorder) CreateURLs(ctx context.Context, urls []URL) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockInMemory)(nil).CreateURLs), ctx, urls)
 }

@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -25,11 +24,11 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
+	ctx := gomock.Any()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockRepository(ctrl)
+	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -62,12 +61,40 @@ func Test_HandleCreateShortLink(t *testing.T) {
 					UUID:      UUID,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
-				})
+				}).Return(&repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}, nil)
 			},
 			expected: result{
 				response: dto.CreateShortLinkResponse{Result: "http://localhost:8080/abcd1234"},
 				status:   "201 Created",
 				code:     http.StatusCreated,
+			},
+		},
+		{
+			name:   "URL already exists",
+			method: http.MethodPost,
+			body:   strings.NewReader(`{"url":"https://example.com"}`),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID, nil)
+				rand.EXPECT().Hex().Return("abcd1234", nil)
+
+				repo.EXPECT().CreateURL(ctx, repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}).Return(&repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abab0001",
+				}, nil)
+			},
+			expected: result{
+				response: dto.CreateShortLinkResponse{Result: "http://localhost:8080/abab0001"},
+				status:   "409 Conflict",
+				code:     http.StatusConflict,
 			},
 		},
 		{
@@ -176,11 +203,11 @@ func Test_HandleBatchCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
+	ctx := gomock.Any()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockRepository(ctrl)
+	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -333,11 +360,11 @@ func Test_HandleGetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
+	ctx := gomock.Any()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockRepository(ctrl)
+	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -419,11 +446,11 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
+	ctx := gomock.Any()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockRepository(ctrl)
+	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
@@ -454,11 +481,38 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 					UUID:      UUID,
 					LongURL:   "https://example.com",
 					ShortCode: "abcd1234",
-				})
+				}).Return(&repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}, nil)
 			},
 			expected: result{
 				status:   http.StatusCreated,
 				response: "http://localhost:8080/abcd1234",
+			},
+		},
+		{
+			name:   "URL already exists",
+			method: http.MethodPost,
+			body:   strings.NewReader("https://example.com"),
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID, nil)
+				rand.EXPECT().Hex().Return("abcd1234", nil)
+
+				repo.EXPECT().CreateURL(ctx, repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+				}).Return(&repository.URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abab0001",
+				}, nil)
+			},
+			expected: result{
+				status:   http.StatusConflict,
+				response: "http://localhost:8080/abab0001",
 			},
 		},
 		{
@@ -530,11 +584,11 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx := context.Background()
+	ctx := gomock.Any()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewMockRepository(ctrl)
+	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)

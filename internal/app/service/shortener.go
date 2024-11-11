@@ -30,7 +30,7 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 		return "", errors.ErrFailedToGenerateUUID
 	}
 
-	shortCode, err := s.rand.Hex()
+	shortCode, err := s.generateUniqueShortCode(ctx)
 	if err != nil {
 		return "", errors.ErrFailedToGenerateCode
 	}
@@ -63,7 +63,7 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 			return nil, errors.ErrFailedToGenerateUUID
 		}
 
-		shortCode, err := s.rand.Hex()
+		shortCode, err := s.generateUniqueShortCode(ctx)
 		if err != nil {
 			return nil, errors.ErrFailedToGenerateCode
 		}
@@ -90,4 +90,17 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 
 func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
 	return s.repo.GetURLByShortCode(ctx, shortCode)
+}
+
+func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
+	for {
+		shortCode, err := s.rand.Hex()
+		if err != nil {
+			return "", err
+		}
+
+		if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
+			return shortCode, nil
+		}
+	}
 }

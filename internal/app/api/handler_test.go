@@ -56,6 +56,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,
@@ -80,6 +81,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,
@@ -241,6 +243,8 @@ func Test_HandleBatchCreateShortLink(t *testing.T) {
 				rand.EXPECT().UUID().Return(UUID2, nil)
 				rand.EXPECT().Hex().Return("abcd0001", nil)
 				rand.EXPECT().Hex().Return("abcd0002", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd0001").Return(nil, false)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd0002").Return(nil, false)
 
 				urls := []repository.URL{
 					{
@@ -476,6 +480,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,
@@ -499,6 +504,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 			before: func() {
 				rand.EXPECT().UUID().Return(UUID, nil)
 				rand.EXPECT().Hex().Return("abcd1234", nil)
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(nil, false)
 
 				repo.EXPECT().CreateURL(ctx, repository.URL{
 					UUID:      UUID,

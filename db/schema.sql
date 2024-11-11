@@ -40,7 +40,7 @@ SET default_table_access_method = heap;
 
 CREATE TABLE public.urls (
     uuid uuid DEFAULT public.uuid_generate_v4() NOT NULL,
-    long_url text NOT NULL,
+    long_url character varying(2048) NOT NULL,
     short_code character varying(255) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP
@@ -48,6 +48,14 @@ CREATE TABLE public.urls (
 
 
 ALTER TABLE public.urls OWNER TO postgres;
+
+--
+-- Name: urls urls_long_url_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.urls
+    ADD CONSTRAINT urls_long_url_key UNIQUE (long_url);
+
 
 --
 -- Name: urls urls_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres

@@ -1,0 +1,16 @@
+version: 2
+sql:
+  - name: postgresql
+    engine: postgresql
+    schema: db/schema.sql
+    queries: db/sqlc/queries.sql
+    gen:
+      go:
+        package: db
+        sql_package: pgx/v5
+        out: internal/app/repository/db
+        rename:
+          public.urls: URL
+        overrides:
+          - db_type: uuid
+            go_type: github.com/google/uuid.UUID

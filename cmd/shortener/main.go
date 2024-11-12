@@ -13,7 +13,7 @@ import (
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	application, err := app.NewApplication()
+	application, err := app.NewApplication(ctx)
 	if err != nil {
 		stop()
 		log.Fatalf("Failed to initialize application: %v", err)

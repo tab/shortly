@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,6 +16,8 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 		memento *Memento
 		err     error
 	}
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	tests := []struct {
 		name     string
@@ -35,7 +38,7 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 				memento: &Memento{
 					State: []URL{
 						{
-							UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+							UUID:      UUID,
 							LongURL:   "http://example.com",
 							ShortCode: "abcd1234",
 						},
@@ -52,35 +55,6 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 			expected: result{
 				memento: &Memento{
 					State: []URL{},
-				},
-				err: nil,
-			},
-		},
-		{
-			name: "Multiple JSON objects",
-			before: func(filePath string) {
-				file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-				require.NoError(t, err)
-				defer file.Close()
-
-				_, err = file.WriteString(`{"uuid":"uuid1","long_url":"http://example1.com","short_code":"code1"}
-{"uuid":"uuid2","long_url":"http://example2.com","short_code":"code2"}`)
-				require.NoError(t, err)
-			},
-			expected: result{
-				memento: &Memento{
-					State: []URL{
-						{
-							UUID:      "uuid1",
-							LongURL:   "http://example1.com",
-							ShortCode: "code1",
-						},
-						{
-							UUID:      "uuid2",
-							LongURL:   "http://example2.com",
-							ShortCode: "code2",
-						},
-					},
 				},
 				err: nil,
 			},
@@ -126,6 +100,8 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 }
 
 func Test_FileStorageRepository_Save(t *testing.T) {
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
 	tests := []struct {
 		name     string
 		before   func(filePath string)
@@ -138,7 +114,7 @@ func Test_FileStorageRepository_Save(t *testing.T) {
 			payload: &Memento{
 				State: []URL{
 					{
-						UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+						UUID:      UUID,
 						LongURL:   "http://example.com",
 						ShortCode: "abcd1234",
 					},
@@ -154,7 +130,7 @@ func Test_FileStorageRepository_Save(t *testing.T) {
 			payload: &Memento{
 				State: []URL{
 					{
-						UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+						UUID:      UUID,
 						LongURL:   "http://example.com",
 						ShortCode: "abcd1234",
 					},

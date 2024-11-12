@@ -9,7 +9,8 @@ concurrency:
   group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 jobs:
-  Analyzer:
+  analyzer:
+    name: Code analyzer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,9 +32,10 @@ jobs:
       - name: Run statictest
         run: |
           go vet -vettool=$(which statictest) ./...
+
   linter:
     name: Golang CI
-    needs: Analyzer
+    needs: analyzer
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,15 +46,40 @@ jobs:
         uses: golangci/golangci-lint-action@v6
         with:
           version: v1.60
+
   coverage:
     name: Codecov
+    env:
+      GO_ENV: test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: shortly-test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.7'
-      - name: Run coverage
+
+      - name: Load schema.sql
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h localhost -U postgres -d shortly-test -f db/schema.sql
+
+      - name: Run tests
         run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

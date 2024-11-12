@@ -1,11 +1,13 @@
 package router
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"shortly/internal/app/config"
@@ -14,12 +16,16 @@ import (
 )
 
 func Test_HealthCheck(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		DatabaseDSN: "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
-	router := NewRouter(cfg, appLogger, repo)
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
+	router := NewRouter(cfg, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
@@ -34,11 +40,11 @@ func Test_HealthCheck(t *testing.T) {
 
 func Test_CreateShortLink(t *testing.T) {
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
-	router := NewRouter(cfg, appLogger, repo)
+	repo := repository.NewInMemoryRepository()
+	router := NewRouter(cfg, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
 	w := httptest.NewRecorder()
@@ -52,17 +58,22 @@ func Test_CreateShortLink(t *testing.T) {
 }
 
 func Test_GetShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
-		ClientURL: "http://localhost:8080",
+		BaseURL: "http://localhost:8080",
 	}
-	repo := repository.NewRepository()
 	appLogger := logger.NewLogger()
-	router := NewRouter(cfg, appLogger, repo)
+	repo := repository.NewInMemoryRepository()
+	router := NewRouter(cfg, repo, appLogger)
 
-	repo.Set(repository.URL{
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
+	_, err := repo.CreateURL(ctx, repository.URL{
+		UUID:      UUID,
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})
+	assert.NoError(t, err)
 
 	req := httptest.NewRequest(http.MethodGet, "/abcd1234", nil)
 	w := httptest.NewRecorder()

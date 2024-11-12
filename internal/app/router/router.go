@@ -14,10 +14,13 @@ import (
 	"shortly/internal/logger"
 )
 
-func NewRouter(cfg *config.Config, appLogger *logger.Logger, repo repository.Repository) http.Handler {
+func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger.Logger) http.Handler {
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand)
-	handler := api.NewURLHandler(cfg, shortener)
+	shortenerHandler := api.NewURLHandler(cfg, shortener)
+
+	health := service.NewHealthService(repo)
+	healthHandler := api.NewHealthHandler(health)
 
 	router := chi.NewRouter()
 	router.Use(
@@ -31,10 +34,12 @@ func NewRouter(cfg *config.Config, appLogger *logger.Logger, repo repository.Rep
 		compress.Middleware,
 	)
 
-	router.Post("/api/shorten", handler.HandleCreateShortLink)
-	router.Get("/api/shorten/{id}", handler.HandleGetShortLink)
-	router.Post("/", handler.DeprecatedHandleCreateShortLink)
-	router.Get("/{id}", handler.DeprecatedHandleGetShortLink)
+	router.Get("/ping", healthHandler.HandlePing)
+	router.Post("/api/shorten", shortenerHandler.HandleCreateShortLink)
+	router.Get("/api/shorten/{id}", shortenerHandler.HandleGetShortLink)
+	router.Post("/api/shorten/batch", shortenerHandler.HandleBatchCreateShortLink)
+	router.Post("/", shortenerHandler.DeprecatedHandleCreateShortLink)
+	router.Get("/{id}", shortenerHandler.DeprecatedHandleGetShortLink)
 
 	return router
 }

@@ -24,7 +24,10 @@ func Middleware(next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			compressedWriter := newCompressWriter(w)
 			originalWriter = compressedWriter
-			defer compressedWriter.Close()
+
+			next.ServeHTTP(originalWriter, r)
+			compressedWriter.Close()
+			return
 		}
 
 		next.ServeHTTP(originalWriter, r)
@@ -36,7 +39,7 @@ type compressReader struct {
 	gzipReader *gzip.Reader
 }
 
-func (c compressReader) Read(p []byte) (n int, err error) {
+func (c *compressReader) Read(p []byte) (n int, err error) {
 	return c.gzipReader.Read(p)
 }
 

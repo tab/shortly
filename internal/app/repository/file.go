@@ -8,20 +8,20 @@ import (
 	"shortly/internal/app/errors"
 )
 
-type FileRepository interface {
+type File interface {
 	Load() (*Memento, error)
 	Save(m *Memento) error
 }
 
-type FileStorageRepository struct {
+type fileRepo struct {
 	filePath string
 }
 
-func NewFileRepository(filePath string) *FileStorageRepository {
-	return &FileStorageRepository{filePath: filePath}
+func NewFileRepository(filePath string) File {
+	return &fileRepo{filePath: filePath}
 }
 
-func (f *FileStorageRepository) Load() (*Memento, error) {
+func (f *fileRepo) Load() (*Memento, error) {
 	file, err := os.OpenFile(f.filePath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
 		return nil, errors.ErrFailedToOpenFile
@@ -45,7 +45,7 @@ func (f *FileStorageRepository) Load() (*Memento, error) {
 	return memento, nil
 }
 
-func (f *FileStorageRepository) Save(memento *Memento) error {
+func (f *fileRepo) Save(memento *Memento) error {
 	file, err := os.OpenFile(f.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.ErrFailedToOpenFile

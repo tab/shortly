@@ -3,6 +3,7 @@ package service
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -99,8 +100,11 @@ func Test_SecureRandom_UUID(t *testing.T) {
 	mockSecureRandom := NewMockSecureRandomGenerator(ctrl)
 	secureRandom := NewSecureRandom()
 
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	generatedUUID, _ := uuid.NewRandom()
+
 	type result struct {
-		uuid  string
+		uuid  uuid.UUID
 		error error
 	}
 
@@ -108,18 +112,18 @@ func Test_SecureRandom_UUID(t *testing.T) {
 		name     string
 		mocked   bool
 		before   func()
-		rand     func() (string, error)
+		rand     func() (uuid.UUID, error)
 		expected result
 	}{
 		{
 			name:   "Success",
 			mocked: false,
 			before: func() {},
-			rand: func() (string, error) {
+			rand: func() (uuid.UUID, error) {
 				return secureRandom.UUID()
 			},
 			expected: result{
-				uuid:  "random-uuid-string",
+				uuid:  generatedUUID,
 				error: nil,
 			},
 		},
@@ -127,13 +131,13 @@ func Test_SecureRandom_UUID(t *testing.T) {
 			name:   "Mocked success",
 			mocked: true,
 			before: func() {
-				mockSecureRandom.EXPECT().UUID().Return("abcd1234", nil)
+				mockSecureRandom.EXPECT().UUID().Return(UUID, nil)
 			},
-			rand: func() (string, error) {
+			rand: func() (uuid.UUID, error) {
 				return mockSecureRandom.UUID()
 			},
 			expected: result{
-				uuid:  "abcd1234",
+				uuid:  UUID,
 				error: nil,
 			},
 		},
@@ -141,13 +145,13 @@ func Test_SecureRandom_UUID(t *testing.T) {
 			name:   "Mocked failure",
 			mocked: true,
 			before: func() {
-				mockSecureRandom.EXPECT().UUID().Return("", errors.ErrFailedToGenerateUUID)
+				mockSecureRandom.EXPECT().UUID().Return(uuid.UUID{}, errors.ErrFailedToGenerateUUID)
 			},
-			rand: func() (string, error) {
+			rand: func() (uuid.UUID, error) {
 				return mockSecureRandom.UUID()
 			},
 			expected: result{
-				uuid:  "",
+				uuid:  uuid.UUID{},
 				error: errors.ErrFailedToGenerateUUID,
 			},
 		},
@@ -157,7 +161,7 @@ func Test_SecureRandom_UUID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			uuid, err := tt.rand()
+			result, err := tt.rand()
 
 			if tt.expected.error != nil {
 				assert.Error(t, err)
@@ -167,9 +171,9 @@ func Test_SecureRandom_UUID(t *testing.T) {
 			}
 
 			if tt.mocked {
-				assert.Equal(t, tt.expected.uuid, uuid)
+				assert.Equal(t, tt.expected.uuid, result)
 			} else {
-				assert.NotEmpty(t, uuid)
+				assert.NotEmpty(t, result)
 			}
 		})
 	}

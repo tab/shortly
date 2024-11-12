@@ -24,7 +24,7 @@ func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler 
 func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var params dto.CreateShortLinkParams
+	var params dto.CreateShortLinkRequest
 
 	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -32,8 +32,14 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	shortURL, err := h.service.CreateShortLink(params.URL)
+	shortURL, err := h.service.CreateShortLink(r.Context(), params.URL)
 	if err != nil {
+		if errors.Is(err, errors.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
+			return
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
@@ -43,12 +49,34 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
 }
 
+func (h *URLHandler) HandleBatchCreateShortLink(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var params dto.BatchCreateShortLinkRequest
+
+	if err := params.Validate(r.Body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	results, err := h.service.CreateShortLinks(r.Context(), params)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(results)
+}
+
 func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(shortCode)
+	url, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
@@ -61,22 +89,30 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
-	shortURL, err := h.service.DeprecatedCreateShortLink(r)
-	if err != nil {
-		switch {
-		case errors.Is(err, errors.ErrRequestBodyEmpty):
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.Is(err, errors.ErrInvalidURL):
-			http.Error(w, err.Error(), http.StatusBadRequest)
-		case errors.Is(err, errors.ErrFailedToGenerateCode):
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		default:
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-		}
+	w.Header().Set("Content-Type", "text/plain")
+
+	var params dto.CreateShortLinkRequest
+
+	if err := params.DeprecatedValidate(r.Body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain")
+	shortURL, err := h.service.CreateShortLink(r.Context(), params.URL)
+	if err != nil {
+		if errors.Is(err, errors.ErrURLAlreadyExists) {
+			w.WriteHeader(http.StatusConflict)
+			_, err = w.Write([]byte(shortURL))
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+			return
+		}
+
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
@@ -88,7 +124,7 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 func (h *URLHandler) DeprecatedHandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(shortCode)
+	url, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		http.Error(w, errors.ErrShortLinkNotFound.Error(), http.StatusNotFound)
 		return

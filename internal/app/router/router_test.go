@@ -25,7 +25,7 @@ func Test_HealthCheck(t *testing.T) {
 		DSN:    cfg.DatabaseDSN,
 		Logger: appLogger,
 	})
-	router := NewRouter(cfg, appLogger, repo)
+	router := NewRouter(cfg, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
@@ -44,7 +44,7 @@ func Test_CreateShortLink(t *testing.T) {
 	}
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
-	router := NewRouter(cfg, appLogger, repo)
+	router := NewRouter(cfg, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
 	w := httptest.NewRecorder()
@@ -64,7 +64,7 @@ func Test_GetShortLink(t *testing.T) {
 	}
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
-	router := NewRouter(cfg, appLogger, repo)
+	router := NewRouter(cfg, repo, appLogger)
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
 

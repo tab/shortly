@@ -89,7 +89,7 @@ func Test_NewPersistenceManager(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			pm := NewPersistenceManager(tt.cfg, appLogger, tt.repo)
+			pm := NewPersistenceManager(tt.cfg, tt.repo, appLogger)
 			assert.NotNil(t, pm)
 			assert.IsType(t, tt.expectedType, pm)
 		})

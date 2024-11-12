@@ -19,7 +19,7 @@ type manager struct {
 	appLogger *logger.Logger
 }
 
-func NewPersistenceManager(cfg *config.Config, logger *logger.Logger, repo repository.Repository) Manager {
+func NewPersistenceManager(cfg *config.Config, repo repository.Repository, logger *logger.Logger) Manager {
 	inMemoryRepo, ok := repo.(repository.InMemory)
 	if !ok {
 		logger.Warn().Msg("Persistence manager initialization skipped, not an in-memory repository")

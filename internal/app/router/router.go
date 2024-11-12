@@ -14,7 +14,7 @@ import (
 	"shortly/internal/logger"
 )
 
-func NewRouter(cfg *config.Config, appLogger *logger.Logger, repo repository.Repository) http.Handler {
+func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger.Logger) http.Handler {
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand)
 	shortenerHandler := api.NewURLHandler(cfg, shortener)

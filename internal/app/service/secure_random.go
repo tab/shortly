@@ -13,7 +13,7 @@ const BytesLength = 4 // 4 bytes = 8 characters
 
 type SecureRandomGenerator interface {
 	Hex() (string, error)
-	UUID() (string, error)
+	UUID() (uuid.UUID, error)
 }
 
 type SecureRandom struct{}
@@ -37,11 +37,11 @@ func (random *SecureRandom) Hex() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-func (random *SecureRandom) UUID() (string, error) {
+func (random *SecureRandom) UUID() (uuid.UUID, error) {
 	newUUID, err := uuid.NewRandom()
 	if err != nil {
-		return "", errors.ErrFailedToGenerateUUID
+		return uuid.UUID{}, errors.ErrFailedToGenerateUUID
 	}
 
-	return newUUID.String(), nil
+	return newUUID, nil
 }

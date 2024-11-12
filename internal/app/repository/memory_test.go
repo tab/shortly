@@ -1,12 +1,15 @@
 package repository
 
 import (
+	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_InMemoryRepository_Set(t *testing.T) {
+func Test_InMemoryRepository_CreateURL(t *testing.T) {
+	ctx := context.Background()
 	store := NewInMemoryRepository()
 
 	tests := []struct {
@@ -31,7 +34,7 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 				ShortCode: "GitHub",
 			},
 			before: func() {
-				store.Set(URL{
+				store.CreateURL(ctx, URL{
 					LongURL:   "https://example.com",
 					ShortCode: "123456ab",
 				})
@@ -42,10 +45,10 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := store.Set(tt.url)
+			_, err := store.CreateURL(ctx, tt.url)
 			assert.NoError(t, err)
 
-			storedURL, found := store.Get(tt.url.ShortCode)
+			storedURL, found := store.GetURLByShortCode(ctx, tt.url.ShortCode)
 			if tt.expected {
 				assert.True(t, found)
 				assert.Equal(t, tt.url.LongURL, storedURL.LongURL)
@@ -56,10 +59,51 @@ func Test_InMemoryRepository_Set(t *testing.T) {
 	}
 }
 
-func Test_InMemoryRepository_Get(t *testing.T) {
+func Test_InMemoryRepository_CreateURLs(t *testing.T) {
+	ctx := context.Background()
 	store := NewInMemoryRepository()
 
-	err := store.Set(URL{
+	tests := []struct {
+		name     string
+		urls     []URL
+		expected int
+	}{
+		{
+			name: "Add new URLs",
+			urls: []URL{
+				{
+					LongURL:   "https://example.com",
+					ShortCode: "abcd0001",
+				},
+				{
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+				},
+				{
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0003",
+				},
+			},
+			expected: 3,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := store.CreateURLs(ctx, tt.urls)
+			assert.NoError(t, err)
+
+			snapshot := store.CreateMemento()
+			assert.Equal(t, tt.expected, len(snapshot.State))
+		})
+	}
+}
+
+func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	_, err := store.CreateURL(ctx, URL{
 		LongURL:   "https://example.com",
 		ShortCode: "abcd1234",
 	})
@@ -93,7 +137,7 @@ func Test_InMemoryRepository_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			longURL, found := store.Get(tt.shortURL)
+			longURL, found := store.GetURLByShortCode(ctx, tt.shortURL)
 
 			if tt.found {
 				assert.NotNil(t, longURL)
@@ -107,6 +151,10 @@ func Test_InMemoryRepository_Get(t *testing.T) {
 }
 
 func Test_InMemoryRepository_CreateMemento(t *testing.T) {
+	ctx := context.Background()
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
 	type result struct {
 		memento *Memento
 		err     error
@@ -114,14 +162,14 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		before   func(store *InMemoryRepository)
+		before   func(store InMemory)
 		expected result
 	}{
 		{
 			name: "Success",
-			before: func(store *InMemoryRepository) {
-				store.Set(URL{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+			before: func(store InMemory) {
+				store.CreateURL(ctx, URL{
+					UUID:      UUID,
 					LongURL:   "http://example.com",
 					ShortCode: "abcd1234",
 				})
@@ -130,7 +178,7 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 				memento: &Memento{
 					State: []URL{
 						{
-							UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+							UUID:      UUID,
 							LongURL:   "http://example.com",
 							ShortCode: "abcd1234",
 						},
@@ -141,7 +189,7 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 		},
 		{
 			name:   "Empty",
-			before: func(_ *InMemoryRepository) {},
+			before: func(_ InMemory) {},
 			expected: result{
 				memento: &Memento{
 					State: []URL(nil),
@@ -163,6 +211,10 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 }
 
 func Test_InMemoryRepository_Restore(t *testing.T) {
+	ctx := context.Background()
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
 	type result struct {
 		memento *Memento
 		err     error
@@ -170,17 +222,17 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		before   func(store *InMemoryRepository)
+		before   func(store InMemory)
 		expected result
 	}{
 		{
 			name:   "Success",
-			before: func(_ *InMemoryRepository) {},
+			before: func(_ InMemory) {},
 			expected: result{
 				memento: &Memento{
 					State: []URL{
 						{
-							UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+							UUID:      UUID,
 							LongURL:   "http://example.com",
 							ShortCode: "abcd1234",
 						},
@@ -191,9 +243,9 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 		},
 		{
 			name: "Empty",
-			before: func(store *InMemoryRepository) {
-				store.Set(URL{
-					UUID:      "6455bd07-e431-4851-af3c-4f703f726639",
+			before: func(store InMemory) {
+				store.CreateURL(ctx, URL{
+					UUID:      UUID,
 					LongURL:   "http://example.com",
 					ShortCode: "abcd1234",
 				})

@@ -1,21 +1,37 @@
 package repository
 
-import "sync"
+import (
+	"context"
+	"sync"
+)
 
-type InMemoryRepository struct {
+type InMemory interface {
+	Repository
+	CreateMemento() *Memento
+	Restore(m *Memento)
+}
+
+type InMemoryRepo struct {
 	data sync.Map
 }
 
-func NewInMemoryRepository() *InMemoryRepository {
-	return &InMemoryRepository{}
+func NewInMemoryRepository() InMemory {
+	return &InMemoryRepo{}
 }
 
-func (m *InMemoryRepository) Set(url URL) error {
+func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) (*URL, error) {
 	m.data.Store(url.ShortCode, url)
+	return &url, nil
+}
+
+func (m *InMemoryRepo) CreateURLs(_ context.Context, urls []URL) error {
+	for _, url := range urls {
+		m.data.Store(url.ShortCode, url)
+	}
 	return nil
 }
 
-func (m *InMemoryRepository) Get(shortCode string) (*URL, bool) {
+func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*URL, bool) {
 	value, ok := m.data.Load(shortCode)
 	if !ok {
 		return nil, false
@@ -29,7 +45,7 @@ func (m *InMemoryRepository) Get(shortCode string) (*URL, bool) {
 	return &url, true
 }
 
-func (m *InMemoryRepository) CreateMemento() *Memento {
+func (m *InMemoryRepo) CreateMemento() *Memento {
 	var results []URL
 
 	m.data.Range(func(_, value interface{}) bool {
@@ -43,7 +59,7 @@ func (m *InMemoryRepository) CreateMemento() *Memento {
 	return &Memento{State: results}
 }
 
-func (m *InMemoryRepository) Restore(memento *Memento) {
+func (m *InMemoryRepo) Restore(memento *Memento) {
 	m.data = sync.Map{}
 
 	for _, url := range memento.State {

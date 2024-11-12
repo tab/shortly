@@ -1,29 +1,22 @@
 package service
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net/http"
-	"strings"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
-	"shortly/internal/app/validator"
 )
 
 type URLService struct {
 	cfg  *config.Config
-	repo URLRepository
+	repo repository.Repository
 	rand SecureRandomGenerator
 }
 
-type URLRepository interface {
-	Set(url repository.URL) error
-	Get(shortCode string) (*repository.URL, bool)
-}
-
-func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGenerator) *URLService {
+func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator) *URLService {
 	return &URLService{
 		cfg:  cfg,
 		repo: repo,
@@ -31,13 +24,13 @@ func NewURLService(cfg *config.Config, repo URLRepository, rand SecureRandomGene
 	}
 }
 
-func (s *URLService) CreateShortLink(longURL string) (string, error) {
+func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (string, error) {
 	uuid, err := s.rand.UUID()
 	if err != nil {
 		return "", errors.ErrFailedToGenerateUUID
 	}
 
-	shortCode, err := s.rand.Hex()
+	shortCode, err := s.generateUniqueShortCode(ctx)
 	if err != nil {
 		return "", errors.ErrFailedToGenerateCode
 	}
@@ -47,39 +40,67 @@ func (s *URLService) CreateShortLink(longURL string) (string, error) {
 		LongURL:   longURL,
 		ShortCode: shortCode,
 	}
-	s.repo.Set(url)
 
-	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
-}
-
-// NOTE: text/plain request is deprecated
-func (s *URLService) DeprecatedCreateShortLink(r *http.Request) (string, error) {
-	body, err := io.ReadAll(r.Body)
-	if err != nil || len(body) == 0 {
-		return "", errors.ErrRequestBodyEmpty
-	}
-	defer r.Body.Close()
-
-	longURL := strings.Trim(strings.TrimSpace(string(body)), "\"")
-
-	if err = validator.Validate(longURL); err != nil {
-		return "", err
-	}
-
-	shortCode, err := s.rand.Hex()
+	record, err := s.repo.CreateURL(ctx, url)
 	if err != nil {
-		return "", errors.ErrFailedToGenerateCode
+		return "", errors.ErrFailedToSaveURL
 	}
 
-	url := repository.URL{
-		LongURL:   longURL,
-		ShortCode: shortCode,
+	if record.ShortCode != shortCode {
+		return fmt.Sprintf("%s/%s", s.cfg.BaseURL, record.ShortCode), errors.ErrURLAlreadyExists
 	}
-	s.repo.Set(url)
 
 	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
 }
 
-func (s *URLService) GetShortLink(shortCode string) (*repository.URL, bool) {
-	return s.repo.Get(shortCode)
+func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCreateShortLinkParams) ([]dto.BatchCreateShortLinkResponse, error) {
+	longURLs := make([]repository.URL, 0, len(params))
+	results := make([]dto.BatchCreateShortLinkResponse, 0, len(params))
+
+	for _, param := range params {
+		uuid, err := s.rand.UUID()
+		if err != nil {
+			return nil, errors.ErrFailedToGenerateUUID
+		}
+
+		shortCode, err := s.generateUniqueShortCode(ctx)
+		if err != nil {
+			return nil, errors.ErrFailedToGenerateCode
+		}
+
+		url := repository.URL{
+			UUID:      uuid,
+			LongURL:   param.OriginalURL,
+			ShortCode: shortCode,
+		}
+		longURLs = append(longURLs, url)
+
+		results = append(results, dto.BatchCreateShortLinkResponse{
+			CorrelationID: param.CorrelationID,
+			ShortURL:      fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode),
+		})
+	}
+
+	if err := s.repo.CreateURLs(ctx, longURLs); err != nil {
+		return nil, errors.ErrFailedToSaveURL
+	}
+
+	return results, nil
+}
+
+func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
+	return s.repo.GetURLByShortCode(ctx, shortCode)
+}
+
+func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
+	for {
+		shortCode, err := s.rand.Hex()
+		if err != nil {
+			return "", err
+		}
+
+		if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
+			return shortCode, nil
+		}
+	}
 }

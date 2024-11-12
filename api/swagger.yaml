@@ -5,20 +5,23 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
-  /health:
+  /ping:
     get:
       summary: Health check
-      description: Check service health
+      description: Database connection health check
       responses:
         '200':
-          description: Service is up and running
+          description: Database connection is up
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                description: Health check message
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: Database connection check message
         '500':
-          $ref: '#/components/responses/InternalServerErrorPlain'
+          $ref: '#/components/responses/InternalServerError'
   /api/shorten:
     post:
       summary: Create a short link
@@ -40,6 +43,37 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/ShortLinkCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/shorten/batch:
+    post:
+      summary: Create multiple short links
+      description: Accepts a JSON array of URLs to be shortened and returns the shortened URLs
+      requestBody:
+        description: Array of URLs to be shortened
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: object
+                properties:
+                  correlation_id:
+                    type: string
+                    description: Correlation identifier for the request
+                  original_url:
+                    type: string
+                    format: uri
+                    description: The original URL to be shortened
+                required:
+                  - correlation_id
+                  - original_url
+      responses:
+        '201':
+          $ref: '#/components/responses/BatchShortLinksCreated'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -135,6 +169,22 @@ components:
             type: string
             description: Shortened URL
           example: "http://localhost:8080/EwHXdJfB"
+    BatchShortLinksCreated:
+      description: Short links created successfully
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                correlation_id:
+                  type: string
+                  description: Correlation identifier for the request
+                short_url:
+                  type: string
+                  format: uri
+                  description: The shortened URL
     OriginalURLFound:
       description: Original URL found
       content:

@@ -28,9 +28,9 @@ func NewApplication(ctx context.Context) (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	persistenceManager := persistence.NewPersistenceManager(cfg, appLogger, appRepository)
+	persistenceManager := persistence.NewPersistenceManager(cfg, appRepository, appLogger)
 
-	appRouter := router.NewRouter(cfg, appLogger, appRepository)
+	appRouter := router.NewRouter(cfg, appRepository, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
 
 	return &Application{

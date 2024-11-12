@@ -24,7 +24,7 @@ func Test_NewServer(t *testing.T) {
 		DSN:    cfg.DatabaseDSN,
 		Logger: appLogger,
 	})
-	appRouter := router.NewRouter(cfg, appLogger, repo)
+	appRouter := router.NewRouter(cfg, repo, appLogger)
 
 	srv := NewServer(cfg, appRouter)
 	assert.NotNil(t, srv)

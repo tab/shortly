@@ -1,32 +1,83 @@
-# go-musthave-shortener-tpl
+# Shortly
 
-Шаблон репозитория для трека «Сервис сокращения URL».
+## Overview
+Shortly is a Go application designed to shorten long URLs
 
-## Начало работы
+## Setup Instructions
 
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без префикса `https://`) для создания модуля.
+### Prerequisites
 
-## Обновление шаблона
+**Docker** and **Docker Compose** installed on your machine
 
-Чтобы иметь возможность получать обновления автотестов и других частей шаблона, выполните команду:
+### Build
 
-```
-git remote add -m main template https://github.com/Yandex-Practicum/go-musthave-shortener-tpl.git
-```
-
-Для обновления кода автотестов выполните команду:
-
-```
-git fetch template && git checkout template/main .github
+```sh
+docker-compose build
 ```
 
-Затем добавьте полученные изменения в свой репозиторий.
+### Database setup
 
-## Запуск автотестов
+```sh
+docker-compose up -d database
+```
 
-Для успешного запуска автотестов называйте ветки `iter<number>`, где `<number>` — порядковый номер инкремента. Например, в ветке с названием `iter4` запустятся автотесты для инкрементов с первого по четвёртый.
+```sh
+GO_ENV=development make db:create db:migrate
+```
 
-При мёрже ветки с инкрементом в основную ветку `main` будут запускаться все автотесты.
+#### Database management commands
 
-Подробнее про локальный и автоматический запуск читайте в [README автотестов](https://github.com/Yandex-Practicum/go-autotests).
+The Makefile provides commands for managing the database:
+
+    Create Database: make db:create
+    Drop Database: make db:drop
+    Apply Migrations: make db:migrate
+    Check Migration Status: make db:migrate:status
+    Rollback Last Migration: make db:rollback
+    Dump Schema: make db:schema:dump
+    Load Schema: make db:schema:load
+
+### Run application
+
+```sh
+docker-compose up backend
+```
+
+### API Documentation
+
+Check api/swagger.yml for the API documentation
+
+### Development
+
+Check `.env.development` for the environment variables
+and `.env.test` for the test environment variables
+
+#### Prepare test environment
+
+```sh
+GO_ENV=test make db:create db:schema:load
+```
+
+Unit Tests:
+
+```sh
+GO_ENV=test make test
+```
+
+Test Coverage:
+
+```sh
+make coverage
+```
+
+Code Vetting:
+
+```sh
+make vet
+```
+
+Linting:
+
+```sh
+make lint
+```

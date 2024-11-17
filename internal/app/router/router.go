@@ -8,9 +8,9 @@ import (
 
 	"shortly/internal/app/api"
 	"shortly/internal/app/config"
+	"shortly/internal/app/middleware/compress"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
-	"shortly/internal/compress"
 	"shortly/internal/logger"
 )
 

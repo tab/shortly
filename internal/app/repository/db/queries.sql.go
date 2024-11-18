@@ -12,8 +12,8 @@ import (
 )
 
 const createURL = `-- name: CreateURL :one
-INSERT INTO urls (uuid, long_url, short_code)
-VALUES ($1, $2, $3)
+INSERT INTO urls (uuid, long_url, short_code, user_uuid)
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (long_url) DO UPDATE SET short_code = urls.short_code
 RETURNING uuid, long_url, short_code
 `
@@ -22,6 +22,7 @@ type CreateURLParams struct {
 	UUID      uuid.UUID
 	LongURL   string
 	ShortCode string
+	UserUUID  uuid.UUID
 }
 
 type CreateURLRow struct {
@@ -31,7 +32,12 @@ type CreateURLRow struct {
 }
 
 func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (CreateURLRow, error) {
-	row := q.db.QueryRow(ctx, createURL, arg.UUID, arg.LongURL, arg.ShortCode)
+	row := q.db.QueryRow(ctx, createURL,
+		arg.UUID,
+		arg.LongURL,
+		arg.ShortCode,
+		arg.UserUUID,
+	)
 	var i CreateURLRow
 	err := row.Scan(&i.UUID, &i.LongURL, &i.ShortCode)
 	return i, err
@@ -52,6 +58,36 @@ func (q *Queries) GetURLByShortCode(ctx context.Context, shortCode string) (GetU
 	var i GetURLByShortCodeRow
 	err := row.Scan(&i.UUID, &i.LongURL, &i.ShortCode)
 	return i, err
+}
+
+const getURLsByUserID = `-- name: GetURLsByUserID :many
+SELECT uuid, long_url, short_code FROM urls WHERE user_uuid = $1
+`
+
+type GetURLsByUserIDRow struct {
+	UUID      uuid.UUID
+	LongURL   string
+	ShortCode string
+}
+
+func (q *Queries) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]GetURLsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getURLsByUserID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetURLsByUserIDRow
+	for rows.Next() {
+		var i GetURLsByUserIDRow
+		if err := rows.Scan(&i.UUID, &i.LongURL, &i.ShortCode); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const healthCheck = `-- name: HealthCheck :one

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -440,6 +441,128 @@ func Test_HandleGetShortLink(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.response.Result, actual.Result)
 			}
+			assert.Equal(t, tt.expected.status, resp.Status)
+			assert.Equal(t, tt.expected.code, resp.StatusCode)
+		})
+	}
+}
+
+func Test_HandleGetUserURLs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	srv := service.NewURLService(cfg, repo, rand)
+	handler := NewURLHandler(cfg, srv)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+
+	ctx := context.WithValue(context.Background(), dto.CurrentUser, UserUUID)
+
+	type result struct {
+		response []dto.GetUserURLsResponse
+		error    dto.ErrorResponse
+		code     int
+		status   string
+	}
+
+	tests := []struct {
+		name     string
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return([]repository.URL{
+					{
+						UUID:      UUID1,
+						LongURL:   "https://google.com",
+						ShortCode: "abcd0001",
+					},
+					{
+						UUID:      UUID2,
+						LongURL:   "https://github.com",
+						ShortCode: "abcd0002",
+					},
+				}, nil)
+			},
+			expected: result{
+				response: []dto.GetUserURLsResponse{
+					{
+						ShortURL:    "http://localhost:8080/abcd0001",
+						OriginalURL: "https://google.com",
+					},
+					{
+						ShortURL:    "http://localhost:8080/abcd0002",
+						OriginalURL: "https://github.com",
+					},
+				},
+				status: "200 OK",
+				code:   http.StatusOK,
+			},
+		},
+		{
+			name: "No URLs",
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, nil)
+			},
+			expected: result{
+				response: []dto.GetUserURLsResponse(nil),
+				status:   "204 No Content",
+				code:     http.StatusNoContent,
+			},
+		},
+		{
+			name: "Error",
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, errors.ErrFailedToLoadUserUrls)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: errors.ErrFailedToLoadUserUrls.Error()},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			req := httptest.NewRequest(http.MethodGet, "/api/user/urls", nil)
+			req = req.WithContext(ctx)
+			w := httptest.NewRecorder()
+
+			handler.HandleGetUserURLs(w, req)
+
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			switch tt.expected.code {
+			case http.StatusNoContent:
+				body, _ := io.ReadAll(resp.Body)
+				assert.Empty(t, body)
+
+			case http.StatusInternalServerError, http.StatusBadRequest, http.StatusNotFound:
+				var actual dto.ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+
+			default:
+				var actual []dto.GetUserURLsResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response, actual)
+			}
+
 			assert.Equal(t, tt.expected.status, resp.Status)
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})

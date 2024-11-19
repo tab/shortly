@@ -12,6 +12,11 @@ type URL struct {
 	UUID      uuid.UUID `json:"uuid"`
 	LongURL   string    `json:"long_url"`
 	ShortCode string    `json:"short_code"`
+	UserUUID  uuid.UUID `json:"user_uuid"`
+}
+
+type User struct {
+	UUID uuid.UUID `json:"uuid"`
 }
 
 type Memento struct {
@@ -22,6 +27,7 @@ type Repository interface {
 	CreateURL(ctx context.Context, url URL) (*URL, error)
 	CreateURLs(ctx context.Context, urls []URL) error
 	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool)
+	GetURLsByUserID(ctx context.Context, uuid uuid.UUID) ([]URL, error)
 }
 
 type HealthChecker interface {

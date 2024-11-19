@@ -317,3 +317,108 @@ func Test_GetShortLink(t *testing.T) {
 		})
 	}
 }
+
+func Test_GetUserURLs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		Addr:      "localhost:8080",
+		BaseURL:   "http://localhost:8080",
+		ClientURL: "http://localhost:8080",
+	}
+
+	repo := repository.NewMockRepository(ctrl)
+	rand := NewMockSecureRandomGenerator(ctrl)
+	service := NewURLService(cfg, repo, rand)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+
+	type result struct {
+		urls  []dto.GetUserURLsResponse
+		error error
+	}
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		before   func(ctx context.Context)
+		expected result
+	}{
+		{
+			name: "Success",
+			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			before: func(ctx context.Context) {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return([]repository.URL{
+					{
+						UUID:      UUID1,
+						LongURL:   "https://google.com",
+						ShortCode: "abcd0001",
+					},
+					{
+						UUID:      UUID2,
+						LongURL:   "https://github.com",
+						ShortCode: "abcd0002",
+					},
+				}, nil)
+			},
+			expected: result{
+				urls: []dto.GetUserURLsResponse{
+					{
+						ShortURL:    "http://localhost:8080/abcd0001",
+						OriginalURL: "https://google.com",
+					},
+					{
+						ShortURL:    "http://localhost:8080/abcd0002",
+						OriginalURL: "https://github.com",
+					},
+				},
+				error: nil,
+			},
+		},
+		{
+			name: "No URLs found",
+			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			before: func(ctx context.Context) {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, nil)
+			},
+			expected: result{
+				urls:  []dto.GetUserURLsResponse{},
+				error: nil,
+			},
+		},
+		{
+			name: "Error loading user URLs",
+			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			before: func(ctx context.Context) {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, errors.ErrFailedToLoadUserUrls)
+			},
+			expected: result{
+				urls:  nil,
+				error: errors.ErrFailedToLoadUserUrls,
+			},
+		},
+		{
+			name:   "Error invalid user ID",
+			ctx:    context.Background(),
+			before: func(_ context.Context) {},
+			expected: result{
+				urls:  nil,
+				error: errors.ErrInvalidUserID,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before(tt.ctx)
+
+			urls, err := service.GetUserURLs(tt.ctx)
+
+			assert.Equal(t, tt.expected.urls, urls)
+			assert.Equal(t, tt.expected.error, err)
+		})
+	}
+}

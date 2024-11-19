@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"shortly/internal/app/repository/db"
@@ -38,6 +39,7 @@ func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) (*URL, error) {
 		UUID:      url.UUID,
 		LongURL:   url.LongURL,
 		ShortCode: url.ShortCode,
+		UserUUID:  url.UserUUID,
 	})
 
 	if err != nil {
@@ -85,6 +87,24 @@ func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) 
 		LongURL:   row.LongURL,
 		ShortCode: row.ShortCode,
 	}, true
+}
+
+func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]URL, error) {
+	rows, err := d.queries.GetURLsByUserID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	urls := make([]URL, 0, len(rows))
+	for _, row := range rows {
+		urls = append(urls, URL{
+			UUID:      row.UUID,
+			LongURL:   row.LongURL,
+			ShortCode: row.ShortCode,
+		})
+	}
+
+	return urls, nil
 }
 
 func (d *DatabaseRepo) Ping(ctx context.Context) error {

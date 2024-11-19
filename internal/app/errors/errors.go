@@ -15,6 +15,10 @@ var (
 	ErrFailedToWriteToFile     = errors.New("failed to write to file")
 	ErrFailedToSaveURL         = errors.New("failed to save URL")
 	ErrURLAlreadyExists        = errors.New("URL already exists")
+	ErrInvalidToken            = errors.New("invalid token")
+	ErrInvalidSigningMethod    = errors.New("invalid signing method")
+	ErrInvalidUserID           = errors.New("invalid user id")
+	ErrFailedToLoadUserUrls    = errors.New("failed to load user URLs")
 )
 
 var (

@@ -252,9 +252,9 @@ func Test_InMemoryRepository_GetURLsByUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			urls, err := store.GetURLsByUserID(ctx, tt.UserID)
+			urls, total, err := store.GetURLsByUserID(ctx, tt.UserID, 25, 0)
 			assert.NoError(t, err)
-			assert.Len(t, urls, tt.expected.count)
+			assert.Equal(t, tt.expected.count, total)
 
 			if tt.expected.count > 0 {
 				assert.Equal(t, tt.expected.UUID, urls[0].UUID)

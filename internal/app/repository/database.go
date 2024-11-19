@@ -89,13 +89,25 @@ func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) 
 	}, true
 }
 
-func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]URL, error) {
-	rows, err := d.queries.GetURLsByUserID(ctx, id)
+func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID, limit, offset int64) ([]URL, int, error) {
+	params := db.GetURLsByUserIDParams{
+		UserUUID: id,
+		Limit:    limit,
+		Offset:   offset,
+	}
+
+	rows, err := d.queries.GetURLsByUserID(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	urls := make([]URL, 0, len(rows))
+	var total int
+
+	if len(rows) > 0 {
+		total = int(rows[0].Total)
+	}
+
 	for _, row := range rows {
 		urls = append(urls, URL{
 			UUID:      row.UUID,
@@ -104,7 +116,7 @@ func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]URL
 		})
 	}
 
-	return urls, nil
+	return urls, total, nil
 }
 
 func (d *DatabaseRepo) Ping(ctx context.Context) error {

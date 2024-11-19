@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
@@ -331,6 +332,12 @@ func Test_GetUserURLs(t *testing.T) {
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
 	service := NewURLService(cfg, repo, rand)
+	paginator := pagination.Pagination{
+		Page: 1,
+		Per:  25,
+	}
+	limit := int64(25)
+	offset := int64(0)
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
 	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
@@ -338,6 +345,7 @@ func Test_GetUserURLs(t *testing.T) {
 
 	type result struct {
 		urls  []dto.GetUserURLsResponse
+		total int
 		error error
 	}
 
@@ -351,7 +359,7 @@ func Test_GetUserURLs(t *testing.T) {
 			name: "Success",
 			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
 			before: func(ctx context.Context) {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return([]repository.URL{
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return([]repository.URL{
 					{
 						UUID:      UUID1,
 						LongURL:   "https://google.com",
@@ -362,7 +370,7 @@ func Test_GetUserURLs(t *testing.T) {
 						LongURL:   "https://github.com",
 						ShortCode: "abcd0002",
 					},
-				}, nil)
+				}, 2, nil)
 			},
 			expected: result{
 				urls: []dto.GetUserURLsResponse{
@@ -375,6 +383,7 @@ func Test_GetUserURLs(t *testing.T) {
 						OriginalURL: "https://github.com",
 					},
 				},
+				total: 2,
 				error: nil,
 			},
 		},
@@ -382,10 +391,11 @@ func Test_GetUserURLs(t *testing.T) {
 			name: "No URLs found",
 			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
 			before: func(ctx context.Context) {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, nil)
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return(nil, 0, nil)
 			},
 			expected: result{
 				urls:  []dto.GetUserURLsResponse{},
+				total: 0,
 				error: nil,
 			},
 		},
@@ -393,10 +403,11 @@ func Test_GetUserURLs(t *testing.T) {
 			name: "Error loading user URLs",
 			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
 			before: func(ctx context.Context) {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, errors.ErrFailedToLoadUserUrls)
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return(nil, 0, errors.ErrFailedToLoadUserUrls)
 			},
 			expected: result{
 				urls:  nil,
+				total: 0,
 				error: errors.ErrFailedToLoadUserUrls,
 			},
 		},
@@ -406,6 +417,7 @@ func Test_GetUserURLs(t *testing.T) {
 			before: func(_ context.Context) {},
 			expected: result{
 				urls:  nil,
+				total: 0,
 				error: errors.ErrInvalidUserID,
 			},
 		},
@@ -415,9 +427,10 @@ func Test_GetUserURLs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before(tt.ctx)
 
-			urls, err := service.GetUserURLs(tt.ctx)
+			urls, total, err := service.GetUserURLs(tt.ctx, &paginator)
 
 			assert.Equal(t, tt.expected.urls, urls)
+			assert.Equal(t, tt.expected.total, total)
 			assert.Equal(t, tt.expected.error, err)
 		})
 	}

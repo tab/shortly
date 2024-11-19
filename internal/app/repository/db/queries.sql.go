@@ -61,17 +61,37 @@ func (q *Queries) GetURLByShortCode(ctx context.Context, shortCode string) (GetU
 }
 
 const getURLsByUserID = `-- name: GetURLsByUserID :many
-SELECT uuid, long_url, short_code FROM urls WHERE user_uuid = $1
+WITH counter AS (
+  SELECT COUNT(*) AS total
+  FROM urls
+  WHERE user_uuid = $1
+)
+SELECT
+  u.uuid,
+  u.long_url,
+  u.short_code,
+  counter.total
+FROM urls AS u
+RIGHT JOIN counter ON TRUE
+WHERE u.user_uuid = $1
+ORDER BY u.created_at DESC LIMIT $2 OFFSET $3
 `
+
+type GetURLsByUserIDParams struct {
+	UserUUID uuid.UUID
+	Limit    int64
+	Offset   int64
+}
 
 type GetURLsByUserIDRow struct {
 	UUID      uuid.UUID
 	LongURL   string
 	ShortCode string
+	Total     int64
 }
 
-func (q *Queries) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]GetURLsByUserIDRow, error) {
-	rows, err := q.db.Query(ctx, getURLsByUserID, id)
+func (q *Queries) GetURLsByUserID(ctx context.Context, arg GetURLsByUserIDParams) ([]GetURLsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getURLsByUserID, arg.UserUUID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +99,12 @@ func (q *Queries) GetURLsByUserID(ctx context.Context, id uuid.UUID) ([]GetURLsB
 	var items []GetURLsByUserIDRow
 	for rows.Next() {
 		var i GetURLsByUserIDRow
-		if err := rows.Scan(&i.UUID, &i.LongURL, &i.ShortCode); err != nil {
+		if err := rows.Scan(
+			&i.UUID,
+			&i.LongURL,
+			&i.ShortCode,
+			&i.Total,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -94,9 +119,9 @@ const healthCheck = `-- name: HealthCheck :one
 SELECT 1
 `
 
-func (q *Queries) HealthCheck(ctx context.Context) (int32, error) {
+func (q *Queries) HealthCheck(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, healthCheck)
-	var column_1 int32
+	var column_1 int64
 	err := row.Scan(&column_1)
 	return column_1, err
 }

@@ -86,18 +86,19 @@ func (mr *MockRepositoryMockRecorder) GetURLByShortCode(ctx, shortCode any) *gom
 }
 
 // GetURLsByUserID mocks base method.
-func (m *MockRepository) GetURLsByUserID(ctx context.Context, uuid uuid.UUID) ([]URL, error) {
+func (m *MockRepository) GetURLsByUserID(ctx context.Context, uuid uuid.UUID, limit, offset int64) ([]URL, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetURLsByUserID", ctx, uuid)
+	ret := m.ctrl.Call(m, "GetURLsByUserID", ctx, uuid, limit, offset)
 	ret0, _ := ret[0].([]URL)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetURLsByUserID indicates an expected call of GetURLsByUserID.
-func (mr *MockRepositoryMockRecorder) GetURLsByUserID(ctx, uuid any) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) GetURLsByUserID(ctx, uuid, limit, offset any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLsByUserID", reflect.TypeOf((*MockRepository)(nil).GetURLsByUserID), ctx, uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLsByUserID", reflect.TypeOf((*MockRepository)(nil).GetURLsByUserID), ctx, uuid, limit, offset)
 }
 
 // MockHealthChecker is a mock of HealthChecker interface.

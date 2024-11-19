@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -50,7 +51,7 @@ func (m *MockRepository) CreateURL(ctx context.Context, url URL) (*URL, error) {
 }
 
 // CreateURL indicates an expected call of CreateURL.
-func (mr *MockRepositoryMockRecorder) CreateURL(ctx context.Context, url URL) *gomock.Call {
+func (mr *MockRepositoryMockRecorder) CreateURL(ctx, url any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURL", reflect.TypeOf((*MockRepository)(nil).CreateURL), ctx, url)
 }
@@ -82,6 +83,21 @@ func (m *MockRepository) GetURLByShortCode(ctx context.Context, shortCode string
 func (mr *MockRepositoryMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockRepository)(nil).GetURLByShortCode), ctx, shortCode)
+}
+
+// GetURLsByUserID mocks base method.
+func (m *MockRepository) GetURLsByUserID(ctx context.Context, uuid uuid.UUID) ([]URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURLsByUserID", ctx, uuid)
+	ret0, _ := ret[0].([]URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetURLsByUserID indicates an expected call of GetURLsByUserID.
+func (mr *MockRepositoryMockRecorder) GetURLsByUserID(ctx, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLsByUserID", reflect.TypeOf((*MockRepository)(nil).GetURLsByUserID), ctx, uuid)
 }
 
 // MockHealthChecker is a mock of HealthChecker interface.

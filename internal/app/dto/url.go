@@ -35,6 +35,11 @@ type GetShortLinkResponse struct {
 	Result string `json:"result"`
 }
 
+type GetUserURLsResponse struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }

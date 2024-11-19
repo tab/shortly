@@ -87,6 +87,25 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: url.LongURL})
 }
 
+func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	urls, err := h.service.GetUserURLs(r.Context())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(urls)
+}
+
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")

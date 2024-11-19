@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -94,6 +95,21 @@ func (m *MockDatabase) GetURLByShortCode(ctx context.Context, shortCode string) 
 func (mr *MockDatabaseMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockDatabase)(nil).GetURLByShortCode), ctx, shortCode)
+}
+
+// GetURLsByUserID mocks base method.
+func (m *MockDatabase) GetURLsByUserID(ctx context.Context, uuid uuid.UUID) ([]URL, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURLsByUserID", ctx, uuid)
+	ret0, _ := ret[0].([]URL)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetURLsByUserID indicates an expected call of GetURLsByUserID.
+func (mr *MockDatabaseMockRecorder) GetURLsByUserID(ctx, uuid any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLsByUserID", reflect.TypeOf((*MockDatabase)(nil).GetURLsByUserID), ctx, uuid)
 }
 
 // Ping mocks base method.

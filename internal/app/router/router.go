@@ -8,6 +8,7 @@ import (
 
 	"shortly/internal/app/api"
 	"shortly/internal/app/config"
+	"shortly/internal/app/middleware/auth"
 	"shortly/internal/app/middleware/compress"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
@@ -22,6 +23,8 @@ func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger
 	health := service.NewHealthService(repo)
 	healthHandler := api.NewHealthHandler(health)
 
+	authenticator := service.NewAuthService(cfg)
+
 	router := chi.NewRouter()
 	router.Use(
 		cors.Handler(cors.Options{
@@ -34,12 +37,25 @@ func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger
 		compress.Middleware,
 	)
 
-	router.Get("/ping", healthHandler.HandlePing)
-	router.Post("/api/shorten", shortenerHandler.HandleCreateShortLink)
-	router.Get("/api/shorten/{id}", shortenerHandler.HandleGetShortLink)
-	router.Post("/api/shorten/batch", shortenerHandler.HandleBatchCreateShortLink)
-	router.Post("/", shortenerHandler.DeprecatedHandleCreateShortLink)
-	router.Get("/{id}", shortenerHandler.DeprecatedHandleGetShortLink)
+	// NOTE: protected routes
+	router.Group(func(r chi.Router) {
+		r.Use(auth.RequireAuth)
+		r.Use(auth.Middleware(authenticator))
+
+		r.Get("/api/user/urls", shortenerHandler.HandleGetUserURLs)
+	})
+
+	// NOTE: public routes
+	router.Group(func(r chi.Router) {
+		r.Use(auth.Middleware(authenticator))
+
+		r.Get("/ping", healthHandler.HandlePing)
+		r.Post("/api/shorten", shortenerHandler.HandleCreateShortLink)
+		r.Get("/api/shorten/{id}", shortenerHandler.HandleGetShortLink)
+		r.Post("/api/shorten/batch", shortenerHandler.HandleBatchCreateShortLink)
+		r.Post("/", shortenerHandler.DeprecatedHandleCreateShortLink)
+		r.Get("/{id}", shortenerHandler.DeprecatedHandleGetShortLink)
+	})
 
 	return router
 }

@@ -150,6 +150,125 @@ func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
 	}
 }
 
+func Test_InMemoryRepository_GetURLsByUserID(t *testing.T) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID1, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID2, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174002")
+
+	type result struct {
+		count     int
+		UUID      uuid.UUID
+		LongURL   string
+		ShortCode string
+	}
+
+	tests := []struct {
+		name     string
+		before   func()
+		UserID   uuid.UUID
+		expected result
+	}{
+		{
+			name: "Success",
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID2,
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     1,
+				UUID:      UUID2,
+				LongURL:   "https://github.com",
+				ShortCode: "abcd0002",
+			},
+		},
+		{
+			name: "Not owned",
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID2,
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+		{
+			name: "Not Found",
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+		{
+			name:   "Empty",
+			before: func() {},
+			UserID: uuid.Nil,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			urls, err := store.GetURLsByUserID(ctx, tt.UserID)
+			assert.NoError(t, err)
+			assert.Len(t, urls, tt.expected.count)
+
+			if tt.expected.count > 0 {
+				assert.Equal(t, tt.expected.UUID, urls[0].UUID)
+				assert.Equal(t, tt.expected.LongURL, urls[0].LongURL)
+				assert.Equal(t, tt.expected.ShortCode, urls[0].ShortCode)
+			}
+
+			t.Cleanup(func() {
+				store.Clear()
+			})
+		})
+	}
+}
+
 func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 	ctx := context.Background()
 
@@ -267,6 +386,43 @@ func Test_InMemoryRepository_Restore(t *testing.T) {
 			store.Restore(tt.expected.memento)
 			memento := store.CreateMemento()
 			assert.Equal(t, tt.expected.memento, memento)
+		})
+	}
+}
+
+func Test_InMemoryRepository_Clear(t *testing.T) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174000")
+
+	tests := []struct {
+		name     string
+		before   func()
+		expected int
+	}{
+		{
+			name: "Success",
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID,
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+					UserUUID:  UserUUID,
+				})
+				assert.NoError(t, err)
+			},
+			expected: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store.Clear()
+
+			snapshot := store.CreateMemento()
+			assert.Equal(t, tt.expected, len(snapshot.State))
 		})
 	}
 }

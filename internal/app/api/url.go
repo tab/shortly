@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
@@ -90,7 +91,9 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	urls, err := h.service.GetUserURLs(r.Context())
+	paginator := pagination.NewPagination(r)
+
+	urls, _, err := h.service.GetUserURLs(r.Context(), paginator)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
@@ -101,6 +104,14 @@ func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
+
+	// TODO: use paginated response
+	// response := dto.PaginatedResponse{
+	//	Data:  urls,
+	//	Page:  paginator.Page,
+	//	Per:   paginator.Per,
+	//	Total: total,
+	// }
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(urls)

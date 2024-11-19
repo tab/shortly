@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
@@ -119,15 +120,15 @@ func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error
 	}
 }
 
-func (s *URLService) GetUserURLs(ctx context.Context) ([]dto.GetUserURLsResponse, error) {
+func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pagination) ([]dto.GetUserURLsResponse, int, error) {
 	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
 	if !ok {
-		return nil, errors.ErrInvalidUserID
+		return nil, 0, errors.ErrInvalidUserID
 	}
 
-	urls, err := s.repo.GetURLsByUserID(ctx, currentUserID)
+	urls, total, err := s.repo.GetURLsByUserID(ctx, currentUserID, pagination.Per, pagination.Offset())
 	if err != nil {
-		return nil, errors.ErrFailedToLoadUserUrls
+		return nil, 0, errors.ErrFailedToLoadUserUrls
 	}
 
 	results := make([]dto.GetUserURLsResponse, len(urls))
@@ -138,5 +139,5 @@ func (s *URLService) GetUserURLs(ctx context.Context) ([]dto.GetUserURLsResponse
 		}
 	}
 
-	return results, nil
+	return results, total, nil
 }

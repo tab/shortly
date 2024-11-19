@@ -459,6 +459,9 @@ func Test_HandleGetUserURLs(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand)
 	handler := NewURLHandler(cfg, srv)
 
+	limit := int64(25)
+	offset := int64(0)
+
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
 	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
 	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
@@ -480,7 +483,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 		{
 			name: "Success",
 			before: func() {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return([]repository.URL{
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return([]repository.URL{
 					{
 						UUID:      UUID1,
 						LongURL:   "https://google.com",
@@ -491,7 +494,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 						LongURL:   "https://github.com",
 						ShortCode: "abcd0002",
 					},
-				}, nil)
+				}, 2, nil)
 			},
 			expected: result{
 				response: []dto.GetUserURLsResponse{
@@ -511,7 +514,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 		{
 			name: "No URLs",
 			before: func() {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, nil)
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return(nil, 0, nil)
 			},
 			expected: result{
 				response: []dto.GetUserURLsResponse(nil),
@@ -522,7 +525,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 		{
 			name: "Error",
 			before: func() {
-				repo.EXPECT().GetURLsByUserID(ctx, UserUUID).Return(nil, errors.ErrFailedToLoadUserUrls)
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return(nil, 0, errors.ErrFailedToLoadUserUrls)
 			},
 			expected: result{
 				error:  dto.ErrorResponse{Error: errors.ErrFailedToLoadUserUrls.Error()},

@@ -27,7 +27,7 @@ type Repository interface {
 	CreateURL(ctx context.Context, url URL) (*URL, error)
 	CreateURLs(ctx context.Context, urls []URL) error
 	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool)
-	GetURLsByUserID(ctx context.Context, uuid uuid.UUID) ([]URL, error)
+	GetURLsByUserID(ctx context.Context, uuid uuid.UUID, limit, offset int64) ([]URL, int, error)
 }
 
 type HealthChecker interface {

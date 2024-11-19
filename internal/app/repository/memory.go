@@ -48,7 +48,7 @@ func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*
 	return &url, true
 }
 
-func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID) ([]URL, error) {
+func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID, limit, offset int64) ([]URL, int, error) {
 	var results []URL
 
 	m.data.Range(func(_, value interface{}) bool {
@@ -59,7 +59,19 @@ func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID) ([]URL, 
 		return true
 	})
 
-	return results, nil
+	total := len(results)
+
+	start := int(offset)
+	if start > total {
+		start = total
+	}
+
+	end := int(offset + limit)
+	if end > total {
+		end = total
+	}
+
+	return results[start:end], total, nil
 }
 
 func (m *InMemoryRepo) CreateMemento() *Memento {

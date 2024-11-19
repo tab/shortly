@@ -316,9 +316,9 @@ func Test_DatabaseRepository_GetURLsByUserID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.before()
 
-			rows, err := store.GetURLsByUserID(ctx, tt.UserID)
+			rows, total, err := store.GetURLsByUserID(ctx, tt.UserID, 25, 0)
 			assert.NoError(t, err)
-			assert.Equal(t, len(rows), tt.expected.count)
+			assert.Equal(t, tt.expected.count, total)
 
 			if tt.expected.count > 0 {
 				assert.NotEmpty(t, rows)

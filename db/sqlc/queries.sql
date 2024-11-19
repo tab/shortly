@@ -11,4 +11,17 @@ RETURNING uuid, long_url, short_code;
 SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1;
 
 -- name: GetURLsByUserID :many
-SELECT uuid, long_url, short_code FROM urls WHERE user_uuid = $1;
+WITH counter AS (
+  SELECT COUNT(*) AS total
+  FROM urls
+  WHERE user_uuid = $1
+)
+SELECT
+  u.uuid,
+  u.long_url,
+  u.short_code,
+  counter.total
+FROM urls AS u
+RIGHT JOIN counter ON TRUE
+WHERE u.user_uuid = $1
+ORDER BY u.created_at DESC LIMIT $2 OFFSET $3;

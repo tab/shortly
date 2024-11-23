@@ -16,4 +16,5 @@ type Url struct {
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
 	UserUuid  uuid.UUID
+	DeletedAt pgtype.Timestamp
 }

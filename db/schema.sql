@@ -44,7 +44,8 @@ CREATE TABLE public.urls (
     short_code character varying(255) NOT NULL,
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    user_uuid uuid
+    user_uuid uuid,
+    deleted_at timestamp without time zone
 );
 
 
@@ -72,6 +73,13 @@ ALTER TABLE ONLY public.urls
 
 ALTER TABLE ONLY public.urls
     ADD CONSTRAINT urls_short_code_key UNIQUE (short_code);
+
+
+--
+-- Name: urls_user_uuid_deleted_at_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX urls_user_uuid_deleted_at_idx ON public.urls USING btree (user_uuid, deleted_at);
 
 
 --

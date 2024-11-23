@@ -44,7 +44,7 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (CreateURL
 }
 
 const getURLByShortCode = `-- name: GetURLByShortCode :one
-SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1
+SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1 AND deleted_at IS NULL
 `
 
 type GetURLByShortCodeRow struct {
@@ -64,7 +64,7 @@ const getURLsByUserID = `-- name: GetURLsByUserID :many
 WITH counter AS (
   SELECT COUNT(*) AS total
   FROM urls
-  WHERE user_uuid = $1
+  WHERE user_uuid = $1 AND deleted_at IS NULL
 )
 SELECT
   u.uuid,
@@ -73,7 +73,7 @@ SELECT
   counter.total
 FROM urls AS u
 RIGHT JOIN counter ON TRUE
-WHERE u.user_uuid = $1
+WHERE u.user_uuid = $1 AND deleted_at IS NULL
 ORDER BY u.created_at DESC LIMIT $2 OFFSET $3
 `
 
@@ -121,7 +121,7 @@ SELECT 1
 
 func (q *Queries) HealthCheck(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, healthCheck)
-	var column_1 int64
-	err := row.Scan(&column_1)
-	return column_1, err
+	var result int64
+	err := row.Scan(&result)
+	return result, err
 }

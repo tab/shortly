@@ -32,8 +32,8 @@ func NewApplication(ctx context.Context) (*Application, error) {
 	}
 	persistenceManager := persistence.NewPersistenceManager(cfg, appRepository, appLogger)
 
-	deleteWorker := worker.NewDeleteWorker(cfg, appRepository, appLogger)
-	deleteWorker.Start(ctx)
+	deleteWorker := worker.NewDeleteWorker(ctx, cfg, appRepository, appLogger)
+	deleteWorker.Start()
 
 	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
@@ -67,12 +67,12 @@ func (a *Application) Run(ctx context.Context) error {
 	case <-ctx.Done():
 		a.logger.Info().Msg("Shutting down server...")
 
+		a.deleteWorker.Stop()
+
 		err = a.persistenceManager.Save()
 		if err != nil {
 			return err
 		}
-
-		a.deleteWorker.Stop()
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()

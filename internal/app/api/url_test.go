@@ -21,7 +21,6 @@ import (
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
 	"shortly/internal/app/worker"
-	"shortly/internal/logger"
 )
 
 func Test_HandleCreateShortLink(t *testing.T) {
@@ -34,8 +33,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
@@ -217,8 +215,7 @@ func Test_HandleBatchCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
@@ -378,8 +375,7 @@ func Test_HandleGetShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
@@ -481,8 +477,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
@@ -705,8 +700,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
@@ -847,8 +841,7 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 

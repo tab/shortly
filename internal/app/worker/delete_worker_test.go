@@ -2,12 +2,11 @@ package worker
 
 import (
 	"context"
-	"testing"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	"testing"
+	"time"
 
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
@@ -19,22 +18,21 @@ func Test_worker_StartAndStop(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	cfg := &config.Config{
 		AppEnv: "test",
 	}
 	repo := repository.NewMockRepository(ctrl)
 	appLogger := logger.NewLogger()
-	deleteWorker := NewDeleteWorker(cfg, repo, appLogger)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	deleteWorker := NewDeleteWorker(ctx, cfg, repo, appLogger)
 
 	assert.NotPanics(t, func() {
-		deleteWorker.Start(ctx)
+		deleteWorker.Start()
 	})
 
 	assert.NotPanics(t, func() {
-		deleteWorker.Stop()
+		cancel()
 	})
 }
 
@@ -50,8 +48,6 @@ func Test_DeleteWorker_Perform(t *testing.T) {
 
 	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
 
-	ctx := context.WithValue(context.Background(), dto.CurrentUser, UserUUID)
-
 	tests := []struct {
 		name   string
 		params dto.BatchDeleteParams
@@ -64,9 +60,7 @@ func Test_DeleteWorker_Perform(t *testing.T) {
 				ShortCodes: []string{"abcd1234"},
 			},
 			before: func() {
-				repo.EXPECT().
-					DeleteURLsByUserID(ctx, UserUUID, []string{"abcd1234"}).
-					Return(nil)
+				repo.EXPECT().DeleteURLsByUserID(gomock.Any(), UserUUID, []string{"abcd1234"}).Return(nil)
 			},
 		},
 		{
@@ -76,9 +70,7 @@ func Test_DeleteWorker_Perform(t *testing.T) {
 				ShortCodes: []string{"abcd1234"},
 			},
 			before: func() {
-				repo.EXPECT().
-					DeleteURLsByUserID(ctx, UserUUID, []string{"abcd1234"}).
-					Return(assert.AnError)
+				repo.EXPECT().DeleteURLsByUserID(gomock.Any(), UserUUID, []string{"abcd1234"}).Return(assert.AnError)
 			},
 		},
 	}
@@ -87,14 +79,17 @@ func Test_DeleteWorker_Perform(t *testing.T) {
 		t.Run(tt.name, func(_ *testing.T) {
 			tt.before()
 
-			w := NewDeleteWorker(cfg, repo, appLogger)
+			ctx, cancel := context.WithCancel(context.Background())
 
-			w.Start(ctx)
+			w := NewDeleteWorker(ctx, cfg, repo, appLogger)
+			w.Start()
 			w.Add(tt.params)
 
-			time.Sleep(100 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 
-			w.Stop()
+			assert.NotPanics(t, func() {
+				cancel()
+			})
 		})
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/router"
+	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
@@ -24,7 +25,8 @@ func Test_NewServer(t *testing.T) {
 		DSN:    cfg.DatabaseDSN,
 		Logger: appLogger,
 	})
-	appRouter := router.NewRouter(cfg, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appRouter := router.NewRouter(cfg, repo, appWorker, appLogger)
 
 	srv := NewServer(cfg, appRouter)
 	assert.NotNil(t, srv)

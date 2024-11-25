@@ -6,6 +6,7 @@ var (
 	ErrInvalidURL              = errors.New("invalid URL")
 	ErrOriginalURLEmpty        = errors.New("original URL is required")
 	ErrCorrelationIDEmpty      = errors.New("correlation id is required")
+	ErrShortCodeEmpty          = errors.New("short code is required")
 	ErrShortLinkNotFound       = errors.New("short link not found")
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
 	ErrFailedToGenerateCode    = errors.New("failed to generate short code")

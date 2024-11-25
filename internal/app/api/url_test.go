@@ -19,6 +19,8 @@ import (
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/app/worker"
+	"shortly/internal/logger"
 )
 
 func Test_HandleCreateShortLink(t *testing.T) {
@@ -31,7 +33,9 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
@@ -212,7 +216,9 @@ func Test_HandleBatchCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
@@ -371,7 +377,9 @@ func Test_HandleGetShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {
@@ -456,7 +464,9 @@ func Test_HandleGetUserURLs(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	limit := int64(25)
@@ -572,6 +582,102 @@ func Test_HandleGetUserURLs(t *testing.T) {
 	}
 }
 
+func Test_HandleBatchDeleteUserURLs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+	handler := NewURLHandler(cfg, srv)
+
+	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+
+	type result struct {
+		error  dto.ErrorResponse
+		code   int
+		status string
+	}
+
+	tests := []struct {
+		name     string
+		ctx      context.Context
+		body     io.Reader
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			ctx:  context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			body: strings.NewReader(`["abcd0001", "abcd0002"]`),
+			before: func() {
+				appWorker.EXPECT().Add(dto.BatchDeleteParams{
+					UserID:     UserUUID,
+					ShortCodes: []string{"abcd0001", "abcd0002"},
+				})
+			},
+			expected: result{
+				status: "202 Accepted",
+				code:   http.StatusAccepted,
+			},
+		},
+		{
+			name:   "Empty",
+			ctx:    context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			body:   strings.NewReader("[]"),
+			before: func() {},
+			expected: result{
+				error:  dto.ErrorResponse{Error: errors.ErrShortCodeEmpty.Error()},
+				status: "400 Bad Request",
+				code:   http.StatusBadRequest,
+			},
+		},
+		{
+			name: "Error",
+			ctx:  context.WithValue(context.Background(), dto.CurrentUser, nil),
+			body: strings.NewReader(`["abcd0001", "abcd0002"]`),
+			before: func() {
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: errors.ErrInvalidUserID.Error()},
+				status: "500 Internal Server Error",
+				code:   http.StatusInternalServerError,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			req := httptest.NewRequest(http.MethodDelete, "/api/user/urls", tt.body)
+			req = req.WithContext(tt.ctx)
+			w := httptest.NewRecorder()
+
+			handler.HandleBatchDeleteUserURLs(w, req)
+
+			resp := w.Result()
+			defer resp.Body.Close()
+
+			switch tt.expected.code {
+			case http.StatusInternalServerError, http.StatusBadRequest, http.StatusNotFound:
+				var actual dto.ErrorResponse
+				err := json.NewDecoder(resp.Body).Decode(&actual)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.error.Error, actual.Error)
+
+			default:
+				assert.Equal(t, tt.expected.status, resp.Status)
+				assert.Equal(t, tt.expected.code, resp.StatusCode)
+			}
+		})
+	}
+}
+
 func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -582,7 +688,9 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
@@ -722,7 +830,9 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 	}
 	repo := repository.NewMockDatabase(ctrl)
 	rand := service.NewMockSecureRandomGenerator(ctrl)
-	srv := service.NewURLService(cfg, repo, rand)
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
 	type result struct {

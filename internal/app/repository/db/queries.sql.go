@@ -43,6 +43,22 @@ func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (CreateURL
 	return i, err
 }
 
+const deleteURLsByUserIDAndShortCodes = `-- name: DeleteURLsByUserIDAndShortCodes :exec
+UPDATE urls
+SET deleted_at = NOW()
+WHERE user_uuid = $1 AND short_code = ANY($2::varchar[]) AND deleted_at IS NULL
+`
+
+type DeleteURLsByUserIDAndShortCodesParams struct {
+	UserUUID   uuid.UUID
+	ShortCodes []string
+}
+
+func (q *Queries) DeleteURLsByUserIDAndShortCodes(ctx context.Context, arg DeleteURLsByUserIDAndShortCodesParams) error {
+	_, err := q.db.Exec(ctx, deleteURLsByUserIDAndShortCodes, arg.UserUUID, arg.ShortCodes)
+	return err
+}
+
 const getURLByShortCode = `-- name: GetURLByShortCode :one
 SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1 AND deleted_at IS NULL
 `

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -53,7 +54,7 @@ func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID, limit, o
 
 	m.data.Range(func(_, value interface{}) bool {
 		url, ok := value.(URL)
-		if ok && url.UserUUID == id {
+		if ok && url.UserUUID == id && url.DeletedAt.IsZero() {
 			results = append(results, url)
 		}
 		return true
@@ -72,6 +73,27 @@ func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID, limit, o
 	}
 
 	return results[start:end], total, nil
+}
+
+func (m *InMemoryRepo) DeleteURLsByUserID(_ context.Context, id uuid.UUID, shortCodes []string) error {
+	for _, shortCode := range shortCodes {
+		value, ok := m.data.Load(shortCode)
+		if !ok {
+			continue
+		}
+
+		url, ok := value.(URL)
+		if !ok {
+			continue
+		}
+
+		if url.UserUUID == id && url.DeletedAt.IsZero() {
+			url.DeletedAt = time.Now()
+			m.data.Store(shortCode, url)
+		}
+	}
+
+	return nil
 }
 
 func (m *InMemoryRepo) CreateMemento() *Memento {

@@ -11,19 +11,22 @@ import (
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
+	"shortly/internal/app/worker"
 )
 
 type URLService struct {
-	cfg  *config.Config
-	repo repository.Repository
-	rand SecureRandomGenerator
+	cfg    *config.Config
+	repo   repository.Repository
+	rand   SecureRandomGenerator
+	worker worker.Worker
 }
 
-func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator) *URLService {
+func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator, worker worker.Worker) *URLService {
 	return &URLService{
-		cfg:  cfg,
-		repo: repo,
-		rand: rand,
+		cfg:    cfg,
+		repo:   repo,
+		rand:   rand,
+		worker: worker,
 	}
 }
 
@@ -107,19 +110,6 @@ func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repos
 	return s.repo.GetURLByShortCode(ctx, shortCode)
 }
 
-func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
-	for {
-		shortCode, err := s.rand.Hex()
-		if err != nil {
-			return "", err
-		}
-
-		if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
-			return shortCode, nil
-		}
-	}
-}
-
 func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pagination) ([]dto.GetUserURLsResponse, int, error) {
 	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
 	if !ok {
@@ -140,4 +130,31 @@ func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pag
 	}
 
 	return results, total, nil
+}
+
+func (s *URLService) DeleteUserURLs(ctx context.Context, params dto.BatchDeleteShortLinkRequest) error {
+	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
+	if !ok {
+		return errors.ErrInvalidUserID
+	}
+
+	s.worker.Add(dto.BatchDeleteParams{
+		UserID:     currentUserID,
+		ShortCodes: params,
+	})
+
+	return nil
+}
+
+func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
+	for {
+		shortCode, err := s.rand.Hex()
+		if err != nil {
+			return "", err
+		}
+
+		if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
+			return shortCode, nil
+		}
+	}
 }

@@ -12,12 +12,13 @@ import (
 	"shortly/internal/app/middleware/compress"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
+	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
-func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger.Logger) http.Handler {
+func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Worker, appLogger *logger.Logger) http.Handler {
 	rand := service.NewSecureRandom()
-	shortener := service.NewURLService(cfg, repo, rand)
+	shortener := service.NewURLService(cfg, repo, rand, worker)
 	shortenerHandler := api.NewURLHandler(cfg, shortener)
 
 	health := service.NewHealthService(repo)
@@ -43,6 +44,7 @@ func NewRouter(cfg *config.Config, repo repository.Repository, appLogger *logger
 		r.Use(auth.Middleware(authenticator))
 
 		r.Get("/api/user/urls", shortenerHandler.HandleGetUserURLs)
+		r.Delete("/api/user/urls", shortenerHandler.HandleBatchDeleteUserURLs)
 	})
 
 	// NOTE: public routes

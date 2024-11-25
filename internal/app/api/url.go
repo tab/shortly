@@ -117,6 +117,27 @@ func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(urls)
 }
 
+func (h *URLHandler) HandleBatchDeleteUserURLs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var params dto.BatchDeleteShortLinkRequest
+
+	if err := params.Validate(r.Body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	err := h.service.DeleteUserURLs(r.Context(), params)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
 // NOTE: text/plain request is deprecated
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")

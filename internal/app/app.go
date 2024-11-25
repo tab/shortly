@@ -10,6 +10,7 @@ import (
 	"shortly/internal/app/repository/persistence"
 	"shortly/internal/app/router"
 	"shortly/internal/app/server"
+	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
@@ -17,6 +18,7 @@ type Application struct {
 	cfg                *config.Config
 	logger             *logger.Logger
 	persistenceManager persistence.Manager
+	deleteWorker       worker.Worker
 	server             server.Server
 }
 
@@ -30,13 +32,17 @@ func NewApplication(ctx context.Context) (*Application, error) {
 	}
 	persistenceManager := persistence.NewPersistenceManager(cfg, appRepository, appLogger)
 
-	appRouter := router.NewRouter(cfg, appRepository, appLogger)
+	deleteWorker := worker.NewDeleteWorker(cfg, appRepository, appLogger)
+	deleteWorker.Start(ctx)
+
+	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
 
 	return &Application{
 		cfg:                cfg,
 		logger:             appLogger,
 		persistenceManager: persistenceManager,
+		deleteWorker:       deleteWorker,
 		server:             appServer,
 	}, nil
 }
@@ -65,6 +71,8 @@ func (a *Application) Run(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+
+		a.deleteWorker.Stop()
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()

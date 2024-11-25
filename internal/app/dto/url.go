@@ -5,6 +5,8 @@ import (
 	"io"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"shortly/internal/app/errors"
 	"shortly/internal/app/validator"
 )
@@ -40,6 +42,13 @@ type GetUserURLsResponse struct {
 	OriginalURL string `json:"original_url"`
 }
 
+type BatchDeleteShortLinkRequest []string
+
+type BatchDeleteParams struct {
+	UserID     uuid.UUID
+	ShortCodes []string
+}
+
 type ErrorResponse struct {
 	Error string `json:"error"`
 }
@@ -66,6 +75,25 @@ func (params *BatchCreateShortLinkRequest) Validate(body io.Reader) error {
 
 		if err := validator.Validate(p.OriginalURL); err != nil {
 			return err
+		}
+	}
+
+	return nil
+}
+
+func (params *BatchDeleteShortLinkRequest) Validate(body io.Reader) error {
+	decoder := json.NewDecoder(body)
+	if err := decoder.Decode(params); err != nil {
+		return err
+	}
+
+	if len(*params) == 0 {
+		return errors.ErrShortCodeEmpty
+	}
+
+	for _, p := range *params {
+		if p == "" {
+			return errors.ErrShortCodeEmpty
 		}
 	}
 

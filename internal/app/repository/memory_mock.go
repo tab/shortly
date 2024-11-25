@@ -96,6 +96,20 @@ func (mr *MockInMemoryMockRecorder) CreateURLs(ctx, urls any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockInMemory)(nil).CreateURLs), ctx, urls)
 }
 
+// DeleteURLsByUserID mocks base method.
+func (m *MockInMemory) DeleteURLsByUserID(ctx context.Context, uuid uuid.UUID, shortCodes []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsByUserID", ctx, uuid, shortCodes)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsByUserID indicates an expected call of DeleteURLsByUserID.
+func (mr *MockInMemoryMockRecorder) DeleteURLsByUserID(ctx, uuid, shortCodes any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsByUserID", reflect.TypeOf((*MockInMemory)(nil).DeleteURLsByUserID), ctx, uuid, shortCodes)
+}
+
 // GetURLByShortCode mocks base method.
 func (m *MockInMemory) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()

@@ -86,6 +86,7 @@ func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) 
 		UUID:      row.UUID,
 		LongURL:   row.LongURL,
 		ShortCode: row.ShortCode,
+		DeletedAt: row.DeletedAt.Time,
 	}, true
 }
 

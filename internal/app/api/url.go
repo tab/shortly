@@ -77,15 +77,21 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(r.Context(), shortCode)
+	result, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
 		return
 	}
 
+	if !result.DeletedAt.IsZero() {
+		w.WriteHeader(http.StatusGone)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkDeleted.Error()})
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: url.LongURL})
+	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: result.LongURL})
 }
 
 func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
@@ -175,11 +181,16 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 func (h *URLHandler) DeprecatedHandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(r.Context(), shortCode)
+	result, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		http.Error(w, errors.ErrShortLinkNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	http.Redirect(w, r, url.LongURL, http.StatusTemporaryRedirect)
+	if !result.DeletedAt.IsZero() {
+		http.Error(w, errors.ErrShortLinkDeleted.Error(), http.StatusGone)
+		return
+	}
+
+	http.Redirect(w, r, result.LongURL, http.StatusTemporaryRedirect)
 }

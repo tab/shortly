@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createURL = `-- name: CreateURL :one
@@ -60,19 +61,25 @@ func (q *Queries) DeleteURLsByUserIDAndShortCodes(ctx context.Context, arg Delet
 }
 
 const getURLByShortCode = `-- name: GetURLByShortCode :one
-SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1 AND deleted_at IS NULL
+SELECT uuid, long_url, short_code, deleted_at FROM urls WHERE short_code = $1
 `
 
 type GetURLByShortCodeRow struct {
 	UUID      uuid.UUID
 	LongURL   string
 	ShortCode string
+	DeletedAt pgtype.Timestamp
 }
 
 func (q *Queries) GetURLByShortCode(ctx context.Context, shortCode string) (GetURLByShortCodeRow, error) {
 	row := q.db.QueryRow(ctx, getURLByShortCode, shortCode)
 	var i GetURLByShortCodeRow
-	err := row.Scan(&i.UUID, &i.LongURL, &i.ShortCode)
+	err := row.Scan(
+		&i.UUID,
+		&i.LongURL,
+		&i.ShortCode,
+		&i.DeletedAt,
+	)
 	return i, err
 }
 

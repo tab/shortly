@@ -8,6 +8,7 @@ var (
 	ErrCorrelationIDEmpty      = errors.New("correlation id is required")
 	ErrShortCodeEmpty          = errors.New("short code is required")
 	ErrShortLinkNotFound       = errors.New("short link not found")
+	ErrShortLinkDeleted        = errors.New("short link deleted")
 	ErrFailedToReadRandomBytes = errors.New("failed to read secure random bytes")
 	ErrFailedToGenerateCode    = errors.New("failed to generate short code")
 	ErrFailedToGenerateUUID    = errors.New("failed to generate UUID")

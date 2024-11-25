@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -408,6 +409,22 @@ func Test_HandleGetShortLink(t *testing.T) {
 				response: dto.CreateShortLinkResponse{Result: "https://example.com"},
 				status:   "200 OK",
 				code:     http.StatusOK,
+			},
+		},
+		{
+			name: "Deleted",
+			path: "/api/shorten/abcd1234",
+			before: func() {
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(&repository.URL{
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+					DeletedAt: time.Now(),
+				}, true)
+			},
+			expected: result{
+				error:  dto.ErrorResponse{Error: errors.ErrShortLinkDeleted.Error()},
+				status: "410 Gone",
+				code:   http.StatusGone,
 			},
 		},
 		{
@@ -859,6 +876,21 @@ func Test_DeprecatedHandleGetShortLink(t *testing.T) {
 			expected: result{
 				status: http.StatusTemporaryRedirect,
 				header: "https://example.com",
+			},
+		},
+		{
+			name: "Deleted",
+			path: "/abcd1234",
+			before: func() {
+				repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(&repository.URL{
+					LongURL:   "https://example.com",
+					ShortCode: "abcd1234",
+					DeletedAt: time.Now(),
+				}, true)
+			},
+			expected: result{
+				status:   http.StatusGone,
+				response: errors.ErrShortLinkDeleted.Error(),
 			},
 		},
 		{

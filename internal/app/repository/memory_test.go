@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+
+	"shortly/internal/app/repository/db"
 )
 
 func Test_InMemoryRepository_CreateURL(t *testing.T) {
@@ -260,6 +262,139 @@ func Test_InMemoryRepository_GetURLsByUserID(t *testing.T) {
 				assert.Equal(t, tt.expected.UUID, urls[0].UUID)
 				assert.Equal(t, tt.expected.LongURL, urls[0].LongURL)
 				assert.Equal(t, tt.expected.ShortCode, urls[0].ShortCode)
+			}
+
+			t.Cleanup(func() {
+				store.Clear()
+			})
+		})
+	}
+}
+
+func Test_InMemoryRepository_DeleteURLsByUserID(t *testing.T) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID1, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID2, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174002")
+
+	tests := []struct {
+		name          string
+		currentUserID uuid.UUID
+		ownerID       uuid.UUID
+		before        func()
+		params        db.DeleteURLsByUserIDAndShortCodesParams
+		deleted       bool
+		expected      int
+	}{
+		{
+			name:          "Success",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID2,
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"abcd0001", "abcd0002"},
+			},
+			deleted:  true,
+			expected: 2,
+		},
+		{
+			name:          "Not owned",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID2,
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID2,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"abcd0001"},
+			},
+			deleted:  false,
+			expected: 1,
+		},
+		{
+			name:          "Not Found",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"abcd0002"},
+			},
+			deleted:  false,
+			expected: 1,
+		},
+		{
+			name:          "Empty",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err := store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{},
+			},
+			deleted:  false,
+			expected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			err := store.DeleteURLsByUserID(ctx, tt.params.UserUUID, tt.params.ShortCodes)
+			assert.NoError(t, err)
+
+			snapshot := store.CreateMemento()
+			assert.Equal(t, tt.expected, len(snapshot.State))
+
+			for _, url := range snapshot.State {
+				if tt.deleted {
+					assert.NotEmpty(t, url.DeletedAt)
+				} else {
+					assert.Empty(t, url.DeletedAt)
+				}
 			}
 
 			t.Cleanup(func() {

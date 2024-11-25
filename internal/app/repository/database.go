@@ -119,6 +119,13 @@ func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID, limit,
 	return urls, total, nil
 }
 
+func (d *DatabaseRepo) DeleteURLsByUserID(ctx context.Context, id uuid.UUID, shortCodes []string) error {
+	return d.queries.DeleteURLsByUserIDAndShortCodes(ctx, db.DeleteURLsByUserIDAndShortCodesParams{
+		UserUUID:   id,
+		ShortCodes: shortCodes,
+	})
+}
+
 func (d *DatabaseRepo) Ping(ctx context.Context) error {
 	_, err := d.queries.HealthCheck(ctx)
 	return err

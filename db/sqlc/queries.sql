@@ -25,3 +25,8 @@ FROM urls AS u
 RIGHT JOIN counter ON TRUE
 WHERE u.user_uuid = $1 AND deleted_at IS NULL
 ORDER BY u.created_at DESC LIMIT $2 OFFSET $3;
+
+-- name: DeleteURLsByUserIDAndShortCodes :exec
+UPDATE urls
+SET deleted_at = NOW()
+WHERE user_uuid = $1 AND short_code = ANY($2::varchar[]) AND deleted_at IS NULL;

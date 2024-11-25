@@ -12,6 +12,7 @@ import (
 	"shortly/internal/app/repository"
 	"shortly/internal/app/repository/persistence"
 	"shortly/internal/app/server"
+	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
@@ -103,6 +104,8 @@ func Test_Application_Run(t *testing.T) {
 	mockPersistenceManager := persistence.NewMockManager(ctrl)
 	mockServer := server.NewMockServer(ctrl)
 	appLogger := logger.NewLogger()
+	repo := repository.NewInMemoryRepository()
+	appWorker := worker.NewDeleteWorker(&config.Config{}, repo, appLogger)
 
 	tests := []struct {
 		name     string
@@ -132,6 +135,7 @@ func Test_Application_Run(t *testing.T) {
 				cfg:                &config.Config{},
 				logger:             appLogger,
 				persistenceManager: mockPersistenceManager,
+				deleteWorker:       appWorker,
 				server:             mockServer,
 			}
 

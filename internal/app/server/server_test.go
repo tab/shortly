@@ -25,7 +25,7 @@ func Test_NewServer(t *testing.T) {
 		DSN:    cfg.DatabaseDSN,
 		Logger: appLogger,
 	})
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
 	appRouter := router.NewRouter(cfg, repo, appWorker, appLogger)
 
 	srv := NewServer(cfg, appRouter)

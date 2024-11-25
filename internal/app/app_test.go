@@ -101,11 +101,18 @@ func Test_Application_Run(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
+	cfg := &config.Config{
+		Addr:      "localhost:8080",
+		BaseURL:   "http://localhost:8080",
+		ClientURL: "http://localhost:8080",
+	}
+
+	ctx := context.Background()
 	mockPersistenceManager := persistence.NewMockManager(ctrl)
 	mockServer := server.NewMockServer(ctrl)
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
-	appWorker := worker.NewDeleteWorker(&config.Config{}, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
 
 	tests := []struct {
 		name     string

@@ -26,7 +26,7 @@ func Test_HealthCheck(t *testing.T) {
 		DSN:    cfg.DatabaseDSN,
 		Logger: appLogger,
 	})
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
 	router := NewRouter(cfg, repo, appWorker, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
@@ -41,12 +41,13 @@ func Test_HealthCheck(t *testing.T) {
 }
 
 func Test_CreateShortLink(t *testing.T) {
+	ctx := context.Background()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
 	}
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
 	router := NewRouter(cfg, repo, appWorker, appLogger)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
@@ -67,7 +68,7 @@ func Test_GetShortLink(t *testing.T) {
 	}
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
 	router := NewRouter(cfg, repo, appWorker, appLogger)
 
 	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")

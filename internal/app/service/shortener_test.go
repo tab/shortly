@@ -18,7 +18,6 @@ import (
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/worker"
-	"shortly/internal/logger"
 )
 
 func Test_CreateShortLink(t *testing.T) {
@@ -34,8 +33,7 @@ func Test_CreateShortLink(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	service := NewURLService(cfg, repo, rand, appWorker)
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
@@ -157,8 +155,7 @@ func TestURLService_CreateShortLinks(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	service := NewURLService(cfg, repo, rand, appWorker)
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
@@ -280,8 +277,7 @@ func Test_GetShortLink(t *testing.T) {
 	ctx := context.Background()
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	service := NewURLService(cfg, repo, rand, appWorker)
 
 	type result struct {
@@ -339,8 +335,7 @@ func Test_GetUserURLs(t *testing.T) {
 
 	repo := repository.NewMockRepository(ctrl)
 	rand := NewMockSecureRandomGenerator(ctrl)
-	appLogger := logger.NewLogger()
-	appWorker := worker.NewDeleteWorker(cfg, repo, appLogger)
+	appWorker := worker.NewMockWorker(ctrl)
 	service := NewURLService(cfg, repo, rand, appWorker)
 	paginator := pagination.Pagination{
 		Page: 1,

@@ -10,64 +10,70 @@ import (
 	"shortly/internal/logger"
 )
 
+const QueueSize = 100
+
 type Worker interface {
-	Start(ctx context.Context)
+	Start()
 	Stop()
 	Add(req dto.BatchDeleteParams)
 }
 
 type worker struct {
+	ctx    context.Context
 	cfg    *config.Config
 	repo   repository.Repository
-	logger *logger.Logger
 	queue  chan dto.BatchDeleteParams
+	logger *logger.Logger
 	wg     sync.WaitGroup
 }
 
-func NewDeleteWorker(cfg *config.Config, repo repository.Repository, logger *logger.Logger) Worker {
+func NewDeleteWorker(ctx context.Context, cfg *config.Config, repo repository.Repository, logger *logger.Logger) Worker {
+	queue := make(chan dto.BatchDeleteParams, QueueSize)
+
 	return &worker{
+		ctx:    ctx,
 		cfg:    cfg,
 		repo:   repo,
+		queue:  queue,
 		logger: logger,
-		queue:  make(chan dto.BatchDeleteParams),
 	}
 }
 
-func (w *worker) Start(ctx context.Context) {
-	w.logger.Info().Msgf("worker starting in %s", w.cfg.AppEnv)
+func (w *worker) Start() {
+	w.logger.Info().Msgf("Worker starting in %s environment", w.cfg.AppEnv)
 
 	w.wg.Add(1)
-	go w.run(ctx)
+	go w.run()
 }
 
 func (w *worker) Stop() {
-	close(w.queue)
 	w.wg.Wait()
 }
 
 func (w *worker) Add(req dto.BatchDeleteParams) {
-	w.queue <- req
+	select {
+	case <-w.ctx.Done():
+		w.logger.Warn().Msg("Worker is stopped")
+	default:
+		w.queue <- req
+	}
 }
 
-func (w *worker) run(ctx context.Context) {
+func (w *worker) run() {
 	defer w.wg.Done()
-
 	for {
 		select {
-		case <-ctx.Done():
+		case <-w.ctx.Done():
 			return
-		case req, ok := <-w.queue:
-			if !ok {
-				return
-			}
-			w.perform(ctx, req)
+		case req := <-w.queue:
+			w.perform(req)
 		}
 	}
 }
 
-func (w *worker) perform(ctx context.Context, req dto.BatchDeleteParams) {
+func (w *worker) perform(req dto.BatchDeleteParams) {
 	shortCodes := unique(req.ShortCodes)
-	err := w.repo.DeleteURLsByUserID(ctx, req.UserID, shortCodes)
+	err := w.repo.DeleteURLsByUserID(w.ctx, req.UserID, shortCodes)
 
 	if err != nil {
 		w.logger.Error().Err(err).Msgf("Error deleting URLs for user %s", req.UserID)

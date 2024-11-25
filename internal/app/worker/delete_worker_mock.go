@@ -10,7 +10,6 @@
 package worker
 
 import (
-	context "context"
 	reflect "reflect"
 	dto "shortly/internal/app/dto"
 
@@ -54,15 +53,15 @@ func (mr *MockWorkerMockRecorder) Add(req any) *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockWorker) Start(ctx context.Context) {
+func (m *MockWorker) Start() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start", ctx)
+	m.ctrl.Call(m, "Start")
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockWorkerMockRecorder) Start(ctx any) *gomock.Call {
+func (mr *MockWorkerMockRecorder) Start() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockWorker)(nil).Start), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockWorker)(nil).Start))
 }
 
 // Stop mocks base method.

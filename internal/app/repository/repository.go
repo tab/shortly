@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -12,6 +13,12 @@ type URL struct {
 	UUID      uuid.UUID `json:"uuid"`
 	LongURL   string    `json:"long_url"`
 	ShortCode string    `json:"short_code"`
+	UserUUID  uuid.UUID `json:"user_uuid"`
+	DeletedAt time.Time `json:"deleted_at"`
+}
+
+type User struct {
+	UUID uuid.UUID `json:"uuid"`
 }
 
 type Memento struct {
@@ -22,6 +29,8 @@ type Repository interface {
 	CreateURL(ctx context.Context, url URL) (*URL, error)
 	CreateURLs(ctx context.Context, urls []URL) error
 	GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool)
+	GetURLsByUserID(ctx context.Context, uuid uuid.UUID, limit, offset int64) ([]URL, int, error)
+	DeleteURLsByUserID(ctx context.Context, uuid uuid.UUID, shortCodes []string) error
 }
 
 type HealthChecker interface {

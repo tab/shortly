@@ -4,28 +4,34 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
+	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/repository"
+	"shortly/internal/app/worker"
 )
 
 type URLService struct {
-	cfg  *config.Config
-	repo repository.Repository
-	rand SecureRandomGenerator
+	cfg    *config.Config
+	repo   repository.Repository
+	rand   SecureRandomGenerator
+	worker worker.Worker
 }
 
-func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator) *URLService {
+func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator, worker worker.Worker) *URLService {
 	return &URLService{
-		cfg:  cfg,
-		repo: repo,
-		rand: rand,
+		cfg:    cfg,
+		repo:   repo,
+		rand:   rand,
+		worker: worker,
 	}
 }
 
 func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (string, error) {
-	uuid, err := s.rand.UUID()
+	id, err := s.rand.UUID()
 	if err != nil {
 		return "", errors.ErrFailedToGenerateUUID
 	}
@@ -35,10 +41,16 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 		return "", errors.ErrFailedToGenerateCode
 	}
 
+	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
+	if !ok {
+		currentUserID = uuid.Nil
+	}
+
 	url := repository.URL{
-		UUID:      uuid,
+		UUID:      id,
 		LongURL:   longURL,
 		ShortCode: shortCode,
+		UserUUID:  currentUserID,
 	}
 
 	record, err := s.repo.CreateURL(ctx, url)
@@ -57,8 +69,13 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 	longURLs := make([]repository.URL, 0, len(params))
 	results := make([]dto.BatchCreateShortLinkResponse, 0, len(params))
 
+	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
+	if !ok {
+		currentUserID = uuid.Nil
+	}
+
 	for _, param := range params {
-		uuid, err := s.rand.UUID()
+		id, err := s.rand.UUID()
 		if err != nil {
 			return nil, errors.ErrFailedToGenerateUUID
 		}
@@ -69,9 +86,10 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 		}
 
 		url := repository.URL{
-			UUID:      uuid,
+			UUID:      id,
 			LongURL:   param.OriginalURL,
 			ShortCode: shortCode,
+			UserUUID:  currentUserID,
 		}
 		longURLs = append(longURLs, url)
 
@@ -90,6 +108,42 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 
 func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
 	return s.repo.GetURLByShortCode(ctx, shortCode)
+}
+
+func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pagination) ([]dto.GetUserURLsResponse, int, error) {
+	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
+	if !ok {
+		return nil, 0, errors.ErrInvalidUserID
+	}
+
+	urls, total, err := s.repo.GetURLsByUserID(ctx, currentUserID, pagination.Per, pagination.Offset())
+	if err != nil {
+		return nil, 0, errors.ErrFailedToLoadUserUrls
+	}
+
+	results := make([]dto.GetUserURLsResponse, len(urls))
+	for i, url := range urls {
+		results[i] = dto.GetUserURLsResponse{
+			ShortURL:    fmt.Sprintf("%s/%s", s.cfg.BaseURL, url.ShortCode),
+			OriginalURL: url.LongURL,
+		}
+	}
+
+	return results, total, nil
+}
+
+func (s *URLService) DeleteUserURLs(ctx context.Context, params dto.BatchDeleteShortLinkRequest) error {
+	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
+	if !ok {
+		return errors.ErrInvalidUserID
+	}
+
+	s.worker.Add(dto.BatchDeleteParams{
+		UserID:     currentUserID,
+		ShortCodes: params,
+	})
+
+	return nil
 }
 
 func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {

@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	uuid "github.com/google/uuid"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -81,6 +82,20 @@ func (mr *MockDatabaseMockRecorder) CreateURLs(ctx, urls any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateURLs", reflect.TypeOf((*MockDatabase)(nil).CreateURLs), ctx, urls)
 }
 
+// DeleteURLsByUserID mocks base method.
+func (m *MockDatabase) DeleteURLsByUserID(ctx context.Context, uuid uuid.UUID, shortCodes []string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteURLsByUserID", ctx, uuid, shortCodes)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteURLsByUserID indicates an expected call of DeleteURLsByUserID.
+func (mr *MockDatabaseMockRecorder) DeleteURLsByUserID(ctx, uuid, shortCodes any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteURLsByUserID", reflect.TypeOf((*MockDatabase)(nil).DeleteURLsByUserID), ctx, uuid, shortCodes)
+}
+
 // GetURLByShortCode mocks base method.
 func (m *MockDatabase) GetURLByShortCode(ctx context.Context, shortCode string) (*URL, bool) {
 	m.ctrl.T.Helper()
@@ -94,6 +109,22 @@ func (m *MockDatabase) GetURLByShortCode(ctx context.Context, shortCode string) 
 func (mr *MockDatabaseMockRecorder) GetURLByShortCode(ctx, shortCode any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLByShortCode", reflect.TypeOf((*MockDatabase)(nil).GetURLByShortCode), ctx, shortCode)
+}
+
+// GetURLsByUserID mocks base method.
+func (m *MockDatabase) GetURLsByUserID(ctx context.Context, uuid uuid.UUID, limit, offset int64) ([]URL, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetURLsByUserID", ctx, uuid, limit, offset)
+	ret0, _ := ret[0].([]URL)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetURLsByUserID indicates an expected call of GetURLsByUserID.
+func (mr *MockDatabaseMockRecorder) GetURLsByUserID(ctx, uuid, limit, offset any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetURLsByUserID", reflect.TypeOf((*MockDatabase)(nil).GetURLsByUserID), ctx, uuid, limit, offset)
 }
 
 // Ping mocks base method.

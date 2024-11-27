@@ -22,6 +22,7 @@ type Config struct {
 	ClientURL       string
 	FileStoragePath string
 	DatabaseDSN     string
+	SecretKey       string
 }
 
 func LoadConfig() *Config {
@@ -49,6 +50,7 @@ func LoadConfig() *Config {
 	flagClientURL := flag.String("c", "", "frontend client URL")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")
+	flagSecretKey := flag.String("s", "", "JWT secret key")
 	flag.Parse()
 
 	return &Config{
@@ -58,6 +60,7 @@ func LoadConfig() *Config {
 		ClientURL:       getEnvOrFlag("CLIENT_URL", *flagClientURL),
 		FileStoragePath: getEnvOrFlag("FILE_STORAGE_PATH", *flagFileStoragePath),
 		DatabaseDSN:     getEnvOrFlag("DATABASE_DSN", *flagDatabaseDSN),
+		SecretKey:       getEnvOrFlag("SECRET_KEY", *flagSecretKey),
 	}
 }
 

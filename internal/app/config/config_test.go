@@ -42,6 +42,7 @@ func Test_LoadConfig(t *testing.T) {
 				ClientURL:       "http://localhost:3000",
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+				SecretKey:       "jwt-secret-key",
 			},
 		},
 		{
@@ -52,6 +53,7 @@ func Test_LoadConfig(t *testing.T) {
 				"-c", "http://localhost:6000",
 				"-f", "store-test.json",
 				"-d", "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+				"-s", "jwt-secret-key",
 			},
 			env: map[string]string{
 				"SERVER_ADDRESS":    "localhost:3000",
@@ -59,6 +61,7 @@ func Test_LoadConfig(t *testing.T) {
 				"CLIENT_URL":        "http://localhost:6000",
 				"FILE_STORAGE_PATH": "store-test.json",
 				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+				"SECRET_KEY":        "jwt-secret-key",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -67,6 +70,7 @@ func Test_LoadConfig(t *testing.T) {
 				ClientURL:       "http://localhost:6000",
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+				SecretKey:       "jwt-secret-key",
 			},
 		},
 	}
@@ -86,6 +90,7 @@ func Test_LoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.ClientURL, result.ClientURL)
 			assert.Equal(t, tt.expected.FileStoragePath, result.FileStoragePath)
 			assert.Equal(t, tt.expected.DatabaseDSN, result.DatabaseDSN)
+			assert.Equal(t, tt.expected.SecretKey, result.SecretKey)
 
 			t.Cleanup(func() {
 				for key := range tt.env {

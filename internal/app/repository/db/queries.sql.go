@@ -9,11 +9,12 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createURL = `-- name: CreateURL :one
-INSERT INTO urls (uuid, long_url, short_code)
-VALUES ($1, $2, $3)
+INSERT INTO urls (uuid, long_url, short_code, user_uuid)
+VALUES ($1, $2, $3, $4)
 ON CONFLICT (long_url) DO UPDATE SET short_code = urls.short_code
 RETURNING uuid, long_url, short_code
 `
@@ -22,6 +23,7 @@ type CreateURLParams struct {
 	UUID      uuid.UUID
 	LongURL   string
 	ShortCode string
+	UserUUID  uuid.UUID
 }
 
 type CreateURLRow struct {
@@ -31,36 +33,118 @@ type CreateURLRow struct {
 }
 
 func (q *Queries) CreateURL(ctx context.Context, arg CreateURLParams) (CreateURLRow, error) {
-	row := q.db.QueryRow(ctx, createURL, arg.UUID, arg.LongURL, arg.ShortCode)
+	row := q.db.QueryRow(ctx, createURL,
+		arg.UUID,
+		arg.LongURL,
+		arg.ShortCode,
+		arg.UserUUID,
+	)
 	var i CreateURLRow
 	err := row.Scan(&i.UUID, &i.LongURL, &i.ShortCode)
 	return i, err
 }
 
+const deleteURLsByUserIDAndShortCodes = `-- name: DeleteURLsByUserIDAndShortCodes :exec
+UPDATE urls
+SET deleted_at = NOW()
+WHERE user_uuid = $1 AND short_code = ANY($2::varchar[]) AND deleted_at IS NULL
+`
+
+type DeleteURLsByUserIDAndShortCodesParams struct {
+	UserUUID   uuid.UUID
+	ShortCodes []string
+}
+
+func (q *Queries) DeleteURLsByUserIDAndShortCodes(ctx context.Context, arg DeleteURLsByUserIDAndShortCodesParams) error {
+	_, err := q.db.Exec(ctx, deleteURLsByUserIDAndShortCodes, arg.UserUUID, arg.ShortCodes)
+	return err
+}
+
 const getURLByShortCode = `-- name: GetURLByShortCode :one
-SELECT uuid, long_url, short_code FROM urls WHERE short_code = $1
+SELECT uuid, long_url, short_code, deleted_at FROM urls WHERE short_code = $1
 `
 
 type GetURLByShortCodeRow struct {
 	UUID      uuid.UUID
 	LongURL   string
 	ShortCode string
+	DeletedAt pgtype.Timestamp
 }
 
 func (q *Queries) GetURLByShortCode(ctx context.Context, shortCode string) (GetURLByShortCodeRow, error) {
 	row := q.db.QueryRow(ctx, getURLByShortCode, shortCode)
 	var i GetURLByShortCodeRow
-	err := row.Scan(&i.UUID, &i.LongURL, &i.ShortCode)
+	err := row.Scan(
+		&i.UUID,
+		&i.LongURL,
+		&i.ShortCode,
+		&i.DeletedAt,
+	)
 	return i, err
+}
+
+const getURLsByUserID = `-- name: GetURLsByUserID :many
+WITH counter AS (
+  SELECT COUNT(*) AS total
+  FROM urls
+  WHERE user_uuid = $1 AND deleted_at IS NULL
+)
+SELECT
+  u.uuid,
+  u.long_url,
+  u.short_code,
+  counter.total
+FROM urls AS u
+RIGHT JOIN counter ON TRUE
+WHERE u.user_uuid = $1 AND deleted_at IS NULL
+ORDER BY u.created_at DESC LIMIT $2 OFFSET $3
+`
+
+type GetURLsByUserIDParams struct {
+	UserUUID uuid.UUID
+	Limit    int64
+	Offset   int64
+}
+
+type GetURLsByUserIDRow struct {
+	UUID      uuid.UUID
+	LongURL   string
+	ShortCode string
+	Total     int64
+}
+
+func (q *Queries) GetURLsByUserID(ctx context.Context, arg GetURLsByUserIDParams) ([]GetURLsByUserIDRow, error) {
+	rows, err := q.db.Query(ctx, getURLsByUserID, arg.UserUUID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetURLsByUserIDRow
+	for rows.Next() {
+		var i GetURLsByUserIDRow
+		if err := rows.Scan(
+			&i.UUID,
+			&i.LongURL,
+			&i.ShortCode,
+			&i.Total,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const healthCheck = `-- name: HealthCheck :one
 SELECT 1
 `
 
-func (q *Queries) HealthCheck(ctx context.Context) (int32, error) {
+func (q *Queries) HealthCheck(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, healthCheck)
-	var column_1 int32
-	err := row.Scan(&column_1)
-	return column_1, err
+	var result int64
+	err := row.Scan(&result)
+	return result, err
 }

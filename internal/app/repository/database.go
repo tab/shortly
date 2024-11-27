@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"shortly/internal/app/repository/db"
@@ -38,6 +39,7 @@ func (d *DatabaseRepo) CreateURL(ctx context.Context, url URL) (*URL, error) {
 		UUID:      url.UUID,
 		LongURL:   url.LongURL,
 		ShortCode: url.ShortCode,
+		UserUUID:  url.UserUUID,
 	})
 
 	if err != nil {
@@ -84,7 +86,45 @@ func (d *DatabaseRepo) GetURLByShortCode(ctx context.Context, shortCode string) 
 		UUID:      row.UUID,
 		LongURL:   row.LongURL,
 		ShortCode: row.ShortCode,
+		DeletedAt: row.DeletedAt.Time,
 	}, true
+}
+
+func (d *DatabaseRepo) GetURLsByUserID(ctx context.Context, id uuid.UUID, limit, offset int64) ([]URL, int, error) {
+	params := db.GetURLsByUserIDParams{
+		UserUUID: id,
+		Limit:    limit,
+		Offset:   offset,
+	}
+
+	rows, err := d.queries.GetURLsByUserID(ctx, params)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	urls := make([]URL, 0, len(rows))
+	var total int
+
+	if len(rows) > 0 {
+		total = int(rows[0].Total)
+	}
+
+	for _, row := range rows {
+		urls = append(urls, URL{
+			UUID:      row.UUID,
+			LongURL:   row.LongURL,
+			ShortCode: row.ShortCode,
+		})
+	}
+
+	return urls, total, nil
+}
+
+func (d *DatabaseRepo) DeleteURLsByUserID(ctx context.Context, id uuid.UUID, shortCodes []string) error {
+	return d.queries.DeleteURLsByUserIDAndShortCodes(ctx, db.DeleteURLsByUserIDAndShortCodesParams{
+		UserUUID:   id,
+		ShortCodes: shortCodes,
+	})
 }
 
 func (d *DatabaseRepo) Ping(ctx context.Context) error {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
+	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
@@ -76,15 +77,71 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(r.Context(), shortCode)
+	result, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
 		return
 	}
 
+	if !result.DeletedAt.IsZero() {
+		w.WriteHeader(http.StatusGone)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkDeleted.Error()})
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: url.LongURL})
+	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: result.LongURL})
+}
+
+func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	paginator := pagination.NewPagination(r)
+
+	urls, _, err := h.service.GetUserURLs(r.Context(), paginator)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	// TODO: use paginated response
+	// response := dto.PaginatedResponse{
+	//	Data:  urls,
+	//	Page:  paginator.Page,
+	//	Per:   paginator.Per,
+	//	Total: total,
+	// }
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(urls)
+}
+
+func (h *URLHandler) HandleBatchDeleteUserURLs(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var params dto.BatchDeleteShortLinkRequest
+
+	if err := params.Validate(r.Body); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	err := h.service.DeleteUserURLs(r.Context(), params)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
 
 // NOTE: text/plain request is deprecated
@@ -124,11 +181,16 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 func (h *URLHandler) DeprecatedHandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "id")
 
-	url, found := h.service.GetShortLink(r.Context(), shortCode)
+	result, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		http.Error(w, errors.ErrShortLinkNotFound.Error(), http.StatusNotFound)
 		return
 	}
 
-	http.Redirect(w, r, url.LongURL, http.StatusTemporaryRedirect)
+	if !result.DeletedAt.IsZero() {
+		http.Error(w, errors.ErrShortLinkDeleted.Error(), http.StatusGone)
+		return
+	}
+
+	http.Redirect(w, r, result.LongURL, http.StatusTemporaryRedirect)
 }

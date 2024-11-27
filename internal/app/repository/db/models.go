@@ -15,4 +15,6 @@ type Url struct {
 	ShortCode string
 	CreatedAt pgtype.Timestamp
 	UpdatedAt pgtype.Timestamp
+	UserUuid  uuid.UUID
+	DeletedAt pgtype.Timestamp
 }

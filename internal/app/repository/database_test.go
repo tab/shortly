@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"shortly/internal/app/repository/db"
 	"shortly/internal/spec"
 )
 
@@ -203,6 +204,255 @@ func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 				assert.Nil(t, row)
 			}
 			assert.Equal(t, tt.found, found)
+
+			t.Cleanup(func() {
+				err = spec.TruncateTables(ctx, dsn)
+				require.NoError(t, err)
+			})
+		})
+	}
+}
+
+func Test_DatabaseRepository_GetURLsByUserID(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID1, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID2, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174002")
+
+	type result struct {
+		count     int
+		UUID      uuid.UUID
+		LongURL   string
+		ShortCode string
+	}
+
+	tests := []struct {
+		name     string
+		before   func()
+		UserID   uuid.UUID
+		expected result
+	}{
+		{
+			name: "Success",
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID2,
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     1,
+				UUID:      UUID2,
+				LongURL:   "https://github.com",
+				ShortCode: "abcd0002",
+			},
+		},
+		{
+			name: "Not owned",
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID2,
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+		{
+			name: "Not Found",
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+				})
+				assert.NoError(t, err)
+			},
+			UserID: UserUUID1,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+		{
+			name:   "Empty",
+			before: func() {},
+			UserID: uuid.Nil,
+			expected: result{
+				count:     0,
+				UUID:      uuid.Nil,
+				LongURL:   "",
+				ShortCode: "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			rows, total, err := store.GetURLsByUserID(ctx, tt.UserID, 25, 0)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected.count, total)
+
+			if tt.expected.count > 0 {
+				assert.NotEmpty(t, rows)
+				assert.Equal(t, tt.expected.UUID, rows[0].UUID)
+				assert.Equal(t, tt.expected.LongURL, rows[0].LongURL)
+				assert.Equal(t, tt.expected.ShortCode, rows[0].ShortCode)
+			} else {
+				assert.Empty(t, rows)
+			}
+
+			t.Cleanup(func() {
+				err = spec.TruncateTables(ctx, dsn)
+				require.NoError(t, err)
+			})
+		})
+	}
+}
+
+func Test_DatabaseRepository_DeleteURLsByUserID(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID1, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID2, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174002")
+
+	tests := []struct {
+		name          string
+		currentUserID uuid.UUID
+		ownerID       uuid.UUID
+		before        func()
+		params        db.DeleteURLsByUserIDAndShortCodesParams
+		expected      int
+	}{
+		{
+			name:          "Success",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID2,
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"abcd0001", "abcd0002"},
+			},
+			expected: 0,
+		},
+		{
+			name:          "Not owned",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID2,
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID2,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"abcd0001"},
+			},
+			expected: 1,
+		},
+		{
+			name:          "Not found",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{"1234abcd"},
+			},
+			expected: 1,
+		},
+		{
+			name:          "Empty",
+			currentUserID: UserUUID1,
+			ownerID:       UserUUID1,
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      UUID1,
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+			},
+			params: db.DeleteURLsByUserIDAndShortCodesParams{
+				UserUUID:   UserUUID1,
+				ShortCodes: []string{},
+			},
+			expected: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			err = store.DeleteURLsByUserID(ctx, tt.params.UserUUID, tt.params.ShortCodes)
+			assert.NoError(t, err)
+
+			_, total, err := store.GetURLsByUserID(ctx, tt.ownerID, 25, 0)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected, total)
 
 			t.Cleanup(func() {
 				err = spec.TruncateTables(ctx, dsn)

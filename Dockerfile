@@ -1,6 +1,5 @@
-FROM golang:1.22-alpine as base-backend
+FROM golang:1.22-alpine as builder
 
-ENV GOFLAGS="-mod=vendor"
 ENV CGO_ENABLED=0
 
 RUN apk add --no-cache --update git tzdata ca-certificates
@@ -8,12 +7,14 @@ RUN apk add --no-cache --update git tzdata ca-certificates
 WORKDIR /app
 
 COPY go.mod go.sum ./
-COPY vendor ./vendor
 
-COPY ./cmd ./cmd
-COPY ./internal ./internal
-COPY ./store.json ./store.json
-
+COPY . ./
 RUN go build -o /app/shortly /app/cmd/shortener/main.go
+
+FROM alpine:3.21
+
+WORKDIR /app
+
+COPY --from=builder /app/shortly /app/shortly
 
 CMD ["/app/shortly"]

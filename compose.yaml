@@ -4,23 +4,18 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: base-backend
-    tty: true
-    stdin_open: true
-    volumes:
-      - ./cmd:/app/cmd
-      - ./internal:/app/internal
-      - ./go.mod:/app/go.mod
-      - ./go.sum:/app/go.sum
-      - ./store.json:/app/store.json
+    depends_on:
+      - database
     ports:
       - "8080:8080"
+    volumes:
+      - ./store.json:/app/store.json
     environment:
         - SERVER_ADDRESS=0.0.0.0:8080
         - BASE_URL=http://localhost:8080
         - CLIENT_URL=http://localhost:3000
         - FILE_STORAGE_PATH=/app/store.json
-        - DATABASE_DSN=postgres://postgres:postgres@localhost:5432/shortly-development?sslmode=disable
+        - DATABASE_DSN=postgres://postgres:postgres@database:5432/shortly-development?sslmode=disable
     networks:
       - shortly-network
 
@@ -34,6 +29,8 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
       POSTGRES_PORT: 5432
+    networks:
+      - shortly-network
 
 networks:
   shortly-network:

@@ -29,15 +29,6 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 	authenticator := service.NewAuthService(cfg)
 
 	router := chi.NewRouter()
-
-	router.HandleFunc("/debug/pprof/", pprof.Index)
-	router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	router.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	router.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	router.HandleFunc("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
-	router.HandleFunc("/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
-
 	router.Use(
 		cors.Handler(cors.Options{
 			AllowedOrigins: []string{cfg.ClientURL},
@@ -48,6 +39,14 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 		appLogger.Middleware,
 		compress.Middleware,
 	)
+
+	router.HandleFunc("/debug/pprof/", pprof.Index)
+	router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	router.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	router.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	router.HandleFunc("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
+	router.HandleFunc("/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
 
 	// NOTE: protected routes
 	router.Group(func(r chi.Router) {

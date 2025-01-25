@@ -15,6 +15,7 @@ const (
 	ServerAddress = "localhost:8080"
 )
 
+// Config is the application configuration
 type Config struct {
 	AppEnv          string
 	Addr            string
@@ -25,6 +26,7 @@ type Config struct {
 	SecretKey       string
 }
 
+// LoadConfig loads the application configuration
 func LoadConfig() *Config {
 	appLogger := logger.NewLogger()
 

@@ -14,6 +14,7 @@ import (
 	"shortly/internal/app/worker"
 )
 
+// URLService is a service for URL operations
 type URLService struct {
 	cfg    *config.Config
 	repo   repository.Repository
@@ -21,6 +22,7 @@ type URLService struct {
 	worker worker.Worker
 }
 
+// NewURLService creates a new URL service instance
 func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRandomGenerator, worker worker.Worker) *URLService {
 	return &URLService{
 		cfg:    cfg,
@@ -30,6 +32,7 @@ func NewURLService(cfg *config.Config, repo repository.Repository, rand SecureRa
 	}
 }
 
+// CreateShortLink creates a new short link
 func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (string, error) {
 	id, err := s.rand.UUID()
 	if err != nil {
@@ -65,6 +68,7 @@ func (s *URLService) CreateShortLink(ctx context.Context, longURL string) (strin
 	return fmt.Sprintf("%s/%s", s.cfg.BaseURL, shortCode), nil
 }
 
+// CreateShortLinks creates new short links
 func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCreateShortLinkParams) ([]dto.BatchCreateShortLinkResponse, error) {
 	longURLs := make([]repository.URL, 0, len(params))
 	results := make([]dto.BatchCreateShortLinkResponse, 0, len(params))
@@ -106,10 +110,12 @@ func (s *URLService) CreateShortLinks(ctx context.Context, params []dto.BatchCre
 	return results, nil
 }
 
+// GetShortLink returns a short link by short code
 func (s *URLService) GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool) {
 	return s.repo.GetURLByShortCode(ctx, shortCode)
 }
 
+// GetUserURLs returns user URLs
 func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pagination) ([]dto.GetUserURLsResponse, int, error) {
 	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
 	if !ok {
@@ -132,6 +138,7 @@ func (s *URLService) GetUserURLs(ctx context.Context, pagination *pagination.Pag
 	return results, total, nil
 }
 
+// DeleteUserURLs deletes user URLs
 func (s *URLService) DeleteUserURLs(ctx context.Context, params dto.BatchDeleteShortLinkRequest) error {
 	currentUserID, ok := (ctx.Value(dto.CurrentUser)).(uuid.UUID)
 	if !ok {
@@ -146,6 +153,7 @@ func (s *URLService) DeleteUserURLs(ctx context.Context, params dto.BatchDeleteS
 	return nil
 }
 
+// generateUniqueShortCode generates a unique short code
 func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
 	for {
 		shortCode, err := s.rand.Hex()

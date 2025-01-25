@@ -2,30 +2,9 @@ name: Iterations
 on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
-    branches:
-      - iter15
-      - iter16
-      - iter17
-      - iter18
-      - iter19
-      - iter20
-      - iter21
-      - iter22
-      - iter23
-      - iter24
   push:
     branches:
       - main
-      - iter15
-      - iter16
-      - iter17
-      - iter18
-      - iter19
-      - iter20
-      - iter21
-      - iter22
-      - iter23
-      - iter24
 jobs:
   shortenertest:
     runs-on: ubuntu-latest
@@ -185,15 +164,5 @@ jobs:
           shortenertestbeta -test.v -test.run=^TestIteration17$ -source-path=.
 
       - name: "Code increment #18"
-        if: |
-          github.ref == 'refs/heads/main' ||
-          github.head_ref == 'iter18' ||
-          github.head_ref == 'iter19' ||
-          github.head_ref == 'iter20' ||
-          github.head_ref == 'iter21' ||
-          github.head_ref == 'iter22' ||
-          github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
         run: |
-          shortenertestbeta -test.v -test.run=^TestIteration18$ \
-              -source-path=. \
+          shortenertestbeta -test.v -test.run=^TestIteration18$ -source-path=.

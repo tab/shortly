@@ -11,11 +11,17 @@ import (
 )
 
 const (
-	BaseURL         = "http://localhost:8080"
-	ServerAddress   = "localhost:8080"
+	// BaseURL is the base URL of the application
+	BaseURL = "http://localhost:8080"
+
+	// ServerAddress is the address and port to run the server
+	ServerAddress = "localhost:8080"
+
+	// ProfilerAddress is the address and port to run the profiler
 	ProfilerAddress = "localhost:2080"
 )
 
+// Config is the application configuration
 type Config struct {
 	AppEnv          string
 	Addr            string
@@ -27,6 +33,7 @@ type Config struct {
 	SecretKey       string
 }
 
+// LoadConfig loads the application configuration
 func LoadConfig() *Config {
 	appLogger := logger.NewLogger()
 

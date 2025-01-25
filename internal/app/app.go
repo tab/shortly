@@ -14,6 +14,7 @@ import (
 	"shortly/internal/logger"
 )
 
+// Application is the main application structure
 type Application struct {
 	cfg                *config.Config
 	logger             *logger.Logger
@@ -23,6 +24,7 @@ type Application struct {
 	pprofServer        server.PprofServer
 }
 
+// NewApplication creates a new application instance
 func NewApplication(ctx context.Context) (*Application, error) {
 	cfg := config.LoadConfig()
 	appLogger := logger.NewLogger()
@@ -50,6 +52,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 	}, nil
 }
 
+// Run starts the application
 func (a *Application) Run(ctx context.Context) error {
 	err := a.persistenceManager.Load()
 	if err != nil {

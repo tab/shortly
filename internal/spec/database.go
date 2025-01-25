@@ -6,6 +6,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// TruncateTables truncates URLs table in the database
 func TruncateTables(ctx context.Context, dsn string) error {
 	err := RunQuery(ctx, dsn, "TRUNCATE TABLE urls RESTART IDENTITY CASCADE")
 	if err != nil {
@@ -15,6 +16,7 @@ func TruncateTables(ctx context.Context, dsn string) error {
 	return nil
 }
 
+// RunQuery runs a query on the database
 func RunQuery(ctx context.Context, dsn string, query string) error {
 	db, err := pgxpool.New(ctx, dsn)
 	if err != nil {

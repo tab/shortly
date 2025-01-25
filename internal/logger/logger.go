@@ -10,14 +10,17 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
+// LogLevel is the log level for the logger. Default is Info level
 const (
 	LogLevel = 1
 )
 
+// Logger is a logger structure for the application
 type Logger struct {
 	log zerolog.Logger
 }
 
+// NewLogger creates a new logger instance
 func NewLogger() *Logger {
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"

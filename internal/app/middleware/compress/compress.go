@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Middleware is a middleware for compressing requests and responses
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		originalWriter := w

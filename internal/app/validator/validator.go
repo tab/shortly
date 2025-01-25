@@ -6,6 +6,7 @@ import (
 	"shortly/internal/app/errors"
 )
 
+// Validate checks if the URL is valid
 func Validate(rawURL string) error {
 	parsedURL, err := url.ParseRequestURI(rawURL)
 

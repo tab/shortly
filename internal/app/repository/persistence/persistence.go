@@ -6,19 +6,23 @@ import (
 	"shortly/internal/logger"
 )
 
+// Manager is an interface for the persistence manager
 type Manager interface {
 	Load() error
 	Save() error
 }
 
+// noOpManager is a no-op persistence manager
 type noOpManager struct{}
 
+// manager is a persistence manager
 type manager struct {
 	repo      repository.InMemory
 	file      repository.File
 	appLogger *logger.Logger
 }
 
+// NewPersistenceManager creates a new persistence manager instance
 func NewPersistenceManager(cfg *config.Config, repo repository.Repository, logger *logger.Logger) Manager {
 	inMemoryRepo, ok := repo.(repository.InMemory)
 	if !ok {
@@ -41,10 +45,12 @@ func NewPersistenceManager(cfg *config.Config, repo repository.Repository, logge
 	}
 }
 
+// Load stub implementation for no-op manager
 func (n *noOpManager) Load() error {
 	return nil
 }
 
+// Load loads data from file and restores the repository state
 func (pm *manager) Load() error {
 	snapshot, err := pm.file.Load()
 
@@ -57,10 +63,12 @@ func (pm *manager) Load() error {
 	return nil
 }
 
+// Save stub implementation for no-op manager
 func (n *noOpManager) Save() error {
 	return nil
 }
 
+// Save saves the repository state to the file
 func (pm *manager) Save() error {
 	snapshot := pm.repo.CreateMemento()
 

@@ -13,15 +13,18 @@ import (
 	"shortly/internal/app/service"
 )
 
+// URLHandler is a handler for URL operations
 type URLHandler struct {
 	cfg     *config.Config
 	service *service.URLService
 }
 
+// NewURLHandler creates a new URLHandler
 func NewURLHandler(cfg *config.Config, service *service.URLService) *URLHandler {
 	return &URLHandler{cfg: cfg, service: service}
 }
 
+// HandleCreateShortLink handles short link creation
 func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -50,6 +53,7 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
 }
 
+// HandleBatchCreateShortLink handles batch short link creation
 func (h *URLHandler) HandleBatchCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -72,6 +76,7 @@ func (h *URLHandler) HandleBatchCreateShortLink(w http.ResponseWriter, r *http.R
 	json.NewEncoder(w).Encode(results)
 }
 
+// HandleGetShortLink handles short link retrieval
 func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -94,6 +99,7 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: result.LongURL})
 }
 
+// HandleGetUserURLs handles user URLs retrieval
 func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -123,6 +129,7 @@ func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(urls)
 }
 
+// HandleBatchDeleteUserURLs handles short link deletion
 func (h *URLHandler) HandleBatchDeleteUserURLs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -144,7 +151,7 @@ func (h *URLHandler) HandleBatchDeleteUserURLs(w http.ResponseWriter, r *http.Re
 	w.WriteHeader(http.StatusAccepted)
 }
 
-// NOTE: text/plain request is deprecated
+// DeprecatedHandleCreateShortLink handles short link creation (text/plain endpoint)
 func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 
@@ -177,7 +184,7 @@ func (h *URLHandler) DeprecatedHandleCreateShortLink(w http.ResponseWriter, r *h
 	}
 }
 
-// NOTE: text/plain request is deprecated
+// DeprecatedHandleGetShortLink handles short link retrieval (text/plain endpoint)
 func (h *URLHandler) DeprecatedHandleGetShortLink(w http.ResponseWriter, r *http.Request) {
 	shortCode := chi.URLParam(r, "id")
 

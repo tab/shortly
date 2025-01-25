@@ -9,6 +9,7 @@ import (
 	"shortly/internal/logger"
 )
 
+// URL is a URL entity
 type URL struct {
 	UUID      uuid.UUID `json:"uuid"`
 	LongURL   string    `json:"long_url"`
@@ -17,14 +18,17 @@ type URL struct {
 	DeletedAt time.Time `json:"deleted_at"`
 }
 
+// User is a user entity
 type User struct {
 	UUID uuid.UUID `json:"uuid"`
 }
 
+// Memento is a memento entity
 type Memento struct {
 	State []URL `json:"state"`
 }
 
+// Repository is an interface for repository
 type Repository interface {
 	CreateURL(ctx context.Context, url URL) (*URL, error)
 	CreateURLs(ctx context.Context, urls []URL) error
@@ -33,15 +37,18 @@ type Repository interface {
 	DeleteURLsByUserID(ctx context.Context, uuid uuid.UUID, shortCodes []string) error
 }
 
+// HealthChecker is an interface for health checker
 type HealthChecker interface {
 	Ping(ctx context.Context) error
 }
 
+// Factory is a factory for repository
 type Factory struct {
 	DSN    string
 	Logger *logger.Logger
 }
 
+// NewRepository creates a new repository instance
 func NewRepository(ctx context.Context, f *Factory) (Repository, error) {
 	if f.DSN != "" {
 		db, err := NewDatabaseRepository(ctx, f.DSN)

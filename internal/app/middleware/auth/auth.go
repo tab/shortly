@@ -10,13 +10,18 @@ import (
 	"shortly/internal/app/service"
 )
 
+// contextKey is a type for context key
 type contextKey string
 
 const (
-	CookieName        = "auth"
+	// CookieName is the name of the authentication cookie
+	CookieName = "auth"
+
+	// ProtectedRouteKey is the key for protected routes
 	ProtectedRouteKey = contextKey("protected")
 )
 
+// RequireAuth is a middleware for protected routes
 func RequireAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.WithValue(r.Context(), ProtectedRouteKey, true)
@@ -24,6 +29,7 @@ func RequireAuth(next http.Handler) http.Handler {
 	})
 }
 
+// Middleware is a middleware for authentication
 func Middleware(authenticator service.Authenticator) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

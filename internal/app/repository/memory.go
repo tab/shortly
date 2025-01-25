@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// InMemory is an interface for in-memory storage
 type InMemory interface {
 	Repository
 	CreateMemento() *Memento
@@ -15,19 +16,23 @@ type InMemory interface {
 	Clear()
 }
 
+// InMemoryRepo is a repository for in-memory storage
 type InMemoryRepo struct {
 	data sync.Map
 }
 
+// NewInMemoryRepository creates a new in-memory repository instance
 func NewInMemoryRepository() InMemory {
 	return &InMemoryRepo{}
 }
 
+// CreateURL creates a new URL record
 func (m *InMemoryRepo) CreateURL(_ context.Context, url URL) (*URL, error) {
 	m.data.Store(url.ShortCode, url)
 	return &url, nil
 }
 
+// CreateURLs creates new URL records
 func (m *InMemoryRepo) CreateURLs(_ context.Context, urls []URL) error {
 	for _, url := range urls {
 		m.data.Store(url.ShortCode, url)
@@ -35,6 +40,7 @@ func (m *InMemoryRepo) CreateURLs(_ context.Context, urls []URL) error {
 	return nil
 }
 
+// GetURLByShortCode returns a URL record by short code
 func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*URL, bool) {
 	value, ok := m.data.Load(shortCode)
 	if !ok {
@@ -49,6 +55,7 @@ func (m *InMemoryRepo) GetURLByShortCode(_ context.Context, shortCode string) (*
 	return &url, true
 }
 
+// GetURLsByUserID returns URL records by user ID
 func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID, limit, offset int64) ([]URL, int, error) {
 	var results []URL
 
@@ -75,6 +82,7 @@ func (m *InMemoryRepo) GetURLsByUserID(_ context.Context, id uuid.UUID, limit, o
 	return results[start:end], total, nil
 }
 
+// DeleteURLsByUserID deletes URL records by user ID
 func (m *InMemoryRepo) DeleteURLsByUserID(_ context.Context, id uuid.UUID, shortCodes []string) error {
 	for _, shortCode := range shortCodes {
 		value, ok := m.data.Load(shortCode)
@@ -96,6 +104,7 @@ func (m *InMemoryRepo) DeleteURLsByUserID(_ context.Context, id uuid.UUID, short
 	return nil
 }
 
+// CreateMemento creates a memento of the current state
 func (m *InMemoryRepo) CreateMemento() *Memento {
 	var results []URL
 
@@ -110,6 +119,7 @@ func (m *InMemoryRepo) CreateMemento() *Memento {
 	return &Memento{State: results}
 }
 
+// Restore restores the state from a memento
 func (m *InMemoryRepo) Restore(memento *Memento) {
 	m.data = sync.Map{}
 
@@ -118,6 +128,7 @@ func (m *InMemoryRepo) Restore(memento *Memento) {
 	}
 }
 
+// Clear clears the repository
 func (m *InMemoryRepo) Clear() {
 	m.data = sync.Map{}
 }

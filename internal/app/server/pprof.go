@@ -11,6 +11,7 @@ import (
 	"shortly/internal/app/config"
 )
 
+// PprofServer is an interface for pprof server
 type PprofServer interface {
 	Run() error
 	Shutdown(ctx context.Context) error
@@ -20,6 +21,7 @@ type pprofServer struct {
 	httpServer *http.Server
 }
 
+// NewPprofServer creates a new pprof server instance
 func NewPprofServer(cfg *config.Config) PprofServer {
 	handler := chi.NewRouter()
 
@@ -39,10 +41,12 @@ func NewPprofServer(cfg *config.Config) PprofServer {
 	}
 }
 
+// Run starts the pprof server
 func (p *pprofServer) Run() error {
 	return p.httpServer.ListenAndServe()
 }
 
+// Shutdown stops the pprof server
 func (p *pprofServer) Shutdown(ctx context.Context) error {
 	return p.httpServer.Shutdown(ctx)
 }

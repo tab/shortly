@@ -11,11 +11,13 @@ const (
 	MaxPerPage     int64 = 1000
 )
 
+// Pagination is a struct for pagination
 type Pagination struct {
 	Page int64
 	Per  int64
 }
 
+// NewPagination creates a new pagination instance
 func NewPagination(r *http.Request) *Pagination {
 	page := parseQueryParam(r, "page", DefaultPage)
 	per := parseQueryParam(r, "per", DefaultPerPage)
@@ -52,6 +54,7 @@ func parseQueryParam(r *http.Request, key string, defaultValue int64) int64 {
 	return value
 }
 
+// Offset returns the pagination offset
 func (p *Pagination) Offset() int64 {
 	return (p.Page - 1) * p.Per
 }

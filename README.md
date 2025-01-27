@@ -81,3 +81,25 @@ Linting:
 ```sh
 make lint
 ```
+
+### Profiling
+
+Generate payload with wrk tool:
+
+```sh
+make benchmark:payload
+```
+
+Create CPU and Memory profiles:
+
+```sh
+make pprof:cpu
+make pprof:mem
+```
+
+Compare profiles:
+
+```sh
+make pprof:cpu:diff
+make pprof:mem:diff
+```

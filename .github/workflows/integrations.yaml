@@ -185,15 +185,5 @@ jobs:
           shortenertestbeta -test.v -test.run=^TestIteration17$ -source-path=.
 
       - name: "Code increment #18"
-        if: |
-          github.ref == 'refs/heads/main' ||
-          github.head_ref == 'iter18' ||
-          github.head_ref == 'iter19' ||
-          github.head_ref == 'iter20' ||
-          github.head_ref == 'iter21' ||
-          github.head_ref == 'iter22' ||
-          github.head_ref == 'iter23' ||
-          github.head_ref == 'iter24'
         run: |
-          shortenertestbeta -test.v -test.run=^TestIteration18$ \
-              -source-path=. \
+          shortenertestbeta -test.v -test.run=^TestIteration18$ -source-path=.

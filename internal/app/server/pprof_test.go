@@ -1,39 +1,53 @@
 package server
 
 import (
+	"context"
 	"net/http"
-	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"shortly/internal/app/config"
 )
 
-func TestNewPprofServer(t *testing.T) {
-	tests := []struct {
-		name string
-		cfg  *config.Config
-	}{
-		{
-			name: "default",
-			cfg:  &config.Config{ProfilerAddr: "localhost:2080"},
-		},
+func Test_NewPprofServer(t *testing.T) {
+	cfg := &config.Config{
+		ProfilerAddr: "localhost:2080",
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			srv := NewPprofServer(tt.cfg)
-			assert.Equal(t, tt.cfg.ProfilerAddr, srv.Addr)
-			assert.NotNil(t, srv.Handler)
+	srv := NewPprofServer(cfg)
+	assert.NotNil(t, srv)
 
-			req, err := http.NewRequest(http.MethodGet, "/debug/pprof/", nil)
-			require.NoError(t, err)
+	s, ok := srv.(*pprofServer)
+	assert.True(t, ok)
 
-			rr := httptest.NewRecorder()
-			srv.Handler.ServeHTTP(rr, req)
-			assert.Equal(t, http.StatusOK, rr.Code)
-		})
+	assert.Equal(t, cfg.ProfilerAddr, s.httpServer.Addr)
+	assert.Equal(t, 60*time.Second, s.httpServer.ReadTimeout)
+}
+
+func Test_PprofServer_RunAndShutdown(t *testing.T) {
+	cfg := &config.Config{
+		ProfilerAddr: "localhost:6000",
 	}
+	srv := NewPprofServer(cfg)
+
+	runErrCh := make(chan error, 1)
+	go func() {
+		err := srv.Run()
+		if err != nil && err != http.ErrServerClosed {
+			runErrCh <- err
+		}
+		close(runErrCh)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	err := srv.Shutdown(ctx)
+	assert.NoError(t, err)
+
+	err = <-runErrCh
+	assert.NoError(t, err)
 }

@@ -9,12 +9,8 @@ import (
 	"shortly/internal/app/repository/db"
 )
 
-const (
-	// MinConnections is the minimum number of connections
-	MinConnections = 10
-	// MaxConnections is the maximum number of connections
-	MaxConnections = 100
-)
+// MaxConnections is the maximum number of connections
+const MaxConnections = 100
 
 // Database is an interface for database operations
 type Database interface {
@@ -36,7 +32,6 @@ func NewDatabaseRepository(ctx context.Context, dsn string) (Database, error) {
 		return nil, err
 	}
 
-	poolConfig.MinConns = MinConnections
 	poolConfig.MaxConns = MaxConnections
 	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {

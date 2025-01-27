@@ -13,13 +13,11 @@ import (
 // contextKey is a type for context key
 type contextKey string
 
-const (
-	// CookieName is the name of the authentication cookie
-	CookieName = "auth"
+// CookieName is the name of the authentication cookie
+const CookieName = "auth"
 
-	// ProtectedRouteKey is the key for protected routes
-	ProtectedRouteKey = contextKey("protected")
-)
+// ProtectedRouteKey is the key for protected routes
+const ProtectedRouteKey = contextKey("protected")
 
 // RequireAuth is a middleware for protected routes
 func RequireAuth(next http.Handler) http.Handler {

@@ -5,11 +5,14 @@ import (
 	"strconv"
 )
 
-const (
-	DefaultPage    int64 = 1
-	DefaultPerPage int64 = 25
-	MaxPerPage     int64 = 1000
-)
+// DefaultPage is the default page number
+const DefaultPage int64 = 1
+
+// DefaultPerPage is the default number of items per page
+const DefaultPerPage int64 = 25
+
+// MaxPerPage is the maximum number of items per page
+const MaxPerPage int64 = 1000
 
 // Pagination is a struct for pagination
 type Pagination struct {

@@ -11,6 +11,12 @@ GOOSE_MIGRATION_DIR=db/migrate
 
 GO_ENV ?= development
 
+SERVER_ADDRESS=localhost:8080
+PROFILE_ADDRESS=localhost:2080
+
+#PROFILE_NAME=base | result
+PROFILE_NAME=result
+
 ifeq ($(GO_ENV),test)
 	ENV_FILE=.env.test
 	LOCAL_ENV_FILE=.env.test.local
@@ -92,3 +98,30 @@ test:
 coverage:
 	@echo "Generating test coverage report..."
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
+
+.PHONY: benchmark\:payload
+benchmark\:payload:
+	@echo "Running payload benchmark..."
+	wrk -t16 -c100 -d30s -s scripts/benchmark.lua http://$(SERVER_ADDRESS)/api/shorten
+
+.PHONY: pprof\:cpu
+pprof\:cpu:
+	@echo "Running pprof for CPU profiling..."
+	curl --location "http://$(PROFILE_ADDRESS)/debug/pprof/profile?seconds=30" > profiles/$(PROFILE_NAME).cpu.pprof
+	go tool pprof profiles/$(PROFILE_NAME).cpu.pprof
+
+.PHONY: pprof\:cpu\:diff
+pprof\:cpu\:diff:
+	@echo "Running pprof CPU diff..."
+	go tool pprof -top -diff_base=profiles/base.cpu.pprof profiles/result.cpu.pprof
+
+.PHONY: pprof\:mem
+pprof\:mem:
+	@echo "Running pprof for memory profiling..."
+	curl --location "http://$(PROFILE_ADDRESS)/debug/pprof/heap" > profiles/$(PROFILE_NAME).mem.pprof
+	go tool pprof profiles/$(PROFILE_NAME).mem.pprof
+
+.PHONY: pprof\:mem\:diff
+pprof\:mem\:diff:
+	@echo "Running pprof memory diff..."
+	go tool pprof -top -diff_base=profiles/base.mem.pprof profiles/result.mem.pprof

@@ -5,17 +5,22 @@ import (
 	"strconv"
 )
 
-const (
-	DefaultPage    int64 = 1
-	DefaultPerPage int64 = 25
-	MaxPerPage     int64 = 1000
-)
+// DefaultPage is the default page number
+const DefaultPage int64 = 1
 
+// DefaultPerPage is the default number of items per page
+const DefaultPerPage int64 = 25
+
+// MaxPerPage is the maximum number of items per page
+const MaxPerPage int64 = 1000
+
+// Pagination is a struct for pagination
 type Pagination struct {
 	Page int64
 	Per  int64
 }
 
+// NewPagination creates a new pagination instance
 func NewPagination(r *http.Request) *Pagination {
 	page := parseQueryParam(r, "page", DefaultPage)
 	per := parseQueryParam(r, "per", DefaultPerPage)
@@ -52,6 +57,7 @@ func parseQueryParam(r *http.Request, key string, defaultValue int64) int64 {
 	return value
 }
 
+// Offset returns the pagination offset
 func (p *Pagination) Offset() int64 {
 	return (p.Page - 1) * p.Per
 }

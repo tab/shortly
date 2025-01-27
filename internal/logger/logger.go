@@ -10,14 +10,17 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 )
 
+// LogLevel is the log level for the logger. Default is Info level
 const (
 	LogLevel = 1
 )
 
+// Logger is a logger structure for the application
 type Logger struct {
 	log zerolog.Logger
 }
 
+// NewLogger creates a new logger instance
 func NewLogger() *Logger {
 	zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
 	zerolog.TimeFieldFormat = "2006-01-02 15:04:05"
@@ -36,14 +39,17 @@ func NewLogger() *Logger {
 	return &Logger{log: log}
 }
 
+// Info returns an Info level event
 func (l *Logger) Info() *zerolog.Event {
 	return l.log.Info()
 }
 
+// Warn returns a Warn level event
 func (l *Logger) Warn() *zerolog.Event {
 	return l.log.Warn()
 }
 
+// Error returns an Error level event
 func (l *Logger) Error() *zerolog.Event {
 	return l.log.Error()
 }
@@ -54,17 +60,20 @@ type responseWriter struct {
 	bytesWritten int
 }
 
+// WriteHeader writes the header
 func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
 
+// Write writes the data
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	n, err := rw.ResponseWriter.Write(b)
 	rw.bytesWritten += n
 	return n, err
 }
 
+// Middleware is a middleware for logging requests
 func (l *Logger) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

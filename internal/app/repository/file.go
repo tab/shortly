@@ -8,6 +8,7 @@ import (
 	"shortly/internal/app/errors"
 )
 
+// File is an interface for file repository
 type File interface {
 	Load() (*Memento, error)
 	Save(m *Memento) error
@@ -17,10 +18,12 @@ type fileRepo struct {
 	filePath string
 }
 
+// NewFileRepository creates a new file repository instance
 func NewFileRepository(filePath string) File {
 	return &fileRepo{filePath: filePath}
 }
 
+// Load reads data from the file
 func (f *fileRepo) Load() (*Memento, error) {
 	file, err := os.OpenFile(f.filePath, os.O_RDONLY|os.O_CREATE, 0644)
 	if err != nil {
@@ -45,6 +48,7 @@ func (f *fileRepo) Load() (*Memento, error) {
 	return memento, nil
 }
 
+// Save writes data to the file
 func (f *fileRepo) Save(memento *Memento) error {
 	file, err := os.OpenFile(f.filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {

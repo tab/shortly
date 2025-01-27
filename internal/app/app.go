@@ -14,14 +14,17 @@ import (
 	"shortly/internal/logger"
 )
 
+// Application is the main application structure
 type Application struct {
 	cfg                *config.Config
 	logger             *logger.Logger
 	persistenceManager persistence.Manager
 	deleteWorker       worker.Worker
 	server             server.Server
+	pprofServer        server.PprofServer
 }
 
+// NewApplication creates a new application instance
 func NewApplication(ctx context.Context) (*Application, error) {
 	cfg := config.LoadConfig()
 	appLogger := logger.NewLogger()
@@ -37,6 +40,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
+	pprofServer := server.NewPprofServer(cfg)
 
 	return &Application{
 		cfg:                cfg,
@@ -44,9 +48,11 @@ func NewApplication(ctx context.Context) (*Application, error) {
 		persistenceManager: persistenceManager,
 		deleteWorker:       deleteWorker,
 		server:             appServer,
+		pprofServer:        pprofServer,
 	}, nil
 }
 
+// Run starts the application
 func (a *Application) Run(ctx context.Context) error {
 	err := a.persistenceManager.Load()
 	if err != nil {
@@ -60,8 +66,15 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		if err := a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
+			serverErrors <- err
+		}
+	}()
+
 	a.logger.Info().Msgf("Application starting in %s", a.cfg.AppEnv)
 	a.logger.Info().Msgf("Listening on %s", a.cfg.Addr)
+	a.logger.Info().Msgf("Profiler on %s", a.cfg.ProfilerAddr)
 
 	select {
 	case <-ctx.Done():
@@ -76,7 +89,14 @@ func (a *Application) Run(ctx context.Context) error {
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		if err = a.server.Shutdown(shutdownCtx); err != nil {
+
+		err = a.server.Shutdown(shutdownCtx)
+		if err != nil {
+			return err
+		}
+
+		err = a.pprofServer.Shutdown(shutdownCtx)
+		if err != nil {
 			return err
 		}
 

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -58,6 +59,27 @@ func Test_InMemoryRepository_CreateURL(t *testing.T) {
 				assert.False(t, found)
 			}
 		})
+	}
+}
+
+func Benchmark_InMemoryRepository_CreateURL(b *testing.B) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		longURL := fmt.Sprintf("https://example.com/%d", i)
+		shortCode := fmt.Sprintf("abcd%d", i)
+
+		_, err := store.CreateURL(ctx, URL{
+			UUID:      UUID,
+			LongURL:   longURL,
+			ShortCode: shortCode,
+		})
+		assert.NoError(b, err)
 	}
 }
 
@@ -149,6 +171,23 @@ func Test_InMemoryRepository_GetURLByShortCode(t *testing.T) {
 			}
 			assert.Equal(t, tt.found, found)
 		})
+	}
+}
+
+func Benchmark_InMemoryRepository_GetURLByShortCode(b *testing.B) {
+	ctx := context.Background()
+	store := NewInMemoryRepository()
+
+	_, err := store.CreateURL(ctx, URL{
+		LongURL:   "https://example.com",
+		ShortCode: "abcd1234",
+	})
+	assert.NoError(b, err)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		store.GetURLByShortCode(ctx, "abcd1234")
 	}
 }
 

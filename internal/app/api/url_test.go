@@ -205,6 +205,37 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	}
 }
 
+func Benchmark_HandleCreateShortLink(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+	handler := NewURLHandler(cfg, srv)
+
+	rand.EXPECT().UUID().Return(uuid.Must(uuid.NewRandom()), nil).AnyTimes()
+	rand.EXPECT().Hex().Return("abcd1234", nil).AnyTimes()
+	repo.EXPECT().GetURLByShortCode(gomock.Any(), "abcd1234").Return(nil, false).AnyTimes()
+	repo.EXPECT().CreateURL(gomock.Any(), gomock.Any()).Return(&repository.URL{
+		LongURL:   "https://example.com",
+		ShortCode: "abcd1234",
+	}, nil).AnyTimes()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodPost, "/api/shorten", strings.NewReader(`{"url":"https://example.com"}`))
+		w := httptest.NewRecorder()
+
+		handler.HandleCreateShortLink(w, req)
+	}
+}
+
 func Test_HandleBatchCreateShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -465,6 +496,37 @@ func Test_HandleGetShortLink(t *testing.T) {
 			assert.Equal(t, tt.expected.status, resp.Status)
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 		})
+	}
+}
+
+func Benchmark_HandleGetShortLink(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	defer ctrl.Finish()
+
+	ctx := gomock.Any()
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+	handler := NewURLHandler(cfg, srv)
+
+	repo.EXPECT().GetURLByShortCode(ctx, "abcd1234").Return(&repository.URL{
+		LongURL:   "https://example.com",
+		ShortCode: "abcd1234",
+	}, true).AnyTimes()
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, "/api/shorten/abcd1234", nil)
+		w := httptest.NewRecorder()
+
+		r := chi.NewRouter()
+		r.Get("/api/shorten/{id}", handler.HandleGetShortLink)
+		r.ServeHTTP(w, req)
 	}
 }
 

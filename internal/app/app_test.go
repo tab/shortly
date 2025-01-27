@@ -174,3 +174,96 @@ func Test_Application_Run(t *testing.T) {
 		})
 	}
 }
+
+func Test_Application_Run_ShutdownErrors(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
+
+	cfg := &config.Config{
+		Addr: "localhost:8080",
+	}
+	repo := repository.NewInMemoryRepository()
+	appLogger := logger.NewLogger()
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
+
+	mockPersistenceManager := persistence.NewMockManager(ctrl)
+	mockServer := server.NewMockServer(ctrl)
+	mockPprofServer := server.NewMockPprofServer(ctrl)
+
+	mockPersistenceManager.EXPECT().Load().Return(nil).AnyTimes()
+	mockServer.EXPECT().Run().DoAndReturn(func() error {
+		time.Sleep(50 * time.Millisecond)
+		return nil
+	}).AnyTimes()
+	mockPprofServer.EXPECT().Run().DoAndReturn(func() error {
+		time.Sleep(50 * time.Millisecond)
+		return nil
+	}).AnyTimes()
+
+	application := &Application{
+		cfg:                cfg,
+		logger:             appLogger,
+		persistenceManager: mockPersistenceManager,
+		deleteWorker:       appWorker,
+		server:             mockServer,
+		pprofServer:        mockPprofServer,
+	}
+
+	runErrCh := make(chan error, 1)
+
+	tests := []struct {
+		name     string
+		before   func()
+		expected error
+	}{
+		{
+			name: "SaveError",
+			before: func() {
+				mockPersistenceManager.EXPECT().Save().Return(assert.AnError)
+			},
+			expected: assert.AnError,
+		},
+		{
+			name: "ServerShutdownError",
+			before: func() {
+				mockPersistenceManager.EXPECT().Save().Return(nil)
+				mockServer.EXPECT().Shutdown(gomock.Any()).Return(assert.AnError)
+			},
+			expected: assert.AnError,
+		},
+		{
+			name: "PprofShutdownError",
+			before: func() {
+				mockPersistenceManager.EXPECT().Save().Return(nil)
+				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockPprofServer.EXPECT().Shutdown(gomock.Any()).Return(assert.AnError)
+			},
+			expected: assert.AnError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			go func() {
+				err := application.Run(ctx)
+				runErrCh <- err
+			}()
+
+			time.Sleep(50 * time.Millisecond)
+			cancel()
+
+			err := <-runErrCh
+
+			if tt.expected != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

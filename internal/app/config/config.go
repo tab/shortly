@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	BaseURL       = "http://localhost:8080"
-	ServerAddress = "localhost:8080"
+	BaseURL         = "http://localhost:8080"
+	ServerAddress   = "localhost:8080"
+	ProfilerAddress = "localhost:2080"
 )
 
 type Config struct {
@@ -20,6 +21,7 @@ type Config struct {
 	Addr            string
 	BaseURL         string
 	ClientURL       string
+	ProfilerAddr    string
 	FileStoragePath string
 	DatabaseDSN     string
 	SecretKey       string
@@ -48,6 +50,7 @@ func LoadConfig() *Config {
 	flagAddr := flag.String("a", ServerAddress, "address and port to run server")
 	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
 	flagClientURL := flag.String("c", "", "frontend client URL")
+	flagProfilerAddr := flag.String("p", ProfilerAddress, "address and port to run profiler")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")
 	flagSecretKey := flag.String("s", "", "JWT secret key")
@@ -58,6 +61,7 @@ func LoadConfig() *Config {
 		Addr:            getEnvOrFlag("SERVER_ADDRESS", *flagAddr),
 		BaseURL:         getEnvOrFlag("BASE_URL", *flagBaseURL),
 		ClientURL:       getEnvOrFlag("CLIENT_URL", *flagClientURL),
+		ProfilerAddr:    getEnvOrFlag("PROFILER_ADDRESS", *flagProfilerAddr),
 		FileStoragePath: getEnvOrFlag("FILE_STORAGE_PATH", *flagFileStoragePath),
 		DatabaseDSN:     getEnvOrFlag("DATABASE_DSN", *flagDatabaseDSN),
 		SecretKey:       getEnvOrFlag("SECRET_KEY", *flagSecretKey),

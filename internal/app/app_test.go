@@ -113,6 +113,7 @@ func Test_Application_Run(t *testing.T) {
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
+	pprofServer := server.NewPprofServer(cfg)
 
 	tests := []struct {
 		name     string
@@ -144,6 +145,7 @@ func Test_Application_Run(t *testing.T) {
 				persistenceManager: mockPersistenceManager,
 				deleteWorker:       appWorker,
 				server:             mockServer,
+				pprofServer:        pprofServer,
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)

@@ -20,6 +20,7 @@ type Application struct {
 	persistenceManager persistence.Manager
 	deleteWorker       worker.Worker
 	server             server.Server
+	pprofServer        *http.Server
 }
 
 func NewApplication(ctx context.Context) (*Application, error) {
@@ -37,6 +38,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
+	pprofServer := server.NewPprofServer(cfg)
 
 	return &Application{
 		cfg:                cfg,
@@ -44,6 +46,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 		persistenceManager: persistenceManager,
 		deleteWorker:       deleteWorker,
 		server:             appServer,
+		pprofServer:        pprofServer,
 	}, nil
 }
 
@@ -60,8 +63,15 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		if err := a.pprofServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Error().Err(err).Msg("pprof server error")
+		}
+	}()
+
 	a.logger.Info().Msgf("Application starting in %s", a.cfg.AppEnv)
 	a.logger.Info().Msgf("Listening on %s", a.cfg.Addr)
+	a.logger.Info().Msgf("Profiler on %s", a.cfg.ProfilerAddr)
 
 	select {
 	case <-ctx.Done():
@@ -76,7 +86,14 @@ func (a *Application) Run(ctx context.Context) error {
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
-		if err = a.server.Shutdown(shutdownCtx); err != nil {
+
+		err = a.server.Shutdown(shutdownCtx)
+		if err != nil {
+			return err
+		}
+
+		err = a.pprofServer.Shutdown(shutdownCtx)
+		if err != nil {
 			return err
 		}
 

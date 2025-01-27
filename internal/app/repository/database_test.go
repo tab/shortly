@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"testing"
@@ -94,6 +95,37 @@ func Test_DatabaseRepository_CreateURL(t *testing.T) {
 				require.NoError(t, err)
 			})
 		})
+	}
+}
+
+func Benchmark_DatabaseRepository_CreateURL(b *testing.B) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(b, err)
+
+	b.Cleanup(func() {
+		err = spec.TruncateTables(ctx, dsn)
+		require.NoError(b, err)
+
+		store.Close()
+	})
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		UUID, err := uuid.NewRandom()
+		require.NoError(b, err)
+
+		longURL := fmt.Sprintf("https://example.com/%d", i)
+		shortCode := fmt.Sprintf("abcd%d", i)
+
+		_, err = store.CreateURL(ctx, URL{
+			UUID:      UUID,
+			LongURL:   longURL,
+			ShortCode: shortCode,
+		})
+		assert.NoError(b, err)
 	}
 }
 
@@ -210,6 +242,33 @@ func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 				require.NoError(t, err)
 			})
 		})
+	}
+}
+
+func Benchmark_DatabaseRepository_GetURLByShortCode(b *testing.B) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(b, err)
+
+	UUID, err := uuid.NewRandom()
+	require.NoError(b, err)
+
+	longURL := "https://example.com"
+	shortCode := "abcd1234"
+
+	_, err = store.CreateURL(ctx, URL{
+		UUID:      UUID,
+		LongURL:   longURL,
+		ShortCode: shortCode,
+	})
+	assert.NoError(b, err)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, found := store.GetURLByShortCode(ctx, shortCode)
+		assert.True(b, found)
 	}
 }
 

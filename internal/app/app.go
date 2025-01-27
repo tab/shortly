@@ -20,7 +20,7 @@ type Application struct {
 	persistenceManager persistence.Manager
 	deleteWorker       worker.Worker
 	server             server.Server
-	pprofServer        *http.Server
+	pprofServer        server.PprofServer
 }
 
 func NewApplication(ctx context.Context) (*Application, error) {
@@ -64,8 +64,8 @@ func (a *Application) Run(ctx context.Context) error {
 	}()
 
 	go func() {
-		if err := a.pprofServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			a.logger.Error().Err(err).Msg("pprof server error")
+		if err := a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
+			serverErrors <- err
 		}
 	}()
 

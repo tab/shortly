@@ -38,6 +38,7 @@ func Test_NewApplication(t *testing.T) {
 			assert.NotNil(t, app.cfg)
 			assert.NotNil(t, app.logger)
 			assert.NotNil(t, app.server)
+			assert.NotNil(t, app.pprofServer)
 		})
 	}
 }
@@ -113,7 +114,7 @@ func Test_Application_Run(t *testing.T) {
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	pprofServer := server.NewPprofServer(cfg)
+	mockPprofServer := server.NewMockPprofServer(ctrl)
 
 	tests := []struct {
 		name     string
@@ -128,10 +129,22 @@ func Test_Application_Run(t *testing.T) {
 					time.Sleep(100 * time.Millisecond)
 					return nil
 				})
+				mockPprofServer.EXPECT().Run().DoAndReturn(func() error {
+					time.Sleep(100 * time.Millisecond)
+					return nil
+				})
 				mockPersistenceManager.EXPECT().Save().Return(nil)
 				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockPprofServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
 			},
 			expected: nil,
+		},
+		{
+			name: "Error on Load",
+			before: func() {
+				mockPersistenceManager.EXPECT().Load().Return(assert.AnError)
+			},
+			expected: assert.AnError,
 		},
 	}
 
@@ -145,7 +158,7 @@ func Test_Application_Run(t *testing.T) {
 				persistenceManager: mockPersistenceManager,
 				deleteWorker:       appWorker,
 				server:             mockServer,
-				pprofServer:        pprofServer,
+				pprofServer:        mockPprofServer,
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)

@@ -9,6 +9,11 @@ import (
 	"shortly/internal/app/repository/db"
 )
 
+const (
+	MinConnections = 10
+	MaxConnections = 100
+)
+
 type Database interface {
 	Repository
 	HealthChecker
@@ -21,7 +26,14 @@ type DatabaseRepo struct {
 }
 
 func NewDatabaseRepository(ctx context.Context, dsn string) (Database, error) {
-	pool, err := pgxpool.New(ctx, dsn)
+	poolConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	poolConfig.MinConns = MinConnections
+	poolConfig.MaxConns = MaxConnections
+	pool, err := pgxpool.NewWithConfig(ctx, poolConfig)
 	if err != nil {
 		return nil, err
 	}

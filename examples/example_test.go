@@ -1,10 +1,11 @@
 //go:build example
 // +build example
 
-package api_test
+package examples
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,13 +13,14 @@ import (
 	"strings"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/router"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
-func ExampleCreateShortLink() {
+func Example_handleCreateShortLink() {
 	ctx := context.Background()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
@@ -49,7 +51,7 @@ func ExampleCreateShortLink() {
 	// Body: {"result":"http://localhost:8080/abcd1234"}
 }
 
-func ExampleGetShortLink() {
+func Example_handleGetShortLink() {
 	ctx := context.Background()
 	cfg := &config.Config{
 		BaseURL: "http://localhost:8080",
@@ -65,7 +67,7 @@ func ExampleGetShortLink() {
 	defer appServer.Close()
 
 	createBody := `{"url":"https://golang.org"}`
-	respCreate, _ := http.Post(ts.URL+"/api/shorten", "application/json", strings.NewReader(createBody))
+	respCreate, _ := http.Post(appServer.URL+"/api/shorten", "application/json", strings.NewReader(createBody))
 	defer respCreate.Body.Close()
 	cBytes, _ := io.ReadAll(respCreate.Body)
 

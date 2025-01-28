@@ -10,7 +10,7 @@ import (
 )
 
 // MaxConnections is the maximum number of connections
-const MaxConnections = 100
+const MaxConnections = 150
 
 // Database is an interface for database operations
 type Database interface {

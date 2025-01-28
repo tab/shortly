@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 
@@ -156,14 +157,60 @@ func (s *URLService) DeleteUserURLs(ctx context.Context, params dto.BatchDeleteS
 
 // generateUniqueShortCode generates a unique short code
 func (s *URLService) generateUniqueShortCode(ctx context.Context) (string, error) {
-	for {
-		shortCode, err := s.rand.Hex()
-		if err != nil {
-			return "", err
-		}
+	//for {
+	//	shortCode, err := s.rand.Hex()
+	//	if err != nil {
+	//		return "", err
+	//	}
+	//
+	//	if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
+	//		return shortCode, nil
+	//	}
+	//}
 
-		if _, exists := s.repo.GetURLByShortCode(ctx, shortCode); !exists {
-			return shortCode, nil
-		}
+	UUID, err := uuid.NewRandom()
+	if err != nil {
+		return "", errors.ErrFailedToGenerateUUID
 	}
+
+	code := UUIDToShortCode(UUID, 8)
+
+	return code, nil
+}
+
+func UUIDToShortCode(id uuid.UUID, length int) string {
+	high64 := binary.BigEndian.Uint64(id[:8])
+
+	code := encodeBase62(high64)
+
+	if len(code) > length {
+		code = code[:length]
+	} else {
+		padding := strings.Repeat("0", length-len(code))
+		code = padding + code
+	}
+
+	return code
+}
+
+func encodeBase62(num uint64) string {
+	if num == 0 {
+		return "0"
+	}
+
+	const chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	var sb strings.Builder
+	for num > 0 {
+		remainder := num % 62
+		sb.WriteByte(chars[remainder])
+		num /= 62
+	}
+
+	bytes := []byte(sb.String())
+	for i, j := 0, len(bytes)-1; i < j; i, j = i+1, j-1 {
+		bytes[i], bytes[j] = bytes[j], bytes[i]
+	}
+
+	return string(bytes)
 }

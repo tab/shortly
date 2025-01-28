@@ -1,10 +1,10 @@
 package dto
 
 import (
-	"encoding/json"
 	"io"
 	"strings"
 
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 
 	"shortly/internal/app/errors"

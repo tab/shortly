@@ -5,12 +5,13 @@ package examples
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+
+	"github.com/goccy/go-json"
 
 	"shortly/internal/app/config"
 	"shortly/internal/app/dto"

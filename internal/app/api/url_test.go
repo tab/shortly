@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +10,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/goccy/go-json"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -131,7 +131,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 			body:   strings.NewReader(`{"url"}`),
 			before: func() {},
 			expected: result{
-				error:  dto.ErrorResponse{Error: "invalid character '}' after object key"},
+				error:  dto.ErrorResponse{Error: "expected colon after object key"},
 				status: "400 Bad Request",
 				code:   http.StatusBadRequest,
 			},

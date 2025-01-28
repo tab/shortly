@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 
 	"github.com/google/uuid"

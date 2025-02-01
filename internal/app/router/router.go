@@ -16,6 +16,7 @@ import (
 	"shortly/internal/logger"
 )
 
+// NewRouter creates a new router instance
 func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Worker, appLogger *logger.Logger) http.Handler {
 	rand := service.NewSecureRandom()
 	shortener := service.NewURLService(cfg, repo, rand, worker)

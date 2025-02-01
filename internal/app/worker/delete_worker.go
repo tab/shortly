@@ -10,8 +10,10 @@ import (
 	"shortly/internal/logger"
 )
 
+// QueueSize is the size of the worker queue
 const QueueSize = 100
 
+// Worker is an interface for the delete worker
 type Worker interface {
 	Start()
 	Stop()
@@ -27,6 +29,7 @@ type worker struct {
 	wg     sync.WaitGroup
 }
 
+// NewDeleteWorker creates a new delete worker instance
 func NewDeleteWorker(ctx context.Context, cfg *config.Config, repo repository.Repository, logger *logger.Logger) Worker {
 	queue := make(chan dto.BatchDeleteParams, QueueSize)
 
@@ -39,6 +42,7 @@ func NewDeleteWorker(ctx context.Context, cfg *config.Config, repo repository.Re
 	}
 }
 
+// Start starts the application worker
 func (w *worker) Start() {
 	w.logger.Info().Msgf("Worker starting in %s environment", w.cfg.AppEnv)
 
@@ -46,10 +50,12 @@ func (w *worker) Start() {
 	go w.run()
 }
 
+// Stop stops the application worker
 func (w *worker) Stop() {
 	w.wg.Wait()
 }
 
+// Add adds a new request to the worker queue
 func (w *worker) Add(req dto.BatchDeleteParams) {
 	select {
 	case <-w.ctx.Done():
@@ -82,6 +88,7 @@ func (w *worker) perform(req dto.BatchDeleteParams) {
 	}
 }
 
+// unique returns a unique slice of short codes
 func unique(shortCodes []string) []string {
 	codesMap := make(map[string]struct{})
 

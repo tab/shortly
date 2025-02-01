@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// LoadEnv loads the environment variables from the .env files for tests run
 func LoadEnv() error {
 	rootDir, err := findProjectRoot()
 	if err != nil {

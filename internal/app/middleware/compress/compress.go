@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// Middleware is a middleware for compressing requests and responses
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		originalWriter := w
@@ -39,10 +40,12 @@ type compressReader struct {
 	gzipReader *gzip.Reader
 }
 
+// Read reads the compressed data
 func (c *compressReader) Read(p []byte) (n int, err error) {
 	return c.gzipReader.Read(p)
 }
 
+// Close closes the reader
 func (c *compressReader) Close() error {
 	if err := c.reader.Close(); err != nil {
 		return err
@@ -67,14 +70,17 @@ type compressWriter struct {
 	gzipWriter *gzip.Writer
 }
 
+// Header returns the writer header
 func (c *compressWriter) Header() http.Header {
 	return c.writer.Header()
 }
 
+// Write writes the compressed data
 func (c *compressWriter) Write(p []byte) (int, error) {
 	return c.gzipWriter.Write(p)
 }
 
+// WriteHeader writes the header
 func (c *compressWriter) WriteHeader(statusCode int) {
 	if statusCode >= http.StatusContinue && statusCode <= http.StatusIMUsed {
 		c.writer.Header().Set("Content-Encoding", "gzip")
@@ -83,6 +89,7 @@ func (c *compressWriter) WriteHeader(statusCode int) {
 	c.writer.WriteHeader(statusCode)
 }
 
+// Close closes the writer
 func (c *compressWriter) Close() error {
 	return c.gzipWriter.Close()
 }

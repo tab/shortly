@@ -3,10 +3,12 @@ package service
 import (
 	"testing"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/errors"
 )
 
 func Test_NewJWTService(t *testing.T) {
@@ -68,7 +70,7 @@ func Test_JWTService_Generate(t *testing.T) {
 	}
 }
 
-func Test_JWTService_Decode(t *testing.T) {
+func Test_JWTService_Verify(t *testing.T) {
 	cfg := &config.Config{
 		SecretKey: "jwt-secret-key",
 	}
@@ -76,36 +78,54 @@ func Test_JWTService_Decode(t *testing.T) {
 
 	UUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174000")
 
+	validToken, err := service.Generate(UUID)
+	assert.NoError(t, err)
+
+	wrongSecretService := NewAuthService(&config.Config{
+		SecretKey: "some-other-key",
+	})
+	wrongToken, err := wrongSecretService.Generate(UUID)
+	assert.NoError(t, err)
+
+	invalidToken := validToken
+	invalidToken = invalidToken[:len(invalidToken)-5] + "XYZ"
+
 	tests := []struct {
 		name     string
-		id       uuid.UUID
-		expected string
+		token    string
+		expected uuid.UUID
+		error    error
 	}{
 		{
 			name:     "Success",
-			id:       UUID,
-			expected: "123e4567-e89b-12d3-a456-426614174000",
+			token:    validToken,
+			expected: UUID,
+			error:    nil,
 		},
 		{
-			name:     "Empty id",
-			id:       uuid.UUID{},
-			expected: "00000000-0000-0000-0000-000000000000",
+			name:     "Wrong token",
+			token:    wrongToken,
+			expected: uuid.Nil,
+			error:    jwt.ErrSignatureInvalid,
 		},
 		{
-			name:     "Nil id",
-			id:       uuid.Nil,
-			expected: "00000000-0000-0000-0000-000000000000",
+			name:     "Invalid token",
+			token:    invalidToken,
+			expected: uuid.Nil,
+			error:    errors.ErrInvalidToken,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			token, err := service.Generate(tt.id)
-			assert.NoError(t, err)
+			id, err := service.Verify(tt.token)
 
-			id, err := service.Verify(token)
-			assert.NoError(t, err)
-			assert.Equal(t, tt.expected, id.String())
+			if tt.error != nil {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tt.expected, id)
 		})
 	}
 }

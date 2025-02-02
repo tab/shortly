@@ -89,6 +89,22 @@ vet:
 	@echo "Running go vet..."
 	go vet ./...
 
+.PHONY: staticcheck
+staticcheck:
+	@echo "Running staticcheck..."
+	staticcheck ./...
+
+.PHONY: staticlint\:build
+staticlint\:build:
+	@echo "Building staticcheck binary..."
+	go build -ldflags="-s -w" -o cmd/staticlint/staticlint cmd/staticlint/main.go
+	chmod +x cmd/staticlint/staticlint
+
+.PHONY: staticlint
+staticlint:
+	@echo "Running staticlint..."
+	./cmd/staticlint/staticlint ./...
+
 .PHONY: test
 test:
 	@echo "Running tests..."

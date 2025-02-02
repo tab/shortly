@@ -61,13 +61,13 @@ func (a *Application) Run(ctx context.Context) error {
 
 	serverErrors := make(chan error, 1)
 	go func() {
-		if err := a.server.Run(); err != nil && err != http.ErrServerClosed {
+		if err = a.server.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
 
 	go func() {
-		if err := a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
+		if err = a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()

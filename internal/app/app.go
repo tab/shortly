@@ -54,20 +54,19 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 // Run starts the application
 func (a *Application) Run(ctx context.Context) error {
-	err := a.persistenceManager.Load()
-	if err != nil {
+	if err := a.persistenceManager.Load(); err != nil {
 		return err
 	}
 
-	serverErrors := make(chan error, 1)
+	serverErrors := make(chan error, 2)
 	go func() {
-		if err = a.server.Run(); err != nil && err != http.ErrServerClosed {
+		if err := a.server.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
 
 	go func() {
-		if err = a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
+		if err := a.pprofServer.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
@@ -82,27 +81,24 @@ func (a *Application) Run(ctx context.Context) error {
 
 		a.deleteWorker.Stop()
 
-		err = a.persistenceManager.Save()
-		if err != nil {
+		if err := a.persistenceManager.Save(); err != nil {
 			return err
 		}
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		err = a.server.Shutdown(shutdownCtx)
-		if err != nil {
+		if err := a.server.Shutdown(shutdownCtx); err != nil {
 			return err
 		}
 
-		err = a.pprofServer.Shutdown(shutdownCtx)
-		if err != nil {
+		if err := a.pprofServer.Shutdown(shutdownCtx); err != nil {
 			return err
 		}
 
 		a.logger.Info().Msg("Server gracefully stopped")
 		return nil
-	case err = <-serverErrors:
+	case err := <-serverErrors:
 		return err
 	}
 }

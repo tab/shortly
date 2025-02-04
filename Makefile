@@ -17,6 +17,11 @@ PROFILE_ADDRESS=localhost:2080
 #PROFILE_NAME=base | result
 PROFILE_NAME=result
 
+BUILD_DATE := $(shell date -u +"%d.%m.%Y")
+BUILD_COMMIT := $(shell git rev-parse --short HEAD)
+BUILD_VERSION := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "N/A")
+VERSION_PACKAGE := shortly/internal/app/version
+
 ifeq ($(GO_ENV),test)
 	ENV_FILE=.env.test
 	LOCAL_ENV_FILE=.env.test.local
@@ -38,6 +43,21 @@ ifneq (,$(wildcard $(LOCAL_ENV_FILE)))
 	include $(LOCAL_ENV_FILE)
 	export $(shell sed 's/=.*//' $(LOCAL_ENV_FILE))
 endif
+
+.PHONY: run
+run:
+	@echo "Running application..."
+	go run -ldflags="-X $(VERSION_PACKAGE).buildVersion=$(BUILD_VERSION) -X $(VERSION_PACKAGE).buildDate=$(BUILD_DATE) -X $(VERSION_PACKAGE).buildCommit=$(BUILD_COMMIT)" cmd/shortener/main.go
+
+.PHONY: build
+build:
+	@echo "Building application..."
+	go build -ldflags="-X $(VERSION_PACKAGE).buildVersion=$(BUILD_VERSION) -X $(VERSION_PACKAGE).buildDate=$(BUILD_DATE) -X $(VERSION_PACKAGE).buildCommit=$(BUILD_COMMIT)" -o cmd/shortener/shortener cmd/shortener/main.go
+
+.PHONY: build\:compose
+build\:compose:
+	@echo "Building application with docker-compose..."
+	export BUILD_VERSION=$(BUILD_VERSION) && export BUILD_DATE=$(BUILD_DATE) && export BUILD_COMMIT=$(BUILD_COMMIT) && docker-compose build
 
 .PHONY: db\:create
 db\:create:

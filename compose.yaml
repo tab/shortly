@@ -4,6 +4,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        BUILD_VERSION: ${BUILD_VERSION:-"N/A"}
+        BUILD_DATE: ${BUILD_DATE:-"N/A"}
+        BUILD_COMMIT: ${BUILD_COMMIT:-"N/A"}
     depends_on:
       - database
     ports:

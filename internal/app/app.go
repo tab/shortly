@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"net/http"
+	"os"
 	"time"
 
 	"shortly/internal/app/config"
@@ -10,6 +11,7 @@ import (
 	"shortly/internal/app/repository/persistence"
 	"shortly/internal/app/router"
 	"shortly/internal/app/server"
+	"shortly/internal/app/version"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
@@ -26,6 +28,9 @@ type Application struct {
 
 // NewApplication creates a new application instance
 func NewApplication(ctx context.Context) (*Application, error) {
+	appVersion := version.NewVersion()
+	appVersion.Print(os.Stdout)
+
 	cfg := config.LoadConfig()
 	appLogger := logger.NewLogger()
 

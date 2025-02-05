@@ -16,6 +16,7 @@ var (
 	buildCommit = "N/A"
 )
 
+// Version is the interface that provides application build
 type Version interface {
 	Print(w io.Writer)
 }

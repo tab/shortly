@@ -1,13 +1,12 @@
 package version
 
 import (
-	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_Print(t *testing.T) {
+func Test_Version(t *testing.T) {
 	tests := []struct {
 		name     string
 		version  version
@@ -20,7 +19,7 @@ func Test_Print(t *testing.T) {
 				buildDate:    "01.02.2025",
 				buildCommit:  "abcd1234",
 			},
-			expected: "Build version: v1.0.0\nBuild date: 01.02.2025\nBuild commit: abcd1234\n",
+			expected: "v1.0.0",
 		},
 		{
 			name: "Empty",
@@ -29,7 +28,7 @@ func Test_Print(t *testing.T) {
 				buildDate:    "N/A",
 				buildCommit:  "N/A",
 			},
-			expected: "Build version: N/A\nBuild date: N/A\nBuild commit: N/A\n",
+			expected: "N/A",
 		},
 	}
 
@@ -40,11 +39,83 @@ func Test_Print(t *testing.T) {
 			buildCommit = tt.version.buildCommit
 
 			appVersion := NewVersion()
+			assert.Equal(t, tt.expected, appVersion.Version())
+		})
+	}
+}
 
-			var buf bytes.Buffer
-			appVersion.Print(&buf)
+func Test_Date(t *testing.T) {
+	tests := []struct {
+		name     string
+		version  version
+		expected string
+	}{
+		{
+			name: "Success",
+			version: version{
+				buildVersion: "v1.0.0",
+				buildDate:    "01.02.2025",
+				buildCommit:  "abcd1234",
+			},
+			expected: "01.02.2025",
+		},
+		{
+			name: "Empty",
+			version: version{
+				buildVersion: "N/A",
+				buildDate:    "N/A",
+				buildCommit:  "N/A",
+			},
+			expected: "N/A",
+		},
+	}
 
-			assert.Equal(t, tt.expected, buf.String())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buildVersion = tt.version.buildVersion
+			buildDate = tt.version.buildDate
+			buildCommit = tt.version.buildCommit
+
+			appVersion := NewVersion()
+			assert.Equal(t, tt.expected, appVersion.Date())
+		})
+	}
+}
+
+func Test_Commit(t *testing.T) {
+	tests := []struct {
+		name     string
+		version  version
+		expected string
+	}{
+		{
+			name: "Success",
+			version: version{
+				buildVersion: "v1.0.0",
+				buildDate:    "01.02.2025",
+				buildCommit:  "abcd1234",
+			},
+			expected: "abcd1234",
+		},
+		{
+			name: "Empty",
+			version: version{
+				buildVersion: "N/A",
+				buildDate:    "N/A",
+				buildCommit:  "N/A",
+			},
+			expected: "N/A",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			buildVersion = tt.version.buildVersion
+			buildDate = tt.version.buildDate
+			buildCommit = tt.version.buildCommit
+
+			appVersion := NewVersion()
+			assert.Equal(t, tt.expected, appVersion.Commit())
 		})
 	}
 }

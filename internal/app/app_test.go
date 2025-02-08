@@ -17,28 +17,33 @@ import (
 )
 
 func Test_NewApplication(t *testing.T) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
+	defer cancel()
 
 	tests := []struct {
-		name     string
-		expected Application
+		name  string
+		error bool
 	}{
 		{
-			name:     "Success",
-			expected: Application{},
+			name:  "Success",
+			error: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			app, err := NewApplication(ctx)
-			assert.NoError(t, err)
 
-			assert.NotNil(t, app)
-			assert.NotNil(t, app.cfg)
-			assert.NotNil(t, app.logger)
-			assert.NotNil(t, app.server)
-			assert.NotNil(t, app.pprofServer)
+			if tt.error {
+				assert.Nil(t, app)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, app)
+				assert.NotNil(t, app.cfg)
+				assert.NotNil(t, app.logger)
+				assert.NotNil(t, app.server)
+				assert.NotNil(t, app.pprofServer)
+			}
 		})
 	}
 }

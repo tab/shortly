@@ -1,10 +1,5 @@
 package version
 
-import (
-	"fmt"
-	"io"
-)
-
 var (
 	// buildVersion is the application build version, example: v1.0.0
 	buildVersion = "N/A"
@@ -18,7 +13,9 @@ var (
 
 // Version is the interface that provides application build
 type Version interface {
-	Print(w io.Writer)
+	Version() string
+	Date() string
+	Commit() string
 }
 
 type version struct {
@@ -36,9 +33,17 @@ func NewVersion() Version {
 	}
 }
 
-// Print prints the app version information
-func (v *version) Print(w io.Writer) {
-	_, _ = fmt.Fprintln(w, "Build version:", buildVersion)
-	_, _ = fmt.Fprintln(w, "Build date:", buildDate)
-	_, _ = fmt.Fprintln(w, "Build commit:", buildCommit)
+// BuildVersion returns the application build version
+func (v *version) Version() string {
+	return v.buildVersion
+}
+
+// BuildDate returns the application build date
+func (v *version) Date() string {
+	return v.buildDate
+}
+
+// BuildCommit returns the application build commit
+func (v *version) Commit() string {
+	return v.buildCommit
 }

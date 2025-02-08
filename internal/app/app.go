@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"net/http"
-	"os"
 	"time"
 
 	"shortly/internal/app/config"
@@ -28,9 +27,6 @@ type Application struct {
 
 // NewApplication creates a new application instance
 func NewApplication(ctx context.Context) (*Application, error) {
-	appVersion := version.NewVersion()
-	appVersion.Print(os.Stdout)
-
 	cfg := config.LoadConfig()
 	appLogger := logger.NewLogger()
 
@@ -75,6 +71,12 @@ func (a *Application) Run(ctx context.Context) error {
 			serverErrors <- err
 		}
 	}()
+
+	appVersion := version.NewVersion()
+
+	a.logger.Info().Msgf("Build version: %s", appVersion.Version())
+	a.logger.Info().Msgf("Build date: %s", appVersion.Date())
+	a.logger.Info().Msgf("Build commit: %s", appVersion.Commit())
 
 	a.logger.Info().Msgf("Application starting in %s", a.cfg.AppEnv)
 	a.logger.Info().Msgf("Listening on %s", a.cfg.Addr)

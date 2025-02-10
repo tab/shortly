@@ -3,12 +3,6 @@ on:
   pull_request:
     types: [opened, reopened, synchronize, ready_for_review]
     branches:
-      - iter15
-      - iter16
-      - iter17
-      - iter18
-      - iter19
-      - iter20
       - iter21
       - iter22
       - iter23
@@ -16,12 +10,6 @@ on:
   push:
     branches:
       - main
-      - iter15
-      - iter16
-      - iter17
-      - iter18
-      - iter19
-      - iter20
       - iter21
       - iter22
       - iter23

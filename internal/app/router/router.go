@@ -41,7 +41,6 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 
 	// NOTE: protected routes
 	router.Group(func(r chi.Router) {
-		r.Use(auth.RequireAuth)
 		r.Use(auth.Middleware(authenticator))
 
 		r.Get("/api/user/urls", shortenerHandler.HandleGetUserURLs)

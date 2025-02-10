@@ -10,6 +10,7 @@ import (
 	"shortly/internal/app/repository/persistence"
 	"shortly/internal/app/router"
 	"shortly/internal/app/server"
+	"shortly/internal/app/version"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
@@ -54,12 +55,11 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 // Run starts the application
 func (a *Application) Run(ctx context.Context) error {
-	err := a.persistenceManager.Load()
-	if err != nil {
+	if err := a.persistenceManager.Load(); err != nil {
 		return err
 	}
 
-	serverErrors := make(chan error, 1)
+	serverErrors := make(chan error, 2)
 	go func() {
 		if err := a.server.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
@@ -72,6 +72,12 @@ func (a *Application) Run(ctx context.Context) error {
 		}
 	}()
 
+	appVersion := version.NewVersion()
+
+	a.logger.Info().Msgf("Build version: %s", appVersion.Version())
+	a.logger.Info().Msgf("Build date: %s", appVersion.Date())
+	a.logger.Info().Msgf("Build commit: %s", appVersion.Commit())
+
 	a.logger.Info().Msgf("Application starting in %s", a.cfg.AppEnv)
 	a.logger.Info().Msgf("Listening on %s", a.cfg.Addr)
 	a.logger.Info().Msgf("Profiler on %s", a.cfg.ProfilerAddr)
@@ -82,27 +88,24 @@ func (a *Application) Run(ctx context.Context) error {
 
 		a.deleteWorker.Stop()
 
-		err = a.persistenceManager.Save()
-		if err != nil {
+		if err := a.persistenceManager.Save(); err != nil {
 			return err
 		}
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 		defer cancel()
 
-		err = a.server.Shutdown(shutdownCtx)
-		if err != nil {
+		if err := a.server.Shutdown(shutdownCtx); err != nil {
 			return err
 		}
 
-		err = a.pprofServer.Shutdown(shutdownCtx)
-		if err != nil {
+		if err := a.pprofServer.Shutdown(shutdownCtx); err != nil {
 			return err
 		}
 
 		a.logger.Info().Msg("Server gracefully stopped")
 		return nil
-	case err = <-serverErrors:
+	case err := <-serverErrors:
 		return err
 	}
 }

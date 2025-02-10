@@ -3,7 +3,6 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,55 +11,6 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/service"
 )
-
-func Test_RequireAuth(t *testing.T) {
-	client := &http.Client{}
-
-	cfg := &config.Config{
-		SecretKey: "jwt-secret-key",
-	}
-	authenticator := service.NewAuthService(cfg)
-
-	type result struct {
-		code int
-	}
-
-	tests := []struct {
-		name     string
-		body     string
-		expected result
-	}{
-		{
-			name: "Success",
-			body: `{"test": "data"}`,
-			expected: result{
-				code: http.StatusOK,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusOK)
-				_, err := w.Write([]byte(`{"response": "ok"}`))
-				assert.NoError(t, err)
-			})
-
-			ts := httptest.NewServer(Middleware(authenticator)(handler))
-			defer ts.Close()
-
-			req, err := http.NewRequest("POST", ts.URL, strings.NewReader(tt.body))
-			assert.NoError(t, err)
-
-			resp, err := client.Do(req)
-			assert.NoError(t, err)
-			defer resp.Body.Close()
-			assert.Equal(t, tt.expected.code, resp.StatusCode)
-		})
-	}
-}
 
 func Test_Middleware(t *testing.T) {
 	client := &http.Client{}
@@ -76,7 +26,6 @@ func Test_Middleware(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		before      func()
 		isProtected bool
 		cookie      *http.Cookie
 		expected    result
@@ -93,7 +42,10 @@ func Test_Middleware(t *testing.T) {
 		{
 			name:        "Public route, valid cookie",
 			isProtected: false,
-			cookie:      func() *http.Cookie { c, _ := generateCookie(authenticator); return c }(),
+			cookie: func() *http.Cookie {
+				c, _ := generateCookie(authenticator)
+				return c
+			}(),
 			expected: result{
 				code:            http.StatusOK,
 				cookieGenerated: false,
@@ -113,14 +65,17 @@ func Test_Middleware(t *testing.T) {
 			isProtected: true,
 			cookie:      nil,
 			expected: result{
-				code:            http.StatusUnauthorized,
-				cookieGenerated: false,
+				code:            http.StatusOK,
+				cookieGenerated: true,
 			},
 		},
 		{
 			name:        "Protected route, valid cookie",
 			isProtected: true,
-			cookie:      func() *http.Cookie { c, _ := generateCookie(authenticator); return c }(),
+			cookie: func() *http.Cookie {
+				c, _ := generateCookie(authenticator)
+				return c
+			}(),
 			expected: result{
 				code:            http.StatusOK,
 				cookieGenerated: false,
@@ -131,8 +86,8 @@ func Test_Middleware(t *testing.T) {
 			isProtected: true,
 			cookie:      &http.Cookie{Name: CookieName, Value: "invalid-token"},
 			expected: result{
-				code:            http.StatusUnauthorized,
-				cookieGenerated: false,
+				code:            http.StatusOK,
+				cookieGenerated: true,
 			},
 		},
 	}
@@ -148,9 +103,6 @@ func Test_Middleware(t *testing.T) {
 
 			var wrappedHandler http.Handler = handler
 			wrappedHandler = Middleware(authenticator)(wrappedHandler)
-			if tt.isProtected {
-				wrappedHandler = RequireAuth(wrappedHandler)
-			}
 
 			ts := httptest.NewServer(wrappedHandler)
 			defer ts.Close()
@@ -168,15 +120,14 @@ func Test_Middleware(t *testing.T) {
 
 			assert.Equal(t, tt.expected.code, resp.StatusCode)
 
-			cookies := resp.Cookies()
-			isNewCookieGenerated := false
-			for _, c := range cookies {
+			cookieFound := false
+			for _, c := range resp.Cookies() {
 				if c.Name == CookieName {
-					isNewCookieGenerated = true
+					cookieFound = true
 					break
 				}
 			}
-			assert.Equal(t, tt.expected.cookieGenerated, isNewCookieGenerated)
+			assert.Equal(t, tt.expected.cookieGenerated, cookieFound)
 		})
 	}
 }

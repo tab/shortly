@@ -15,12 +15,14 @@ type Server interface {
 }
 
 type server struct {
+	cfg        *config.Config
 	httpServer *http.Server
 }
 
 // NewServer creates a new server instance
 func NewServer(cfg *config.Config, handler http.Handler) Server {
 	return &server{
+		cfg: cfg,
 		httpServer: &http.Server{
 			Addr:         cfg.Addr,
 			Handler:      handler,
@@ -33,6 +35,9 @@ func NewServer(cfg *config.Config, handler http.Handler) Server {
 
 // Run starts the application server
 func (s *server) Run() error {
+	if config.IsTLSEnabled(s.cfg) {
+		return s.httpServer.ListenAndServeTLS(s.cfg.Certificate, s.cfg.PrivateKey)
+	}
 	return s.httpServer.ListenAndServe()
 }
 

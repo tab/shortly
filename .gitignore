@@ -30,3 +30,6 @@ store-test.json
 # ENV
 .env.development.local
 .env.test.local
+
+# Certificates
+*.pem

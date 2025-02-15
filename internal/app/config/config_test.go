@@ -44,6 +44,7 @@ func Test_LoadConfig(t *testing.T) {
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
+				EnableHTTPS:     false,
 			},
 		},
 		{
@@ -55,7 +56,8 @@ func Test_LoadConfig(t *testing.T) {
 				"-p", "localhost:2080",
 				"-f", "store-test.json",
 				"-d", "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
-				"-s", "jwt-secret-key",
+				"-k", "jwt-secret-key",
+				"-s", "true",
 			},
 			env: map[string]string{
 				"SERVER_ADDRESS":    "localhost:3000",
@@ -65,6 +67,7 @@ func Test_LoadConfig(t *testing.T) {
 				"FILE_STORAGE_PATH": "store-test.json",
 				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				"SECRET_KEY":        "jwt-secret-key",
+				"ENABLE_HTTPS":      "true",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -75,6 +78,7 @@ func Test_LoadConfig(t *testing.T) {
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
+				EnableHTTPS:     true,
 			},
 		},
 	}
@@ -96,6 +100,117 @@ func Test_LoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.FileStoragePath, result.FileStoragePath)
 			assert.Equal(t, tt.expected.DatabaseDSN, result.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, result.SecretKey)
+			assert.Equal(t, tt.expected.EnableHTTPS, result.EnableHTTPS)
+
+			t.Cleanup(func() {
+				for key := range tt.env {
+					os.Unsetenv(key)
+				}
+			})
+		})
+	}
+}
+
+func Test_getEnvOrFlag(t *testing.T) {
+	tests := []struct {
+		name     string
+		env      map[string]string
+		envKey   string
+		flagVal  string
+		expected string
+	}{
+		{
+			name: "Flag value is empty",
+			env: map[string]string{
+				"TEST_ENV": "some-env-value",
+			},
+			envKey:   "TEST_ENV",
+			flagVal:  "",
+			expected: "some-env-value",
+		},
+		{
+			name: "Flag value is present",
+			env: map[string]string{
+				"TEST_ENV": "some-env-value",
+			},
+			envKey:   "TEST_ENV",
+			flagVal:  "some-flag-value",
+			expected: "some-env-value",
+		},
+		{
+			name:     "Env value is empty",
+			env:      map[string]string{},
+			envKey:   "TEST_ENV",
+			flagVal:  "some-flag-value",
+			expected: "some-flag-value",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for key, value := range tt.env {
+				os.Setenv(key, value)
+			}
+
+			flag.CommandLine = flag.NewFlagSet(tt.name, flag.ContinueOnError)
+
+			result := getEnvOrFlag(tt.envKey, tt.flagVal)
+			assert.Equal(t, tt.expected, result)
+
+			t.Cleanup(func() {
+				for key := range tt.env {
+					os.Unsetenv(key)
+				}
+			})
+		})
+	}
+}
+
+func Test_getEnvOrBoolFlag(t *testing.T) {
+	tests := []struct {
+		name     string
+		env      map[string]string
+		envKey   string
+		flagVal  bool
+		expected bool
+	}{
+		{
+			name: "Flag value is false",
+			env: map[string]string{
+				"TEST_ENV": "true",
+			},
+			envKey:   "TEST_ENV",
+			flagVal:  false,
+			expected: true,
+		},
+		{
+			name: "Flag value is true",
+			env: map[string]string{
+				"TEST_ENV": "false",
+			},
+			envKey:   "TEST_ENV",
+			flagVal:  true,
+			expected: false,
+		},
+		{
+			name:     "Env value is false",
+			env:      map[string]string{},
+			envKey:   "TEST_ENV",
+			flagVal:  true,
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for key, value := range tt.env {
+				os.Setenv(key, value)
+			}
+
+			flag.CommandLine = flag.NewFlagSet(tt.name, flag.ContinueOnError)
+
+			result := getEnvOrBoolFlag(tt.envKey, tt.flagVal)
+			assert.Equal(t, tt.expected, result)
 
 			t.Cleanup(func() {
 				for key := range tt.env {

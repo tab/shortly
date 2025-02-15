@@ -19,6 +19,9 @@ const ServerAddress = "localhost:8080"
 // ProfilerAddress is the address and port to run the profiler
 const ProfilerAddress = "localhost:2080"
 
+// EnableHTTPS is a flag to enable HTTPS
+const EnableHTTPS = false
+
 // Config is the application configuration
 type Config struct {
 	AppEnv          string
@@ -29,6 +32,9 @@ type Config struct {
 	FileStoragePath string
 	DatabaseDSN     string
 	SecretKey       string
+	EnableHTTPS     bool
+	Certificate     string
+	PrivateKey      string
 }
 
 // LoadConfig loads the application configuration
@@ -58,7 +64,8 @@ func LoadConfig() *Config {
 	flagProfilerAddr := flag.String("p", ProfilerAddress, "address and port to run profiler")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")
-	flagSecretKey := flag.String("s", "", "JWT secret key")
+	flagSecretKey := flag.String("k", "", "JWT secret key")
+	flagEnableHTTPS := flag.Bool("s", EnableHTTPS, "enable HTTPS")
 	flag.Parse()
 
 	return &Config{
@@ -70,12 +77,20 @@ func LoadConfig() *Config {
 		FileStoragePath: getEnvOrFlag("FILE_STORAGE_PATH", *flagFileStoragePath),
 		DatabaseDSN:     getEnvOrFlag("DATABASE_DSN", *flagDatabaseDSN),
 		SecretKey:       getEnvOrFlag("SECRET_KEY", *flagSecretKey),
+		EnableHTTPS:     getEnvOrBoolFlag("ENABLE_HTTPS", *flagEnableHTTPS),
 	}
 }
 
 func getEnvOrFlag(envVar, flagValue string) string {
 	if envValue, ok := os.LookupEnv(envVar); ok && envValue != "" {
 		return envValue
+	}
+	return flagValue
+}
+
+func getEnvOrBoolFlag(envVar string, flagValue bool) bool {
+	if envValue, ok := os.LookupEnv(envVar); ok && envValue != "" {
+		return envValue == "true"
 	}
 	return flagValue
 }

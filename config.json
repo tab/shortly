@@ -1,0 +1,13 @@
+{
+  "env": "development",
+  "server_address": "localhost:9443",
+  "base_url": "https://localhost:9443",
+  "client_url": "http://localhost:3000",
+  "profiler_address": "localhost:10443",
+  "file_storage_path": "store.json",
+  "database_dsn": "postgres://postgres:postgres@database:5432/shortly-development?sslmode=disable",
+  "secret_key": "f04657c9278e88dac0a37c6fd30f5317",
+  "enable_https": false,
+  "certificate_path": "certs/certificate.pem",
+  "certificate_key_path": "certs/private-key.pem"
+}

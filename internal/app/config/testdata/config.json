@@ -1,0 +1,9 @@
+{
+  "server_address": "localhost:9000",
+  "base_url": "http://localhost:9000",
+  "profiler_address": "localhost:9080",
+  "file_storage_path": "store-test.json",
+  "database_dsn": "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+  "secret_key": "jwt-secret-key-test",
+  "enable_https": true
+}

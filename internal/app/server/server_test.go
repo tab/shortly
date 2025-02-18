@@ -43,8 +43,41 @@ func Test_NewServer(t *testing.T) {
 
 func Test_Server_RunAndShutdown(t *testing.T) {
 	cfg := &config.Config{
-		Addr: "localhost:5000",
+		Addr:    "localhost:5000",
+		BaseURL: "http://localhost:5000",
 	}
+	handler := http.NewServeMux()
+	srv := NewServer(cfg, handler)
+
+	runErrCh := make(chan error, 1)
+	go func() {
+		err := srv.Run()
+		if err != nil && err != http.ErrServerClosed {
+			runErrCh <- err
+		}
+		close(runErrCh)
+	}()
+
+	time.Sleep(100 * time.Millisecond)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	err := srv.Shutdown(ctx)
+	assert.NoError(t, err)
+
+	err = <-runErrCh
+	assert.NoError(t, err)
+}
+
+func Test_Server_RunAndShutdownTLS(t *testing.T) {
+	cfg := &config.Config{
+		Addr:        "localhost:10443",
+		BaseURL:     "https://localhost:10443",
+		EnableHTTPS: true,
+		Certificate: "testdata/cert.pem",
+		PrivateKey:  "testdata/key.pem",
+	}
+
 	handler := http.NewServeMux()
 	srv := NewServer(cfg, handler)
 

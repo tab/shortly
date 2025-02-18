@@ -2,15 +2,23 @@ package main
 
 import (
 	"flag"
+	"net/http"
 	"os"
 	"syscall"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"shortly/internal/app/config"
 )
 
 func Test_Main(t *testing.T) {
+	cfg := &config.Config{
+		Addr:    "localhost:8080",
+		BaseURL: "http://localhost:8080",
+	}
+
 	tests := []struct {
 		name   string
 		before func()
@@ -33,7 +41,7 @@ func Test_Main(t *testing.T) {
 	for _, tt := range tests {
 		oldArgs := os.Args
 		defer func() { os.Args = oldArgs }()
-		os.Args = []string{oldArgs[0], "-a=localhost:0"}
+		os.Args = []string{oldArgs[0], cfg.Addr}
 
 		flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 
@@ -44,7 +52,14 @@ func Test_Main(t *testing.T) {
 			close(done)
 		}()
 
-		time.Sleep(100 * time.Millisecond)
+		require.Eventually(t, func() bool {
+			resp, err := http.Get(cfg.BaseURL + "/live")
+			if err != nil {
+				return false
+			}
+			defer resp.Body.Close()
+			return resp.StatusCode == http.StatusOK
+		}, 1*time.Second, 50*time.Millisecond, "timeout: server did not start")
 
 		p, err := os.FindProcess(os.Getpid())
 		require.NoError(t, err)

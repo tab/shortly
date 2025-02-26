@@ -149,7 +149,7 @@ func Test_Config_WithFile(t *testing.T) {
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key-test",
-				EnableHTTPS:     true,
+				EnableHTTPS:     false,
 			},
 		},
 	}
@@ -203,7 +203,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				FileStoragePath: "store.json",
 				DatabaseDSN:     "postgres://user:pass@localhost:5432/db",
 				SecretKey:       "secret",
-				EnableHTTPS:     true,
+				EnableHTTPS:     false,
 			},
 			config: Config{
 				AppEnv: "test",
@@ -217,7 +217,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				FileStoragePath: "store.json",
 				DatabaseDSN:     "postgres://user:pass@localhost:5432/db",
 				SecretKey:       "secret",
-				EnableHTTPS:     true,
+				EnableHTTPS:     false,
 			},
 		},
 		{
@@ -234,7 +234,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				FileStoragePath: "default",
 				DatabaseDSN:     "default",
 				SecretKey:       "default",
-				EnableHTTPS:     true,
+				EnableHTTPS:     false,
 			},
 			expected: Config{
 				AppEnv:          "test",
@@ -258,7 +258,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				FileStoragePath: "initial",
 				DatabaseDSN:     "initial",
 				SecretKey:       "initial",
-				EnableHTTPS:     true,
+				EnableHTTPS:     false,
 			},
 			expected: Config{
 				AppEnv:          "test",
@@ -320,15 +320,13 @@ func Test_Config_WithENV(t *testing.T) {
 		{
 			name: "Use env vars",
 			env: map[string]string{
-				"SERVER_ADDRESS":       "localhost:3000",
-				"BASE_URL":             "http://localhost:3000",
-				"PROFILER_ADDRESS":     "localhost:2080",
-				"FILE_STORAGE_PATH":    "store-test.json",
-				"DATABASE_DSN":         "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
-				"SECRET_KEY":           "jwt-secret-key",
-				"ENABLE_HTTPS":         "false",
-				"CERTIFICATE_PATH":     "cert.pem",
-				"CERTIFICATE_KEY_PATH": "key.pem",
+				"SERVER_ADDRESS":    "localhost:3000",
+				"BASE_URL":          "http://localhost:3000",
+				"PROFILER_ADDRESS":  "localhost:2080",
+				"FILE_STORAGE_PATH": "store-test.json",
+				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+				"SECRET_KEY":        "jwt-secret-key",
+				"ENABLE_HTTPS":      "false",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -339,8 +337,6 @@ func Test_Config_WithENV(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
 				EnableHTTPS:     false,
-				Certificate:     "cert.pem",
-				PrivateKey:      "key.pem",
 			},
 		},
 	}
@@ -364,8 +360,6 @@ func Test_Config_WithENV(t *testing.T) {
 			assert.Equal(t, tt.expected.DatabaseDSN, cfg.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, cfg.SecretKey)
 			assert.Equal(t, tt.expected.EnableHTTPS, cfg.EnableHTTPS)
-			assert.Equal(t, tt.expected.Certificate, cfg.Certificate)
-			assert.Equal(t, tt.expected.PrivateKey, cfg.PrivateKey)
 
 			t.Cleanup(func() {
 				for key := range tt.env {

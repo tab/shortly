@@ -2,17 +2,27 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
+	"encoding/pem"
+	"math/big"
 	"net/http"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/router"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
+	"shortly/internal/spec"
 )
 
 func Test_NewServer(t *testing.T) {
@@ -43,10 +53,13 @@ func Test_NewServer(t *testing.T) {
 
 func Test_Server_RunAndShutdown(t *testing.T) {
 	cfg := &config.Config{
-		Addr:    "localhost:5000",
-		BaseURL: "http://localhost:5000",
+		Addr:    "localhost:8181",
+		BaseURL: "http://localhost:8181",
 	}
 	handler := http.NewServeMux()
+	handler.HandleFunc("/live", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	srv := NewServer(cfg, handler)
 
 	runErrCh := make(chan error, 1)
@@ -58,7 +71,7 @@ func Test_Server_RunAndShutdown(t *testing.T) {
 		close(runErrCh)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	spec.WaitForServerStart(t, cfg.BaseURL+"/live")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -70,15 +83,19 @@ func Test_Server_RunAndShutdown(t *testing.T) {
 }
 
 func Test_Server_RunAndShutdownTLS(t *testing.T) {
+	certPath, keyPath := generateTestCertificates(t)
+
 	cfg := &config.Config{
 		Addr:        "localhost:10443",
 		BaseURL:     "https://localhost:10443",
 		EnableHTTPS: true,
-		Certificate: "testdata/cert.pem",
-		PrivateKey:  "testdata/key.pem",
+		Certificate: certPath,
+		PrivateKey:  keyPath,
 	}
-
 	handler := http.NewServeMux()
+	handler.HandleFunc("/live", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	srv := NewServer(cfg, handler)
 
 	runErrCh := make(chan error, 1)
@@ -90,7 +107,7 @@ func Test_Server_RunAndShutdownTLS(t *testing.T) {
 		close(runErrCh)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	spec.WaitForServerStart(t, cfg.BaseURL+"/live")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -99,4 +116,55 @@ func Test_Server_RunAndShutdownTLS(t *testing.T) {
 
 	err = <-runErrCh
 	assert.NoError(t, err)
+}
+
+func generateTestCertificates(t *testing.T) (certPath, keyPath string) {
+	tempDir, err := os.MkdirTemp("", "tls-test-*")
+	require.NoError(t, err)
+	t.Cleanup(func() { os.RemoveAll(tempDir) })
+
+	certPath = filepath.Join(tempDir, "cert.pem")
+	keyPath = filepath.Join(tempDir, "key.pem")
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	require.NoError(t, err)
+
+	template := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+		Subject: pkix.Name{
+			Organization: []string{"Acme"},
+			CommonName:   "localhost",
+		},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(time.Hour * 24),
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+		DNSNames:              []string{"localhost"},
+	}
+
+	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
+	require.NoError(t, err)
+
+	certFile, err := os.Create(certPath)
+	require.NoError(t, err)
+	defer certFile.Close()
+
+	err = pem.Encode(certFile, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certDER,
+	})
+	require.NoError(t, err)
+
+	keyFile, err := os.Create(keyPath)
+	require.NoError(t, err)
+	defer keyFile.Close()
+
+	err = pem.Encode(keyFile, &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	})
+	require.NoError(t, err)
+
+	return certPath, keyPath
 }

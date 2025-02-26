@@ -13,6 +13,15 @@ import (
 	"shortly/internal/app/config"
 )
 
+const (
+	// serverStartTimeout is the maximum time to wait for server to start
+	serverStartTimeout = 1 * time.Second
+	// serverStartPollInterval is how frequently to check if server has started
+	serverStartPollInterval = 50 * time.Millisecond
+	// shutdownTimeout is the maximum time to wait for server shutdown
+	shutdownTimeout = 1 * time.Second
+)
+
 func Test_Main(t *testing.T) {
 	cfg := &config.Config{
 		Addr:    "localhost:8080",
@@ -59,7 +68,7 @@ func Test_Main(t *testing.T) {
 			}
 			defer resp.Body.Close()
 			return resp.StatusCode == http.StatusOK
-		}, 1*time.Second, 50*time.Millisecond, "timeout: server did not start")
+		}, serverStartTimeout, serverStartPollInterval, "timeout: server did not start")
 
 		p, err := os.FindProcess(os.Getpid())
 		require.NoError(t, err)
@@ -70,7 +79,7 @@ func Test_Main(t *testing.T) {
 		select {
 		case <-done:
 			// main() exited successfully
-		case <-time.After(1 * time.Second):
+		case <-time.After(shutdownTimeout):
 			t.Fatal("timeout: main() did not exit after signal")
 		}
 	}

@@ -39,6 +39,10 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 		compress.Middleware,
 	)
 
+	router.Get("/live", healthHandler.HandleLiveness)
+	router.Get("/ready", healthHandler.HandleReadiness)
+	router.Get("/ping", healthHandler.HandlePing)
+
 	// NOTE: protected routes
 	router.Group(func(r chi.Router) {
 		r.Use(auth.Middleware(authenticator))
@@ -50,8 +54,6 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 	// NOTE: public routes
 	router.Group(func(r chi.Router) {
 		r.Use(auth.Middleware(authenticator))
-
-		r.Get("/ping", healthHandler.HandlePing)
 		r.Post("/api/shorten", shortenerHandler.HandleCreateShortLink)
 		r.Get("/api/shorten/{id}", shortenerHandler.HandleGetShortLink)
 		r.Post("/api/shorten/batch", shortenerHandler.HandleBatchCreateShortLink)

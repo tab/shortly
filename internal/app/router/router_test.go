@@ -16,6 +16,54 @@ import (
 	"shortly/internal/logger"
 )
 
+func Test_HandleLiveness(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.Config{
+		DatabaseDSN: "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+	}
+	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
+	router := NewRouter(cfg, repo, appWorker, appLogger)
+
+	req := httptest.NewRequest(http.MethodGet, "/live", nil)
+	w := httptest.NewRecorder()
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
+func Test_HandleReadiness(t *testing.T) {
+	ctx := context.Background()
+	cfg := &config.Config{
+		DatabaseDSN: "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
+	}
+	appLogger := logger.NewLogger()
+	repo, _ := repository.NewRepository(ctx, &repository.Factory{
+		DSN:    cfg.DatabaseDSN,
+		Logger: appLogger,
+	})
+	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
+	router := NewRouter(cfg, repo, appWorker, appLogger)
+
+	req := httptest.NewRequest(http.MethodGet, "/ready", nil)
+	w := httptest.NewRecorder()
+
+	resp := w.Result()
+	defer resp.Body.Close()
+
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+}
+
 func Test_HealthCheck(t *testing.T) {
 	ctx := context.Background()
 	cfg := &config.Config{

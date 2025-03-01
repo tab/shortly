@@ -43,6 +43,7 @@ func Test_LoadConfig(t *testing.T) {
 				FileStoragePath: "store-test.json",
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
+				TrustedSubnet:   "",
 			},
 		},
 		{
@@ -55,6 +56,7 @@ func Test_LoadConfig(t *testing.T) {
 				"-d", "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				"-k", "jwt-secret-key",
 				"-c", "config.json",
+				"-t", "10.0.0.0/24",
 			},
 			env: map[string]string{
 				"SERVER_ADDRESS":    "localhost:3000",
@@ -64,6 +66,7 @@ func Test_LoadConfig(t *testing.T) {
 				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				"SECRET_KEY":        "jwt-secret-key",
 				"CONFIG":            "config.json",
+				"TRUSTED_SUBNET":    "10.0.0.0/24",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -74,6 +77,7 @@ func Test_LoadConfig(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
 				ConfigFilePath:  "config.json",
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 	}
@@ -95,6 +99,7 @@ func Test_LoadConfig(t *testing.T) {
 			assert.Equal(t, tt.expected.DatabaseDSN, result.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, result.SecretKey)
 			assert.Equal(t, tt.expected.ConfigFilePath, result.ConfigFilePath)
+			assert.Equal(t, tt.expected.TrustedSubnet, result.TrustedSubnet)
 
 			t.Cleanup(func() {
 				for key := range tt.env {
@@ -123,6 +128,7 @@ func Test_Config_WithFile(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -133,6 +139,7 @@ func Test_Config_WithFile(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 		{
@@ -150,6 +157,7 @@ func Test_Config_WithFile(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key-test",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 	}
@@ -166,6 +174,7 @@ func Test_Config_WithFile(t *testing.T) {
 					DatabaseDSN:     tt.config.DatabaseDSN,
 					SecretKey:       tt.config.SecretKey,
 					EnableHTTPS:     tt.config.EnableHTTPS,
+					TrustedSubnet:   tt.config.TrustedSubnet,
 				},
 			}
 
@@ -182,6 +191,7 @@ func Test_Config_WithFile(t *testing.T) {
 			assert.Equal(t, tt.expected.DatabaseDSN, cfg.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, cfg.SecretKey)
 			assert.Equal(t, tt.expected.EnableHTTPS, cfg.EnableHTTPS)
+			assert.Equal(t, tt.expected.TrustedSubnet, cfg.TrustedSubnet)
 		})
 	}
 }
@@ -204,6 +214,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "postgres://user:pass@localhost:5432/db",
 				SecretKey:       "secret",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 			config: Config{
 				AppEnv: "test",
@@ -218,6 +229,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "postgres://user:pass@localhost:5432/db",
 				SecretKey:       "secret",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 		{
@@ -235,6 +247,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "default",
 				SecretKey:       "default",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 			expected: Config{
 				AppEnv:          "test",
@@ -245,6 +258,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "default",
 				SecretKey:       "default",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 		{
@@ -259,6 +273,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "initial",
 				SecretKey:       "initial",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 			expected: Config{
 				AppEnv:          "test",
@@ -269,6 +284,7 @@ func Test_Config_WithFlags(t *testing.T) {
 				DatabaseDSN:     "initial",
 				SecretKey:       "initial",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 	}
@@ -285,6 +301,7 @@ func Test_Config_WithFlags(t *testing.T) {
 					DatabaseDSN:     tt.config.DatabaseDSN,
 					SecretKey:       tt.config.SecretKey,
 					EnableHTTPS:     tt.config.EnableHTTPS,
+					TrustedSubnet:   tt.config.TrustedSubnet,
 				},
 			}
 
@@ -300,6 +317,7 @@ func Test_Config_WithFlags(t *testing.T) {
 			assert.Equal(t, tt.expected.DatabaseDSN, cfg.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, cfg.SecretKey)
 			assert.Equal(t, tt.expected.EnableHTTPS, cfg.EnableHTTPS)
+			assert.Equal(t, tt.expected.TrustedSubnet, cfg.TrustedSubnet)
 		})
 	}
 }
@@ -327,6 +345,7 @@ func Test_Config_WithENV(t *testing.T) {
 				"DATABASE_DSN":      "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				"SECRET_KEY":        "jwt-secret-key",
 				"ENABLE_HTTPS":      "false",
+				"TRUSTED_SUBNET":    "10.0.0.0/24",
 			},
 			expected: &Config{
 				AppEnv:          "test",
@@ -337,6 +356,7 @@ func Test_Config_WithENV(t *testing.T) {
 				DatabaseDSN:     "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",
 				SecretKey:       "jwt-secret-key",
 				EnableHTTPS:     false,
+				TrustedSubnet:   "10.0.0.0/24",
 			},
 		},
 	}
@@ -360,6 +380,7 @@ func Test_Config_WithENV(t *testing.T) {
 			assert.Equal(t, tt.expected.DatabaseDSN, cfg.DatabaseDSN)
 			assert.Equal(t, tt.expected.SecretKey, cfg.SecretKey)
 			assert.Equal(t, tt.expected.EnableHTTPS, cfg.EnableHTTPS)
+			assert.Equal(t, tt.expected.TrustedSubnet, cfg.TrustedSubnet)
 
 			t.Cleanup(func() {
 				for key := range tt.env {

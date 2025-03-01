@@ -34,6 +34,7 @@ type Config struct {
 	Certificate     string `json:"certificate_path"`
 	PrivateKey      string `json:"certificate_key_path"`
 	ConfigFilePath  string
+	TrustedSubnet   string `json:"trusted_subnet"`
 }
 
 // Flags is the flags for the configuration
@@ -46,6 +47,7 @@ type Flags struct {
 	SecretKey       string
 	EnableHTTPS     bool
 	ConfigFilePath  string
+	TrustedSubnet   string
 }
 
 // Builder is a builder for the Config
@@ -77,6 +79,7 @@ func ParseFlags() Flags {
 	flagSecretKey := flag.String("k", "", "JWT secret key")
 	flagConfigFilePath := flag.String("c", "", "path to the config file")
 	flagAliasConfigFilePath := flag.String("config", "", "path to the config file")
+	flagTrustedSubnet := flag.String("t", "", "trusted subnet")
 	flag.Parse()
 
 	if *flagConfigFilePath == "" {
@@ -91,6 +94,7 @@ func ParseFlags() Flags {
 		DatabaseDSN:     *flagDatabaseDSN,
 		SecretKey:       *flagSecretKey,
 		ConfigFilePath:  *flagConfigFilePath,
+		TrustedSubnet:   *flagTrustedSubnet,
 	}
 }
 
@@ -170,6 +174,9 @@ func (b *Builder) WithFlags(f Flags) *Builder {
 		b.cfg.SecretKey = f.SecretKey
 	}
 	b.cfg.EnableHTTPS = f.EnableHTTPS
+	if f.TrustedSubnet != "" {
+		b.cfg.TrustedSubnet = f.TrustedSubnet
+	}
 
 	return b
 }
@@ -208,6 +215,9 @@ func (b *Builder) WithEnv() *Builder {
 	}
 	if v, ok := os.LookupEnv("CONFIG"); ok && v != "" {
 		b.cfg.ConfigFilePath = v
+	}
+	if v, ok := os.LookupEnv("TRUSTED_SUBNET"); ok && v != "" {
+		b.cfg.TrustedSubnet = v
 	}
 
 	return b

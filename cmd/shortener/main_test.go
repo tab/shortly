@@ -13,7 +13,7 @@ import (
 	"shortly/internal/spec"
 )
 
-const shutdownTimeout = 1 * time.Second
+const shutdownTimeout = 5 * time.Second
 
 func Test_Main(t *testing.T) {
 	cfg := &config.Config{

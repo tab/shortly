@@ -572,11 +572,89 @@ func Test_DatabaseRepository_Ping(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestDatabaseRepo_Close(t *testing.T) {
+func Test_DatabaseRepository_Close(t *testing.T) {
 	ctx := context.Background()
 	dsn := os.Getenv("DATABASE_DSN")
 	store, err := NewDatabaseRepository(ctx, dsn)
 	assert.NoError(t, err)
 
 	store.Close()
+}
+
+func Test_DatabaseRepository_Counters(t *testing.T) {
+	ctx := context.Background()
+	dsn := os.Getenv("DATABASE_DSN")
+	store, err := NewDatabaseRepository(ctx, dsn)
+	assert.NoError(t, err)
+
+	UserUUID1 := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID2 := uuid.MustParse("123e4567-e89b-12d3-a456-426614174002")
+
+	type result struct {
+		urls  int
+		users int
+	}
+
+	tests := []struct {
+		name     string
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			before: func() {
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      uuid.MustParse("6455bd07-e431-4851-af3c-4f703f720001"),
+					LongURL:   "https://google.com",
+					ShortCode: "abcd0001",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      uuid.MustParse("6455bd07-e431-4851-af3c-4f703f720002"),
+					LongURL:   "https://github.com",
+					ShortCode: "abcd0002",
+					UserUUID:  UserUUID1,
+				})
+				assert.NoError(t, err)
+
+				_, err = store.CreateURL(ctx, URL{
+					UUID:      uuid.MustParse("6455bd07-e431-4851-af3c-4f703f720003"),
+					LongURL:   "https://go.dev",
+					ShortCode: "abcd0003",
+					UserUUID:  UserUUID2,
+				})
+				assert.NoError(t, err)
+			},
+			expected: result{
+				urls:  3,
+				users: 2,
+			},
+		},
+		{
+			name:   "Empty",
+			before: func() {},
+			expected: result{
+				urls:  0,
+				users: 0,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			urls, users, err := store.Counters(ctx)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expected.urls, urls)
+			assert.Equal(t, tt.expected.users, users)
+
+			t.Cleanup(func() {
+				err = spec.TruncateTables(ctx, dsn)
+				require.NoError(t, err)
+			})
+		})
+	}
 }

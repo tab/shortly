@@ -42,6 +42,11 @@ type HealthChecker interface {
 	Ping(ctx context.Context) error
 }
 
+// StatsReporter is an interface for stats reporter
+type StatsReporter interface {
+	Counters(ctx context.Context) (int, int, error)
+}
+
 // Factory is a factory for repository
 type Factory struct {
 	DSN    string

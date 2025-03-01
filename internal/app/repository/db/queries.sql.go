@@ -148,3 +148,23 @@ func (q *Queries) HealthCheck(ctx context.Context) (int64, error) {
 	err := row.Scan(&result)
 	return result, err
 }
+
+const stats = `-- name: Stats :one
+SELECT
+  COUNT(*) AS urls,
+  COUNT(DISTINCT user_uuid) AS users
+FROM public.urls
+WHERE deleted_at IS NULL
+`
+
+type StatsRow struct {
+	Urls  int64
+	Users int64
+}
+
+func (q *Queries) Stats(ctx context.Context) (StatsRow, error) {
+	row := q.db.QueryRow(ctx, stats)
+	var i StatsRow
+	err := row.Scan(&i.Urls, &i.Users)
+	return i, err
+}

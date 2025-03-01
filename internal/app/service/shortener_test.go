@@ -142,7 +142,7 @@ func Test_CreateShortLink(t *testing.T) {
 	}
 }
 
-func TestURLService_CreateShortLinks(t *testing.T) {
+func Test_URLService_CreateShortLinks(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

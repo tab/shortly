@@ -30,3 +30,10 @@ ORDER BY u.created_at DESC LIMIT $2 OFFSET $3;
 UPDATE urls
 SET deleted_at = NOW()
 WHERE user_uuid = $1 AND short_code = ANY($2::varchar[]) AND deleted_at IS NULL;
+
+-- name: Stats :one
+SELECT
+  COUNT(*) AS urls,
+  COUNT(DISTINCT user_uuid) AS users
+FROM public.urls
+WHERE deleted_at IS NULL;

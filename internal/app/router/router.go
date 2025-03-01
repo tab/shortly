@@ -25,6 +25,9 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 	health := service.NewHealthService(repo)
 	healthHandler := api.NewHealthHandler(health)
 
+	stats := service.NewStatsReporter(repo)
+	statsHandler := api.NewStatsHandler(stats)
+
 	authenticator := service.NewAuthService(cfg)
 
 	router := chi.NewRouter()
@@ -42,6 +45,8 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 	router.Get("/live", healthHandler.HandleLiveness)
 	router.Get("/ready", healthHandler.HandleReadiness)
 	router.Get("/ping", healthHandler.HandlePing)
+
+	router.Get("/api/internal/stats", statsHandler.HandleStats)
 
 	// NOTE: protected routes
 	router.Group(func(r chi.Router) {

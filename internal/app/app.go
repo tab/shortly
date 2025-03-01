@@ -15,6 +15,8 @@ import (
 	"shortly/internal/logger"
 )
 
+const shutdownTimeout = 5 * time.Second
+
 // Application is the main application structure
 type Application struct {
 	cfg                *config.Config
@@ -92,7 +94,7 @@ func (a *Application) Run(ctx context.Context) error {
 			return err
 		}
 
-		shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 
 		if err := a.server.Shutdown(shutdownCtx); err != nil {
@@ -111,11 +113,14 @@ func (a *Application) Run(ctx context.Context) error {
 }
 
 func initRepository(ctx context.Context, cfg *config.Config, logger *logger.Logger) (repository.Repository, error) {
+	if cfg.DatabaseDSN == "" {
+		return repository.NewInMemoryRepository(), nil
+	}
+
 	repo, err := repository.NewRepository(ctx, &repository.Factory{
 		DSN:    cfg.DatabaseDSN,
 		Logger: logger,
 	})
-
 	if err != nil {
 		logger.Error().Err(err).Msg("Failed to initialize application repository")
 		return nil, err

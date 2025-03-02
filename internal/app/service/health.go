@@ -11,7 +11,7 @@ type HealthChecker interface {
 	Ping(ctx context.Context) error
 }
 
-// HealthService is a service for health checks
+// healthService is a service for health checks
 type healthService struct {
 	repo repository.Repository
 }

@@ -1,6 +1,8 @@
 {
   "server_address": "localhost:9000",
   "base_url": "http://localhost:9000",
+  "grpc_server_address": "localhost:9191",
+  "grpc_secret_key": "grpc-secret-key-test",
   "profiler_address": "localhost:9080",
   "file_storage_path": "store-test.json",
   "database_dsn": "postgres://postgres:postgres@localhost:5432/shortly-test?sslmode=disable",

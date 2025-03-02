@@ -17,6 +17,9 @@ const BaseURL = "http://localhost:8080"
 // ServerAddress is the address and port to run the server
 const ServerAddress = "localhost:8080"
 
+// GRPCServerAddress is the address and port to run the gRPC server
+const GRPCServerAddress = "localhost:9090"
+
 // ProfilerAddress is the address and port to run the profiler
 const ProfilerAddress = "localhost:2080"
 
@@ -26,6 +29,8 @@ type Config struct {
 	Addr            string `json:"server_address"`
 	BaseURL         string `json:"base_url"`
 	ClientURL       string `json:"client_url"`
+	GRPCServerAddr  string `json:"grpc_server_address"`
+	GRPCSecretKey   string `json:"grpc_secret_key"`
 	ProfilerAddr    string `json:"profiler_address"`
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
@@ -41,6 +46,8 @@ type Config struct {
 type Flags struct {
 	Addr            string
 	BaseURL         string
+	GRPCServerAddr  string
+	GRPCSecretKey   string
 	ProfilerAddr    string
 	FileStoragePath string
 	DatabaseDSN     string
@@ -73,6 +80,8 @@ func NewConfigBuilder() *Builder {
 func ParseFlags() Flags {
 	flagAddr := flag.String("a", ServerAddress, "address and port to run server")
 	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
+	flagGRPCServerAddr := flag.String("g", GRPCServerAddress, "address and port to run gRPC server")
+	flagGRPCSecretKey := flag.String("s", "", "gRPC secret key")
 	flagProfilerAddr := flag.String("p", ProfilerAddress, "address and port to run profiler")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")
@@ -89,6 +98,8 @@ func ParseFlags() Flags {
 	return Flags{
 		Addr:            *flagAddr,
 		BaseURL:         *flagBaseURL,
+		GRPCServerAddr:  *flagGRPCServerAddr,
+		GRPCSecretKey:   *flagGRPCSecretKey,
 		ProfilerAddr:    *flagProfilerAddr,
 		FileStoragePath: *flagFileStoragePath,
 		DatabaseDSN:     *flagDatabaseDSN,
@@ -161,6 +172,12 @@ func (b *Builder) WithFlags(f Flags) *Builder {
 	if f.BaseURL != "" {
 		b.cfg.BaseURL = f.BaseURL
 	}
+	if f.GRPCServerAddr != "" {
+		b.cfg.GRPCServerAddr = f.GRPCServerAddr
+	}
+	if f.GRPCSecretKey != "" {
+		b.cfg.GRPCSecretKey = f.GRPCSecretKey
+	}
 	if f.ProfilerAddr != "" {
 		b.cfg.ProfilerAddr = f.ProfilerAddr
 	}
@@ -191,6 +208,12 @@ func (b *Builder) WithEnv() *Builder {
 	}
 	if v, ok := os.LookupEnv("CLIENT_URL"); ok && v != "" {
 		b.cfg.ClientURL = v
+	}
+	if v, ok := os.LookupEnv("GRPC_SERVER_ADDRESS"); ok && v != "" {
+		b.cfg.GRPCServerAddr = v
+	}
+	if v, ok := os.LookupEnv("GRPC_SECRET_KEY"); ok && v != "" {
+		b.cfg.GRPCSecretKey = v
 	}
 	if v, ok := os.LookupEnv("PROFILER_ADDRESS"); ok && v != "" {
 		b.cfg.ProfilerAddr = v

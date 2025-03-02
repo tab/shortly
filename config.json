@@ -1,6 +1,7 @@
 {
   "env": "development",
   "server_address": "localhost:9443",
+  "grpc_server_address": "localhost:9090",
   "base_url": "https://localhost:9443",
   "client_url": "http://localhost:3000",
   "profiler_address": "localhost:10443",

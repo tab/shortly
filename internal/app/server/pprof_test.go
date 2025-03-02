@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"shortly/internal/app/config"
+	"shortly/internal/spec"
 )
 
 func Test_NewPprofServer(t *testing.T) {
@@ -41,7 +43,7 @@ func Test_PprofServer_RunAndShutdown(t *testing.T) {
 		close(runErrCh)
 	}()
 
-	time.Sleep(100 * time.Millisecond)
+	spec.WaitForServerStart(t, fmt.Sprintf("http://%s/debug/pprof/", cfg.ProfilerAddr))
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()

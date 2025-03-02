@@ -24,6 +24,7 @@ type Application struct {
 	persistenceManager persistence.Manager
 	deleteWorker       worker.Worker
 	server             server.Server
+	grpcServer         server.GRPCServer
 	pprofServer        server.PprofServer
 }
 
@@ -43,6 +44,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 
 	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
+	grpcServer := server.NewGRPCServer(cfg)
 	pprofServer := server.NewPprofServer(cfg)
 
 	return &Application{
@@ -51,6 +53,7 @@ func NewApplication(ctx context.Context) (*Application, error) {
 		persistenceManager: persistenceManager,
 		deleteWorker:       deleteWorker,
 		server:             appServer,
+		grpcServer:         grpcServer,
 		pprofServer:        pprofServer,
 	}, nil
 }
@@ -61,9 +64,16 @@ func (a *Application) Run(ctx context.Context) error {
 		return err
 	}
 
-	serverErrors := make(chan error, 2)
+	serverErrors := make(chan error, 3)
+
 	go func() {
 		if err := a.server.Run(); err != nil && err != http.ErrServerClosed {
+			serverErrors <- err
+		}
+	}()
+
+	go func() {
+		if err := a.grpcServer.Run(); err != nil && err != http.ErrServerClosed {
 			serverErrors <- err
 		}
 	}()
@@ -82,6 +92,7 @@ func (a *Application) Run(ctx context.Context) error {
 
 	a.logger.Info().Msgf("Application starting in %s", a.cfg.AppEnv)
 	a.logger.Info().Msgf("Listening on %s", a.cfg.Addr)
+	a.logger.Info().Msgf("GRPC listening on %s", a.cfg.GRPCServerAddr)
 	a.logger.Info().Msgf("Profiler on %s", a.cfg.ProfilerAddr)
 
 	select {
@@ -98,6 +109,10 @@ func (a *Application) Run(ctx context.Context) error {
 		defer cancel()
 
 		if err := a.server.Shutdown(shutdownCtx); err != nil {
+			return err
+		}
+
+		if err := a.grpcServer.Shutdown(shutdownCtx); err != nil {
 			return err
 		}
 

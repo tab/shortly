@@ -75,7 +75,7 @@ func Test_DatabaseRepository_CreateURL(t *testing.T) {
 	store, err := NewDatabaseRepository(ctx, dsn)
 	assert.NoError(t, err)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	tests := []struct {
 		name       string
@@ -231,7 +231,7 @@ func Test_DatabaseRepository_GetURLByShortCode(t *testing.T) {
 	store, err := NewDatabaseRepository(ctx, dsn)
 	assert.NoError(t, err)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	_, err = store.CreateURL(ctx, URL{
 		UUID:      UUID,

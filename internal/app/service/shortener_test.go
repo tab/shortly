@@ -346,7 +346,7 @@ func Test_GetUserURLs(t *testing.T) {
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
 	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	type result struct {
 		urls  []dto.GetUserURLsResponse
@@ -456,7 +456,7 @@ func Test_DeleteUserURLs(t *testing.T) {
 	appWorker := worker.NewMockWorker(ctrl)
 	service := NewURLService(cfg, repo, rand, appWorker)
 
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	tests := []struct {
 		name     string

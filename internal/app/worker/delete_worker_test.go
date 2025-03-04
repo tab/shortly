@@ -46,7 +46,7 @@ func Test_DeleteWorker_Perform(t *testing.T) {
 	repo := repository.NewMockRepository(ctrl)
 	appLogger := logger.NewLogger()
 
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	tests := []struct {
 		name   string

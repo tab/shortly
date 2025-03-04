@@ -26,7 +26,7 @@ func Test_JWTService_Generate(t *testing.T) {
 	}
 	service := NewAuthService(cfg)
 
-	UUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174000")
+	UUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	type result struct {
 		header string
@@ -76,7 +76,7 @@ func Test_JWTService_Verify(t *testing.T) {
 	}
 	service := NewAuthService(cfg)
 
-	UUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174000")
+	UUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	validToken, err := service.Generate(UUID)
 	assert.NoError(t, err)

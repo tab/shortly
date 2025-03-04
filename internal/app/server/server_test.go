@@ -20,6 +20,7 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/router"
+	"shortly/internal/app/service"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 	"shortly/internal/spec"
@@ -36,7 +37,10 @@ func Test_NewServer(t *testing.T) {
 		Logger: appLogger,
 	})
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	appRouter := router.NewRouter(cfg, repo, appWorker, appLogger)
+
+	generator := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, generator, appWorker)
+	appRouter := router.NewRouter(cfg, shortener, repo, appLogger)
 
 	srv := NewServer(cfg, appRouter)
 	assert.NotNil(t, srv)

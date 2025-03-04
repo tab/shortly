@@ -12,6 +12,7 @@ import (
 
 	"shortly/internal/app/config"
 	"shortly/internal/app/repository"
+	"shortly/internal/app/service"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
@@ -27,7 +28,9 @@ func Test_HandleLiveness(t *testing.T) {
 		Logger: appLogger,
 	})
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	router := NewRouter(cfg, repo, appWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, rand, appWorker)
+	router := NewRouter(cfg, shortener, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/live", nil)
 	w := httptest.NewRecorder()
@@ -51,7 +54,9 @@ func Test_HandleReadiness(t *testing.T) {
 		Logger: appLogger,
 	})
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	router := NewRouter(cfg, repo, appWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, rand, appWorker)
+	router := NewRouter(cfg, shortener, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/ready", nil)
 	w := httptest.NewRecorder()
@@ -75,7 +80,9 @@ func Test_HealthCheck(t *testing.T) {
 		Logger: appLogger,
 	})
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	router := NewRouter(cfg, repo, appWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, rand, appWorker)
+	router := NewRouter(cfg, shortener, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodGet, "/health", nil)
 	w := httptest.NewRecorder()
@@ -96,7 +103,9 @@ func Test_CreateShortLink(t *testing.T) {
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	router := NewRouter(cfg, repo, appWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, rand, appWorker)
+	router := NewRouter(cfg, shortener, repo, appLogger)
 
 	req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader("https://example.com"))
 	w := httptest.NewRecorder()
@@ -117,9 +126,11 @@ func Test_GetShortLink(t *testing.T) {
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
-	router := NewRouter(cfg, repo, appWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, repo, rand, appWorker)
+	router := NewRouter(cfg, shortener, repo, appLogger)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	_, err := repo.CreateURL(ctx, repository.URL{
 		UUID:      UUID,

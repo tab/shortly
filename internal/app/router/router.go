@@ -13,14 +13,11 @@ import (
 	"shortly/internal/app/middleware/trusted"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
-	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
 // NewRouter creates a new router instance
-func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Worker, appLogger *logger.Logger) http.Handler {
-	rand := service.NewSecureRandom()
-	shortener := service.NewURLService(cfg, repo, rand, worker)
+func NewRouter(cfg *config.Config, shortener *service.URLService, repo repository.Repository, appLogger *logger.Logger) http.Handler {
 	shortenerHandler := api.NewURLHandler(cfg, shortener)
 
 	health := service.NewHealthService(repo)

@@ -14,6 +14,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"shortly/internal/app/config"
+	handler "shortly/internal/app/grpc"
+	"shortly/internal/app/grpc/proto"
+	"shortly/internal/app/service"
 )
 
 // GRPCServer is an interface for gRPC server
@@ -28,7 +31,7 @@ type grpcServer struct {
 }
 
 // NewGRPCServer creates a new gRPC server instance
-func NewGRPCServer(cfg *config.Config) GRPCServer {
+func NewGRPCServer(cfg *config.Config, shortener *service.URLService) GRPCServer {
 	var opts []grpc.ServerOption
 
 	params := keepalive.ServerParameters{
@@ -54,6 +57,8 @@ func NewGRPCServer(cfg *config.Config) GRPCServer {
 	}
 
 	srv := grpc.NewServer(opts...)
+	grpcShortener := handler.NewShortener(cfg, shortener)
+	proto.RegisterURLShortenerServer(srv, grpcShortener)
 
 	return &grpcServer{
 		cfg:        cfg,

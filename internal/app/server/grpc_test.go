@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/service"
 )
 
 const startupTimeout = 100 * time.Millisecond
@@ -17,8 +18,8 @@ func Test_NewGRPCServer(t *testing.T) {
 		GRPCServerAddr: "localhost:9090",
 		GRPCSecretKey:  "grpc-secret-key",
 	}
-
-	srv := NewGRPCServer(cfg)
+	shortener := &service.URLService{}
+	srv := NewGRPCServer(cfg, shortener)
 	assert.NotNil(t, srv)
 
 	s, ok := srv.(*grpcServer)
@@ -32,7 +33,8 @@ func Test_GRPCServer_RunAndShutdown(t *testing.T) {
 		GRPCServerAddr: "localhost:9090",
 		GRPCSecretKey:  "grpc-secret-key",
 	}
-	srv := NewGRPCServer(cfg)
+	shortener := &service.URLService{}
+	srv := NewGRPCServer(cfg, shortener)
 
 	runErrCh := make(chan error, 1)
 
@@ -65,7 +67,8 @@ func Test_GRPCServer_RunWithTLS(t *testing.T) {
 		Certificate:    certPath,
 		PrivateKey:     keyPath,
 	}
-	srv := NewGRPCServer(cfg)
+	shortener := &service.URLService{}
+	srv := NewGRPCServer(cfg, shortener)
 
 	runErrCh := make(chan error, 1)
 

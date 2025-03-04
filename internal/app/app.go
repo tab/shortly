@@ -10,6 +10,7 @@ import (
 	"shortly/internal/app/repository/persistence"
 	"shortly/internal/app/router"
 	"shortly/internal/app/server"
+	"shortly/internal/app/service"
 	"shortly/internal/app/version"
 	"shortly/internal/app/worker"
 	"shortly/internal/logger"
@@ -21,6 +22,7 @@ const shutdownTimeout = 5 * time.Second
 type Application struct {
 	cfg                *config.Config
 	logger             *logger.Logger
+	shortener          *service.URLService
 	persistenceManager persistence.Manager
 	deleteWorker       worker.Worker
 	server             server.Server
@@ -42,14 +44,19 @@ func NewApplication(ctx context.Context) (*Application, error) {
 	deleteWorker := worker.NewDeleteWorker(ctx, cfg, appRepository, appLogger)
 	deleteWorker.Start()
 
-	appRouter := router.NewRouter(cfg, appRepository, deleteWorker, appLogger)
+	rand := service.NewSecureRandom()
+	shortener := service.NewURLService(cfg, appRepository, rand, deleteWorker)
+
+	appRouter := router.NewRouter(cfg, shortener, appRepository, appLogger)
 	appServer := server.NewServer(cfg, appRouter)
-	grpcServer := server.NewGRPCServer(cfg)
+
+	grpcServer := server.NewGRPCServer(cfg, shortener)
 	pprofServer := server.NewPprofServer(cfg)
 
 	return &Application{
 		cfg:                cfg,
 		logger:             appLogger,
+		shortener:          shortener,
 		persistenceManager: persistenceManager,
 		deleteWorker:       deleteWorker,
 		server:             appServer,
@@ -73,7 +80,7 @@ func (a *Application) Run(ctx context.Context) error {
 	}()
 
 	go func() {
-		if err := a.grpcServer.Run(); err != nil && err != http.ErrServerClosed {
+		if err := a.grpcServer.Run(); err != nil {
 			serverErrors <- err
 		}
 	}()
@@ -127,6 +134,7 @@ func (a *Application) Run(ctx context.Context) error {
 	}
 }
 
+// initRepository initializes the application repository based on the configuration
 func initRepository(ctx context.Context, cfg *config.Config, logger *logger.Logger) (repository.Repository, error) {
 	if cfg.DatabaseDSN == "" {
 		return repository.NewInMemoryRepository(), nil

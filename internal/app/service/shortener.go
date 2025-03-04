@@ -14,6 +14,14 @@ import (
 	"shortly/internal/app/worker"
 )
 
+type Shortener interface {
+	CreateShortLink(ctx context.Context, longURL string) (string, error)
+	CreateShortLinks(ctx context.Context, params []dto.BatchCreateShortLinkParams) ([]dto.BatchCreateShortLinkResponse, error)
+	GetShortLink(ctx context.Context, shortCode string) (*repository.URL, bool)
+	GetUserURLs(ctx context.Context, pagination *pagination.Pagination) ([]dto.GetUserURLsResponse, int, error)
+	DeleteUserURLs(ctx context.Context, params dto.BatchDeleteShortLinkRequest) error
+}
+
 // URLService is a service for URL operations
 type URLService struct {
 	cfg    *config.Config

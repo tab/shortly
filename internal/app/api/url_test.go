@@ -37,7 +37,7 @@ func Test_HandleCreateShortLink(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
 		response dto.CreateShortLinkResponse
@@ -548,7 +548,7 @@ func Test_HandleGetUserURLs(t *testing.T) {
 
 	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
 	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	ctx := context.WithValue(context.Background(), dto.CurrentUser, UserUUID)
 
@@ -669,7 +669,7 @@ func Test_HandleBatchDeleteUserURLs(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174001")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	type result struct {
 		error  dto.ErrorResponse
@@ -766,7 +766,7 @@ func Test_DeprecatedHandleCreateShortLink(t *testing.T) {
 	srv := service.NewURLService(cfg, repo, rand, appWorker)
 	handler := NewURLHandler(cfg, srv)
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
 		status   int

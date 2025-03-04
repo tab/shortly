@@ -10,20 +10,21 @@ import (
 	"shortly/internal/app/config"
 	"shortly/internal/app/middleware/auth"
 	"shortly/internal/app/middleware/compress"
+	"shortly/internal/app/middleware/trusted"
 	"shortly/internal/app/repository"
 	"shortly/internal/app/service"
-	"shortly/internal/app/worker"
 	"shortly/internal/logger"
 )
 
 // NewRouter creates a new router instance
-func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Worker, appLogger *logger.Logger) http.Handler {
-	rand := service.NewSecureRandom()
-	shortener := service.NewURLService(cfg, repo, rand, worker)
+func NewRouter(cfg *config.Config, shortener *service.URLService, repo repository.Repository, appLogger *logger.Logger) http.Handler {
 	shortenerHandler := api.NewURLHandler(cfg, shortener)
 
 	health := service.NewHealthService(repo)
 	healthHandler := api.NewHealthHandler(health)
+
+	stats := service.NewStatsReporter(repo)
+	statsHandler := api.NewStatsHandler(stats)
 
 	authenticator := service.NewAuthService(cfg)
 
@@ -42,6 +43,13 @@ func NewRouter(cfg *config.Config, repo repository.Repository, worker worker.Wor
 	router.Get("/live", healthHandler.HandleLiveness)
 	router.Get("/ready", healthHandler.HandleReadiness)
 	router.Get("/ping", healthHandler.HandlePing)
+
+	// NOTE: trusted_subnet routes
+	router.Group(func(r chi.Router) {
+		r.Use(trusted.Middleware(cfg.TrustedSubnet))
+
+		r.Get("/api/internal/stats", statsHandler.HandleStats)
+	})
 
 	// NOTE: protected routes
 	router.Group(func(r chi.Router) {

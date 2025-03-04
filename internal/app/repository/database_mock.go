@@ -53,6 +53,22 @@ func (mr *MockDatabaseMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockDatabase)(nil).Close))
 }
 
+// Counters mocks base method.
+func (m *MockDatabase) Counters(ctx context.Context) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Counters", ctx)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Counters indicates an expected call of Counters.
+func (mr *MockDatabaseMockRecorder) Counters(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Counters", reflect.TypeOf((*MockDatabase)(nil).Counters), ctx)
+}
+
 // CreateURL mocks base method.
 func (m *MockDatabase) CreateURL(ctx context.Context, url URL) (*URL, error) {
 	m.ctrl.T.Helper()

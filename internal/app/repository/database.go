@@ -16,6 +16,7 @@ const MaxConnections = 100
 type Database interface {
 	Repository
 	HealthChecker
+	StatsReporter
 	Close()
 }
 
@@ -142,6 +143,16 @@ func (d *DatabaseRepo) DeleteURLsByUserID(ctx context.Context, id uuid.UUID, sho
 		UserUUID:   id,
 		ShortCodes: shortCodes,
 	})
+}
+
+// Counters returns the number of URLs and users
+func (d *DatabaseRepo) Counters(ctx context.Context) (int, int, error) {
+	row, err := d.queries.Stats(ctx)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return int(row.Urls), int(row.Users), nil
 }
 
 // Ping checks the database connection

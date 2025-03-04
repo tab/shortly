@@ -135,6 +135,11 @@ coverage:
 	@echo "Generating test coverage report..."
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 
+.PHONY: proto\:generate
+proto\:generate:
+	@echo "Generate proto..."
+	protoc --proto_path=api/proto --go_out=internal/app/ --go-grpc_out=internal/app/ api/proto/*.proto
+
 .PHONY: benchmark\:payload
 benchmark\:payload:
 	@echo "Running payload benchmark..."

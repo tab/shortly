@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "/grpc/proto";
+
+service URLShortener {
+  rpc CreateShortLink(CreateShortLinkRequest) returns (CreateShortLinkResponse);
+  rpc GetShortLink(GetShortLinkRequest) returns (GetShortLinkResponse);
+  rpc BatchCreateShortLinks(BatchCreateShortLinkRequest) returns (BatchCreateShortLinkResponse);
+  rpc GetUserURLs(GetUserURLsRequest) returns (GetUserURLsResponse);
+  rpc DeleteUserURLs(DeleteUserURLsRequest) returns (DeleteUserURLsResponse);
+}
+
+message CreateShortLinkRequest {
+  string url = 1;
+}
+
+message CreateShortLinkResponse {
+  string result = 1;
+  string status = 2;
+  int32 code = 3;
+}
+
+message GetShortLinkRequest {
+  string short_code = 1;
+}
+
+message GetShortLinkResponse {
+  string result = 1;
+  string status = 2;
+  int32 code = 3;
+}
+
+message BatchCreateShortLinkRequest {
+  repeated BatchCreateParams items = 1;
+}
+
+message BatchCreateParams {
+  string correlation_id = 1;
+  string original_url = 2;
+}
+
+message BatchCreateShortLinkResponse {
+  repeated BatchCreateResult items = 1;
+}
+
+message BatchCreateResult {
+  string correlation_id = 1;
+  string short_url = 2;
+}
+
+message GetUserURLsRequest {
+  int32 page = 1;
+  int32 per = 2;
+}
+
+message GetUserURLsResponse {
+  repeated UserURL items = 1;
+  int32 total = 2;
+}
+
+message UserURL {
+  string short_url = 1;
+  string original_url = 2;
+}
+
+message DeleteUserURLsRequest {
+  repeated string short_codes = 1;
+}
+
+message DeleteUserURLsResponse {
+  bool success = 1;
+}

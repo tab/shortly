@@ -250,6 +250,17 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 			},
 		},
 		{
+			name: "Short Code with whitespace only",
+			request: &proto.GetShortLinkRequest{
+				ShortCode: "   ",
+			},
+			before: func() {},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error()),
+			},
+		},
+		{
 			name: "Not Found",
 			request: &proto.GetShortLinkRequest{
 				ShortCode: "notfound",

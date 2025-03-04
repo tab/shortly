@@ -25,10 +25,6 @@ func NewShortener(cfg *config.Config, service service.Shortener) *Shortener {
 }
 
 func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortLinkRequest) (*proto.CreateShortLinkResponse, error) {
-	if req.Url == "" {
-		return nil, status.Error(codes.InvalidArgument, errors.ErrOriginalURLEmpty.Error())
-	}
-
 	url := strings.TrimSpace(req.Url)
 	if url == "" {
 		return nil, status.Error(codes.InvalidArgument, errors.ErrOriginalURLEmpty.Error())
@@ -69,11 +65,12 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 }
 
 func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkRequest) (*proto.GetShortLinkResponse, error) {
-	if req.ShortCode == "" {
+	shortCode := strings.TrimSpace(req.ShortCode)
+	if shortCode == "" {
 		return nil, status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error())
 	}
 
-	url, ok := s.service.GetShortLink(ctx, req.ShortCode)
+	url, ok := s.service.GetShortLink(ctx, shortCode)
 	if !ok {
 		return nil, status.Error(codes.NotFound, errors.ErrShortLinkNotFound.Error())
 	}

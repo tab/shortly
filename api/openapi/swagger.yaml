@@ -132,6 +132,45 @@ paths:
           $ref: '#/components/responses/Gone'
         '500':
           $ref: '#/components/responses/InternalServerError'
+  /api/user/urls:
+    get:
+      summary: Fetch user URLs
+      description: Load all user URLs
+      responses:
+        '200':
+          description: User URLs loaded successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    short_code:
+                      type: string
+                      description: Short code of the URL
+                    original_url:
+                      type: string
+                      format: uri
+                      description: The original URL
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete user URLs
+      description: Deletes all URLs shortened by the user
+      responses:
+        '202':
+          description: User URLs deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: User URLs deletion message
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /api/internal/stats:
     get:
       summary: Retrieve internal statistics

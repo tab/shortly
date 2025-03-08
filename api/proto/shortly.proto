@@ -90,10 +90,19 @@ message UserURL {
 
 // DeleteUserURLsRequest is the request message for DeleteUserURLs
 message DeleteUserURLsRequest {
-  repeated string short_codes = 1;
+  repeated string short_codes = 1 [
+    (buf.validate.field) = {
+      repeated: {
+        min_items: 1,
+        items: { string: { min_len: 1 } }
+      }
+    }
+  ];
 }
 
 // DeleteUserURLsResponse is the response message for DeleteUserURLs
 message DeleteUserURLsResponse {
   bool success = 1;
+  string status = 2;
+  int32 code = 3;
 }

@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/grpc/proto"
 	"shortly/internal/app/repository"
@@ -294,6 +296,222 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expected.response.Result, response.Result)
+				assert.Equal(t, tt.expected.response.Status, response.Status)
+				assert.Equal(t, tt.expected.response.Code, response.Code)
+			}
+		})
+	}
+}
+
+func Test_Shortener_GetUserURLs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+
+	handler := NewShortener(cfg, srv)
+
+	limit := int64(25)
+	offset := int64(0)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
+
+	ctx := context.WithValue(context.Background(), dto.CurrentUser, UserUUID)
+
+	type result struct {
+		response *proto.GetUserURLsResponse
+		err      error
+	}
+
+	tests := []struct {
+		name     string
+		request  *proto.GetUserURLsRequest
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			request: &proto.GetUserURLsRequest{
+				Page: 1,
+				Per:  25,
+			},
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return([]repository.URL{
+					{
+						UUID:      UUID1,
+						LongURL:   "https://google.com",
+						ShortCode: "abcd0001",
+					},
+					{
+						UUID:      UUID2,
+						LongURL:   "https://github.com",
+						ShortCode: "abcd0002",
+					},
+				}, 2, nil)
+			},
+			expected: result{
+				response: &proto.GetUserURLsResponse{
+					Items: []*proto.UserURL{
+						{
+							ShortUrl:    fmt.Sprintf("%s/%s", cfg.BaseURL, "abcd0001"),
+							OriginalUrl: "https://google.com",
+						},
+						{
+							ShortUrl:    fmt.Sprintf("%s/%s", cfg.BaseURL, "abcd0002"),
+							OriginalUrl: "https://github.com",
+						},
+					},
+					Total: 2,
+				},
+			},
+		},
+		{
+			name: "No URLs",
+			request: &proto.GetUserURLsRequest{
+				Page: 1,
+				Per:  25,
+			},
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return([]repository.URL{}, 0, nil)
+			},
+			expected: result{
+				response: &proto.GetUserURLsResponse{
+					Items: []*proto.UserURL{},
+					Total: 0,
+				},
+			},
+		},
+		{
+			name: "Error",
+			request: &proto.GetUserURLsRequest{
+				Page: 1,
+				Per:  25,
+			},
+			before: func() {
+				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return(nil, 0, errors.ErrFailedToLoadUserUrls)
+			},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.Internal, errors.ErrFailedToLoadUserUrls.Error()),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			response, err := handler.GetUserURLs(ctx, tt.request)
+
+			if tt.expected.err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err.Error(), err.Error())
+				assert.Nil(t, response)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Items, response.Items)
+				assert.Equal(t, tt.expected.response.Total, response.Total)
+			}
+		})
+	}
+}
+
+func Test_Shortener_DeleteUserURLs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+
+	handler := NewShortener(cfg, srv)
+
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
+
+	type result struct {
+		response *proto.DeleteUserURLsResponse
+		err      error
+	}
+
+	tests := []struct {
+		name     string
+		request  *proto.DeleteUserURLsRequest
+		ctx      context.Context
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			request: &proto.DeleteUserURLsRequest{
+				ShortCodes: []string{"abcd1234", "efgh5678"},
+			},
+			ctx: context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			before: func() {
+				appWorker.EXPECT().Add(dto.BatchDeleteParams{
+					UserID:     UserUUID,
+					ShortCodes: []string{"abcd1234", "efgh5678"},
+				})
+			},
+			expected: result{
+				response: &proto.DeleteUserURLsResponse{
+					Success: true,
+					Status:  codes.OK.String(),
+					Code:    int32(codes.OK),
+				},
+				err: nil,
+			},
+		},
+		{
+			name: "Empty",
+			request: &proto.DeleteUserURLsRequest{
+				ShortCodes: []string{},
+			},
+			ctx:    context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
+			before: func() {},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error()),
+			},
+		},
+		{
+			name: "Error",
+			request: &proto.DeleteUserURLsRequest{
+				ShortCodes: []string{"abcd1234", "efgh5678"},
+			},
+			ctx:    context.WithValue(context.Background(), dto.CurrentUser, nil),
+			before: func() {},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.Internal, errors.ErrInvalidUserID.Error()),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			response, err := handler.DeleteUserURLs(tt.ctx, tt.request)
+
+			if tt.expected.err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err.Error(), err.Error())
+				assert.Nil(t, response)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected.response.Success, response.Success)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}

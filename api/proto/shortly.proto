@@ -1,74 +1,97 @@
 syntax = "proto3";
 
-package api;
+package shortly.v1;
 
-option go_package = "/grpc/proto";
+option go_package = "buf.build/tab/shortly/internal/app/grpc/proto";
 
+// URLShortener service
 service URLShortener {
+  // CreateShortLink creates a short link for the given URL
   rpc CreateShortLink(CreateShortLinkRequest) returns (CreateShortLinkResponse);
+
+  // GetShortLink returns the original URL for the given shortCode
   rpc GetShortLink(GetShortLinkRequest) returns (GetShortLinkResponse);
-  rpc BatchCreateShortLinks(BatchCreateShortLinkRequest) returns (BatchCreateShortLinkResponse);
+
+  // BatchCreateShortLinks creates short links for the given URLs
+  rpc BatchCreateShortLinks(BatchCreateShortLinksRequest) returns (BatchCreateShortLinksResponse);
+
+  // GetUserURLs returns the list of short URLs created by the user
   rpc GetUserURLs(GetUserURLsRequest) returns (GetUserURLsResponse);
+
+  // DeleteUserURLs deletes the short URLs created by the user
   rpc DeleteUserURLs(DeleteUserURLsRequest) returns (DeleteUserURLsResponse);
 }
 
+// CreateShortLinkRequest is the request message for CreateShortLink
 message CreateShortLinkRequest {
   string url = 1;
 }
 
+// CreateShortLinkResponse is the response message for CreateShortLink
 message CreateShortLinkResponse {
   string result = 1;
   string status = 2;
   int32 code = 3;
 }
 
+// GetShortLinkRequest is the request message for GetShortLink
 message GetShortLinkRequest {
   string short_code = 1;
 }
 
+// GetShortLinkResponse is the response message for GetShortLink
 message GetShortLinkResponse {
   string result = 1;
   string status = 2;
   int32 code = 3;
 }
 
-message BatchCreateShortLinkRequest {
+// BatchCreateShortLinksRequest is the request message for BatchCreateShortLinks
+message BatchCreateShortLinksRequest {
   repeated BatchCreateParams items = 1;
 }
 
+// BatchCreateParams is the request message for BatchCreateShortLinks
 message BatchCreateParams {
   string correlation_id = 1;
   string original_url = 2;
 }
 
-message BatchCreateShortLinkResponse {
+// BatchCreateShortLinksResponse is the response message for BatchCreateShortLinks
+message BatchCreateShortLinksResponse {
   repeated BatchCreateResult items = 1;
 }
 
+// BatchCreateResult is the response message for BatchCreateShortLinks
 message BatchCreateResult {
   string correlation_id = 1;
   string short_url = 2;
 }
 
+// GetUserURLsRequest is the request message for GetUserURLs
 message GetUserURLsRequest {
   int32 page = 1;
   int32 per = 2;
 }
 
+// GetUserURLsResponse is the response message for GetUserURLs
 message GetUserURLsResponse {
   repeated UserURL items = 1;
   int32 total = 2;
 }
 
+// UserURL is the object for GetUserURLsResponse
 message UserURL {
   string short_url = 1;
   string original_url = 2;
 }
 
+// DeleteUserURLsRequest is the request message for DeleteUserURLs
 message DeleteUserURLsRequest {
   repeated string short_codes = 1;
 }
 
+// DeleteUserURLsResponse is the response message for DeleteUserURLs
 message DeleteUserURLsResponse {
   bool success = 1;
 }

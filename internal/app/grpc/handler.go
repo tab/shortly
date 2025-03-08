@@ -2,8 +2,8 @@ package grpc
 
 import (
 	"context"
-	"strings"
 
+	"github.com/bufbuild/protovalidate-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -11,7 +11,6 @@ import (
 	"shortly/internal/app/errors"
 	"shortly/internal/app/grpc/proto"
 	"shortly/internal/app/service"
-	"shortly/internal/app/validator"
 )
 
 type Shortener struct {
@@ -25,16 +24,11 @@ func NewShortener(cfg *config.Config, service service.Shortener) *Shortener {
 }
 
 func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortLinkRequest) (*proto.CreateShortLinkResponse, error) {
-	url := strings.TrimSpace(req.Url)
-	if url == "" {
-		return nil, status.Error(codes.InvalidArgument, errors.ErrOriginalURLEmpty.Error())
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, errors.ErrInvalidURL.Error())
 	}
 
-	if err := validator.Validate(url); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	shortURL, err := s.service.CreateShortLink(ctx, url)
+	shortURL, err := s.service.CreateShortLink(ctx, req.Url)
 	if err != nil {
 		if errors.Is(err, errors.ErrURLAlreadyExists) {
 			return &proto.CreateShortLinkResponse{
@@ -65,12 +59,11 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 }
 
 func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkRequest) (*proto.GetShortLinkResponse, error) {
-	shortCode := strings.TrimSpace(req.ShortCode)
-	if shortCode == "" {
-		return nil, status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error())
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, errors.ErrInvalidShortCode.Error())
 	}
 
-	url, ok := s.service.GetShortLink(ctx, shortCode)
+	url, ok := s.service.GetShortLink(ctx, req.ShortCode)
 	if !ok {
 		return nil, status.Error(codes.NotFound, errors.ErrShortLinkNotFound.Error())
 	}

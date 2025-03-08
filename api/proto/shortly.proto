@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "buf/validate/validate.proto";
+
 package shortly.v1;
 
 option go_package = "buf.build/tab/shortly/internal/app/grpc/proto";
@@ -24,7 +26,7 @@ service URLShortener {
 
 // CreateShortLinkRequest is the request message for CreateShortLink
 message CreateShortLinkRequest {
-  string url = 1;
+  string url = 1 [(buf.validate.field) = {string: {min_len: 1, pattern: "^https?://.*"}}];
 }
 
 // CreateShortLinkResponse is the response message for CreateShortLink
@@ -36,7 +38,7 @@ message CreateShortLinkResponse {
 
 // GetShortLinkRequest is the request message for GetShortLink
 message GetShortLinkRequest {
-  string short_code = 1;
+  string short_code = 1 [(buf.validate.field) = {string: {min_len: 1}}];
 }
 
 // GetShortLinkResponse is the response message for GetShortLink
@@ -48,13 +50,13 @@ message GetShortLinkResponse {
 
 // BatchCreateShortLinksRequest is the request message for BatchCreateShortLinks
 message BatchCreateShortLinksRequest {
-  repeated BatchCreateParams items = 1;
+  repeated BatchCreateParams items = 1 [(buf.validate.field) = {repeated: {min_items: 1}}];
 }
 
 // BatchCreateParams is the request message for BatchCreateShortLinks
 message BatchCreateParams {
-  string correlation_id = 1;
-  string original_url = 2;
+  string correlation_id = 1 [(buf.validate.field) = {string: {min_len: 1}}];
+  string original_url = 2 [(buf.validate.field) = {string: {min_len: 1, pattern: "^https?://.*"}}];
 }
 
 // BatchCreateShortLinksResponse is the response message for BatchCreateShortLinks
@@ -70,8 +72,8 @@ message BatchCreateResult {
 
 // GetUserURLsRequest is the request message for GetUserURLs
 message GetUserURLsRequest {
-  int32 page = 1;
-  int32 per = 2;
+  int32 page = 1 [(buf.validate.field) = {int32: {gte: 1}}];
+  int32 per = 2 [(buf.validate.field) = {int32: {gte: 1}}];
 }
 
 // GetUserURLsResponse is the response message for GetUserURLs

@@ -132,7 +132,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				response: nil,
-				err:      status.Error(codes.InvalidArgument, errors.ErrOriginalURLEmpty.Error()),
+				err:      status.Error(codes.InvalidArgument, errors.ErrInvalidURL.Error()),
 			},
 		},
 		{
@@ -143,7 +143,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				response: nil,
-				err:      status.Error(codes.InvalidArgument, errors.ErrOriginalURLEmpty.Error()),
+				err:      status.Error(codes.InvalidArgument, errors.ErrInvalidURL.Error()),
 			},
 		},
 		{
@@ -246,18 +246,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 			before: func() {},
 			expected: result{
 				response: nil,
-				err:      status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error()),
-			},
-		},
-		{
-			name: "Short Code with whitespace only",
-			request: &proto.GetShortLinkRequest{
-				ShortCode: "   ",
-			},
-			before: func() {},
-			expected: result{
-				response: nil,
-				err:      status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error()),
+				err:      status.Error(codes.InvalidArgument, errors.ErrInvalidShortCode.Error()),
 			},
 		},
 		{

@@ -22,7 +22,7 @@ func NewHealthHandler(service service.HealthChecker) *HealthHandler {
 func (h *HealthHandler) HandleLiveness(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.HealthResponse{Result: "alive"})
+	_ = json.NewEncoder(w).Encode(dto.HealthResponse{Result: "alive"})
 }
 
 // HandleReadiness handles application readiness check
@@ -32,12 +32,12 @@ func (h *HealthHandler) HandleReadiness(w http.ResponseWriter, r *http.Request) 
 	err := h.service.Ping(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.HealthResponse{Result: "ready"})
+	_ = json.NewEncoder(w).Encode(dto.HealthResponse{Result: "ready"})
 }
 
 // HandlePing handles ping request
@@ -47,10 +47,10 @@ func (h *HealthHandler) HandlePing(w http.ResponseWriter, r *http.Request) {
 	err := h.service.Ping(r.Context())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.HealthResponse{Result: "pong"})
+	_ = json.NewEncoder(w).Encode(dto.HealthResponse{Result: "pong"})
 }

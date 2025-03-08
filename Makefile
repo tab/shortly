@@ -135,6 +135,21 @@ coverage:
 	@echo "Generating test coverage report..."
 	go test ./... -coverprofile=coverage.out && go tool cover -html=coverage.out
 
+.PHONY: buf\:format
+buf\:format:
+	@echo "Formatting proto files..."
+	buf format -w
+
+.PHONY: buf\:lint
+buf\:lint:
+	@echo "Linting proto files..."
+	buf lint
+
+.PHONY: buf\:generate
+buf\:generate:
+	@echo "Generating Go code from proto files..."
+	buf generate
+
 .PHONY: benchmark\:payload
 benchmark\:payload:
 	@echo "Running payload benchmark..."

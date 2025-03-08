@@ -11,6 +11,9 @@ var ErrOriginalURLEmpty = errors.New("original URL is required")
 // ErrCorrelationIDEmpty is returned when the correlation ID is empty
 var ErrCorrelationIDEmpty = errors.New("correlation id is required")
 
+// ErrInvalidShortCode is returned when the short code is invalid
+var ErrInvalidShortCode = errors.New("invalid short code")
+
 // ErrShortCodeEmpty is returned when the short code is empty
 var ErrShortCodeEmpty = errors.New("short code is required")
 

@@ -120,7 +120,7 @@ func Test_PersistenceManager_Load(t *testing.T) {
 	mockFileRepo := repository.NewMockFile(ctrl)
 	appLogger := logger.NewLogger()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	snapshot := &repository.Memento{
 		State: []repository.URL{
@@ -184,7 +184,7 @@ func Test_PersistenceManager_Save(t *testing.T) {
 	mockFileRepo := repository.NewMockFile(ctrl)
 	appLogger := logger.NewLogger()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	snapshot := &repository.Memento{
 		State: []repository.URL{

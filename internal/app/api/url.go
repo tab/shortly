@@ -32,7 +32,7 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 
 	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -40,17 +40,17 @@ func (h *URLHandler) HandleCreateShortLink(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		if errors.Is(err, errors.ErrURLAlreadyExists) {
 			w.WriteHeader(http.StatusConflict)
-			json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
+			_ = json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
 			return
 		}
 
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
+	_ = json.NewEncoder(w).Encode(dto.CreateShortLinkResponse{Result: shortURL})
 }
 
 // HandleBatchCreateShortLink handles batch short link creation
@@ -61,19 +61,19 @@ func (h *URLHandler) HandleBatchCreateShortLink(w http.ResponseWriter, r *http.R
 
 	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	results, err := h.service.CreateShortLinks(r.Context(), params)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(results)
+	_ = json.NewEncoder(w).Encode(results)
 }
 
 // HandleGetShortLink handles short link retrieval
@@ -85,18 +85,18 @@ func (h *URLHandler) HandleGetShortLink(w http.ResponseWriter, r *http.Request) 
 	result, found := h.service.GetShortLink(r.Context(), shortCode)
 	if !found {
 		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkNotFound.Error()})
 		return
 	}
 
 	if !result.DeletedAt.IsZero() {
 		w.WriteHeader(http.StatusGone)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkDeleted.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: errors.ErrShortLinkDeleted.Error()})
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: result.LongURL})
+	_ = json.NewEncoder(w).Encode(dto.GetShortLinkResponse{Result: result.LongURL})
 }
 
 // HandleGetUserURLs handles user URLs retrieval
@@ -108,7 +108,7 @@ func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	urls, _, err := h.service.GetUserURLs(r.Context(), paginator)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
@@ -126,7 +126,7 @@ func (h *URLHandler) HandleGetUserURLs(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(urls)
+	_ = json.NewEncoder(w).Encode(urls)
 }
 
 // HandleBatchDeleteUserURLs handles short link deletion
@@ -137,14 +137,14 @@ func (h *URLHandler) HandleBatchDeleteUserURLs(w http.ResponseWriter, r *http.Re
 
 	if err := params.Validate(r.Body); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	err := h.service.DeleteUserURLs(r.Context(), params)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
+		_ = json.NewEncoder(w).Encode(dto.ErrorResponse{Error: err.Error()})
 		return
 	}
 

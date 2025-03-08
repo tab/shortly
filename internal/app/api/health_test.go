@@ -13,7 +13,7 @@ import (
 	"shortly/internal/app/service"
 )
 
-func TestHealthHandler_HandleLiveness(t *testing.T) {
+func Test_HealthHandler_HandleLiveness(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -60,7 +60,7 @@ func TestHealthHandler_HandleLiveness(t *testing.T) {
 	}
 }
 
-func TestHealthHandler_HandleReadiness(t *testing.T) {
+func Test_HealthHandler_HandleReadiness(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -134,7 +134,7 @@ func TestHealthHandler_HandleReadiness(t *testing.T) {
 	}
 }
 
-func TestHealthHandler_HandlePing(t *testing.T) {
+func Test_HealthHandler_HandlePing(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 

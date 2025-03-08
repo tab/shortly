@@ -100,7 +100,7 @@ func Test_SecureRandom_UUID(t *testing.T) {
 	mockSecureRandom := NewMockSecureRandomGenerator(ctrl)
 	secureRandom := NewSecureRandom()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 	generatedUUID, _ := uuid.NewRandom()
 
 	type result struct {

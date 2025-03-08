@@ -23,8 +23,10 @@ func main() {
 		log.Fatalf("Failed to initialize application: %v", err)
 	}
 
-	if err = application.Run(ctx); err != nil {
+	if err = application.Run(ctx); err != nil && err != context.Canceled {
 		stop()
 		log.Fatalf("Application error: %v", err)
 	}
+
+	stop()
 }

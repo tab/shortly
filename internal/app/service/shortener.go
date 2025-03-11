@@ -14,6 +14,7 @@ import (
 	"shortly/internal/app/worker"
 )
 
+// Shortener is a service for URL shortening
 type Shortener interface {
 	CreateShortLink(ctx context.Context, longURL string) (string, error)
 	CreateShortLinks(ctx context.Context, params []dto.BatchCreateShortLinkParams) ([]dto.BatchCreateShortLinkResponse, error)

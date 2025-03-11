@@ -18,7 +18,7 @@ const BaseURL = "http://localhost:8080"
 const ServerAddress = "localhost:8080"
 
 // GRPCServerAddress is the address and port to run the gRPC server
-const GRPCServerAddress = "localhost:9090"
+const GRPCServerAddress = "localhost:50051"
 
 // ProfilerAddress is the address and port to run the profiler
 const ProfilerAddress = "localhost:2080"

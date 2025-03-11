@@ -19,7 +19,7 @@ const startupTimeout = 100 * time.Millisecond
 
 func Test_NewGRPCServer(t *testing.T) {
 	cfg := &config.Config{
-		GRPCServerAddr: "localhost:9090",
+		GRPCServerAddr: "localhost:50051",
 		GRPCSecretKey:  "grpc-secret-key",
 	}
 	shortener := &service.URLService{}
@@ -34,7 +34,7 @@ func Test_NewGRPCServer(t *testing.T) {
 
 func Test_GRPCServer_RunAndShutdown(t *testing.T) {
 	cfg := &config.Config{
-		GRPCServerAddr: "localhost:9090",
+		GRPCServerAddr: "localhost:50051",
 		GRPCSecretKey:  "grpc-secret-key",
 	}
 	shortener := &service.URLService{}
@@ -65,7 +65,7 @@ func Test_GRPCServer_RunWithTLS(t *testing.T) {
 	certPath, keyPath := generateTestCertificates(t)
 
 	cfg := &config.Config{
-		GRPCServerAddr: "localhost:9090",
+		GRPCServerAddr: "localhost:50051",
 		GRPCSecretKey:  "grpc-secret-key",
 		EnableHTTPS:    true,
 		Certificate:    certPath,

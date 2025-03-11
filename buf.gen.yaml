@@ -8,4 +8,4 @@ plugins:
     out: internal/app/grpc/proto
     opt: paths=source_relative
 inputs:
-  - directory: api/proto
+  - directory: proto

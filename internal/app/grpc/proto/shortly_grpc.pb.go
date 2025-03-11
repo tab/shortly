@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	URLShortener_CreateShortLink_FullMethodName       = "/shortly.v1.URLShortener/CreateShortLink"
-	URLShortener_GetShortLink_FullMethodName          = "/shortly.v1.URLShortener/GetShortLink"
-	URLShortener_BatchCreateShortLinks_FullMethodName = "/shortly.v1.URLShortener/BatchCreateShortLinks"
-	URLShortener_GetUserURLs_FullMethodName           = "/shortly.v1.URLShortener/GetUserURLs"
-	URLShortener_DeleteUserURLs_FullMethodName        = "/shortly.v1.URLShortener/DeleteUserURLs"
+	URLShortener_CreateShortLinkV1_FullMethodName       = "/shortly.v1.URLShortener/CreateShortLinkV1"
+	URLShortener_GetShortLinkV1_FullMethodName          = "/shortly.v1.URLShortener/GetShortLinkV1"
+	URLShortener_BatchCreateShortLinksV1_FullMethodName = "/shortly.v1.URLShortener/BatchCreateShortLinksV1"
+	URLShortener_GetUserURLsV1_FullMethodName           = "/shortly.v1.URLShortener/GetUserURLsV1"
+	URLShortener_DeleteUserURLsV1_FullMethodName        = "/shortly.v1.URLShortener/DeleteUserURLsV1"
 )
 
 // URLShortenerClient is the client API for URLShortener service.
@@ -32,16 +32,16 @@ const (
 //
 // URLShortener service
 type URLShortenerClient interface {
-	// CreateShortLink creates a short link for the given URL
-	CreateShortLink(ctx context.Context, in *CreateShortLinkRequest, opts ...grpc.CallOption) (*CreateShortLinkResponse, error)
-	// GetShortLink returns the original URL for the given shortCode
-	GetShortLink(ctx context.Context, in *GetShortLinkRequest, opts ...grpc.CallOption) (*GetShortLinkResponse, error)
-	// BatchCreateShortLinks creates short links for the given URLs
-	BatchCreateShortLinks(ctx context.Context, in *BatchCreateShortLinksRequest, opts ...grpc.CallOption) (*BatchCreateShortLinksResponse, error)
-	// GetUserURLs returns the list of short URLs created by the user
-	GetUserURLs(ctx context.Context, in *GetUserURLsRequest, opts ...grpc.CallOption) (*GetUserURLsResponse, error)
-	// DeleteUserURLs deletes the short URLs created by the user
-	DeleteUserURLs(ctx context.Context, in *DeleteUserURLsRequest, opts ...grpc.CallOption) (*DeleteUserURLsResponse, error)
+	// CreateShortLinkV1 creates a short link for the given URL
+	CreateShortLinkV1(ctx context.Context, in *CreateShortLinkV1Request, opts ...grpc.CallOption) (*CreateShortLinkV1Response, error)
+	// GetShortLinkV1 returns the original URL for the given shortCode
+	GetShortLinkV1(ctx context.Context, in *GetShortLinkV1Request, opts ...grpc.CallOption) (*GetShortLinkV1Response, error)
+	// BatchCreateShortLinksV1 creates short links for the given URLs
+	BatchCreateShortLinksV1(ctx context.Context, in *BatchCreateShortLinksV1Request, opts ...grpc.CallOption) (*BatchCreateShortLinksV1Response, error)
+	// GetUserURLsV1 returns the list of short URLs created by the user
+	GetUserURLsV1(ctx context.Context, in *GetUserURLsV1Request, opts ...grpc.CallOption) (*GetUserURLsV1Response, error)
+	// DeleteUserURLsV1 deletes the short URLs created by the user
+	DeleteUserURLsV1(ctx context.Context, in *DeleteUserURLsV1Request, opts ...grpc.CallOption) (*DeleteUserURLsV1Response, error)
 }
 
 type uRLShortenerClient struct {
@@ -52,50 +52,50 @@ func NewURLShortenerClient(cc grpc.ClientConnInterface) URLShortenerClient {
 	return &uRLShortenerClient{cc}
 }
 
-func (c *uRLShortenerClient) CreateShortLink(ctx context.Context, in *CreateShortLinkRequest, opts ...grpc.CallOption) (*CreateShortLinkResponse, error) {
+func (c *uRLShortenerClient) CreateShortLinkV1(ctx context.Context, in *CreateShortLinkV1Request, opts ...grpc.CallOption) (*CreateShortLinkV1Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(CreateShortLinkResponse)
-	err := c.cc.Invoke(ctx, URLShortener_CreateShortLink_FullMethodName, in, out, cOpts...)
+	out := new(CreateShortLinkV1Response)
+	err := c.cc.Invoke(ctx, URLShortener_CreateShortLinkV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerClient) GetShortLink(ctx context.Context, in *GetShortLinkRequest, opts ...grpc.CallOption) (*GetShortLinkResponse, error) {
+func (c *uRLShortenerClient) GetShortLinkV1(ctx context.Context, in *GetShortLinkV1Request, opts ...grpc.CallOption) (*GetShortLinkV1Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetShortLinkResponse)
-	err := c.cc.Invoke(ctx, URLShortener_GetShortLink_FullMethodName, in, out, cOpts...)
+	out := new(GetShortLinkV1Response)
+	err := c.cc.Invoke(ctx, URLShortener_GetShortLinkV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerClient) BatchCreateShortLinks(ctx context.Context, in *BatchCreateShortLinksRequest, opts ...grpc.CallOption) (*BatchCreateShortLinksResponse, error) {
+func (c *uRLShortenerClient) BatchCreateShortLinksV1(ctx context.Context, in *BatchCreateShortLinksV1Request, opts ...grpc.CallOption) (*BatchCreateShortLinksV1Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(BatchCreateShortLinksResponse)
-	err := c.cc.Invoke(ctx, URLShortener_BatchCreateShortLinks_FullMethodName, in, out, cOpts...)
+	out := new(BatchCreateShortLinksV1Response)
+	err := c.cc.Invoke(ctx, URLShortener_BatchCreateShortLinksV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerClient) GetUserURLs(ctx context.Context, in *GetUserURLsRequest, opts ...grpc.CallOption) (*GetUserURLsResponse, error) {
+func (c *uRLShortenerClient) GetUserURLsV1(ctx context.Context, in *GetUserURLsV1Request, opts ...grpc.CallOption) (*GetUserURLsV1Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetUserURLsResponse)
-	err := c.cc.Invoke(ctx, URLShortener_GetUserURLs_FullMethodName, in, out, cOpts...)
+	out := new(GetUserURLsV1Response)
+	err := c.cc.Invoke(ctx, URLShortener_GetUserURLsV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *uRLShortenerClient) DeleteUserURLs(ctx context.Context, in *DeleteUserURLsRequest, opts ...grpc.CallOption) (*DeleteUserURLsResponse, error) {
+func (c *uRLShortenerClient) DeleteUserURLsV1(ctx context.Context, in *DeleteUserURLsV1Request, opts ...grpc.CallOption) (*DeleteUserURLsV1Response, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(DeleteUserURLsResponse)
-	err := c.cc.Invoke(ctx, URLShortener_DeleteUserURLs_FullMethodName, in, out, cOpts...)
+	out := new(DeleteUserURLsV1Response)
+	err := c.cc.Invoke(ctx, URLShortener_DeleteUserURLsV1_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -108,16 +108,16 @@ func (c *uRLShortenerClient) DeleteUserURLs(ctx context.Context, in *DeleteUserU
 //
 // URLShortener service
 type URLShortenerServer interface {
-	// CreateShortLink creates a short link for the given URL
-	CreateShortLink(context.Context, *CreateShortLinkRequest) (*CreateShortLinkResponse, error)
-	// GetShortLink returns the original URL for the given shortCode
-	GetShortLink(context.Context, *GetShortLinkRequest) (*GetShortLinkResponse, error)
-	// BatchCreateShortLinks creates short links for the given URLs
-	BatchCreateShortLinks(context.Context, *BatchCreateShortLinksRequest) (*BatchCreateShortLinksResponse, error)
-	// GetUserURLs returns the list of short URLs created by the user
-	GetUserURLs(context.Context, *GetUserURLsRequest) (*GetUserURLsResponse, error)
-	// DeleteUserURLs deletes the short URLs created by the user
-	DeleteUserURLs(context.Context, *DeleteUserURLsRequest) (*DeleteUserURLsResponse, error)
+	// CreateShortLinkV1 creates a short link for the given URL
+	CreateShortLinkV1(context.Context, *CreateShortLinkV1Request) (*CreateShortLinkV1Response, error)
+	// GetShortLinkV1 returns the original URL for the given shortCode
+	GetShortLinkV1(context.Context, *GetShortLinkV1Request) (*GetShortLinkV1Response, error)
+	// BatchCreateShortLinksV1 creates short links for the given URLs
+	BatchCreateShortLinksV1(context.Context, *BatchCreateShortLinksV1Request) (*BatchCreateShortLinksV1Response, error)
+	// GetUserURLsV1 returns the list of short URLs created by the user
+	GetUserURLsV1(context.Context, *GetUserURLsV1Request) (*GetUserURLsV1Response, error)
+	// DeleteUserURLsV1 deletes the short URLs created by the user
+	DeleteUserURLsV1(context.Context, *DeleteUserURLsV1Request) (*DeleteUserURLsV1Response, error)
 	mustEmbedUnimplementedURLShortenerServer()
 }
 
@@ -128,20 +128,20 @@ type URLShortenerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedURLShortenerServer struct{}
 
-func (UnimplementedURLShortenerServer) CreateShortLink(context.Context, *CreateShortLinkRequest) (*CreateShortLinkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateShortLink not implemented")
+func (UnimplementedURLShortenerServer) CreateShortLinkV1(context.Context, *CreateShortLinkV1Request) (*CreateShortLinkV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateShortLinkV1 not implemented")
 }
-func (UnimplementedURLShortenerServer) GetShortLink(context.Context, *GetShortLinkRequest) (*GetShortLinkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetShortLink not implemented")
+func (UnimplementedURLShortenerServer) GetShortLinkV1(context.Context, *GetShortLinkV1Request) (*GetShortLinkV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetShortLinkV1 not implemented")
 }
-func (UnimplementedURLShortenerServer) BatchCreateShortLinks(context.Context, *BatchCreateShortLinksRequest) (*BatchCreateShortLinksResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BatchCreateShortLinks not implemented")
+func (UnimplementedURLShortenerServer) BatchCreateShortLinksV1(context.Context, *BatchCreateShortLinksV1Request) (*BatchCreateShortLinksV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BatchCreateShortLinksV1 not implemented")
 }
-func (UnimplementedURLShortenerServer) GetUserURLs(context.Context, *GetUserURLsRequest) (*GetUserURLsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetUserURLs not implemented")
+func (UnimplementedURLShortenerServer) GetUserURLsV1(context.Context, *GetUserURLsV1Request) (*GetUserURLsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserURLsV1 not implemented")
 }
-func (UnimplementedURLShortenerServer) DeleteUserURLs(context.Context, *DeleteUserURLsRequest) (*DeleteUserURLsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserURLs not implemented")
+func (UnimplementedURLShortenerServer) DeleteUserURLsV1(context.Context, *DeleteUserURLsV1Request) (*DeleteUserURLsV1Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteUserURLsV1 not implemented")
 }
 func (UnimplementedURLShortenerServer) mustEmbedUnimplementedURLShortenerServer() {}
 func (UnimplementedURLShortenerServer) testEmbeddedByValue()                      {}
@@ -164,92 +164,92 @@ func RegisterURLShortenerServer(s grpc.ServiceRegistrar, srv URLShortenerServer)
 	s.RegisterService(&URLShortener_ServiceDesc, srv)
 }
 
-func _URLShortener_CreateShortLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateShortLinkRequest)
+func _URLShortener_CreateShortLinkV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateShortLinkV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServer).CreateShortLink(ctx, in)
+		return srv.(URLShortenerServer).CreateShortLinkV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortener_CreateShortLink_FullMethodName,
+		FullMethod: URLShortener_CreateShortLinkV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServer).CreateShortLink(ctx, req.(*CreateShortLinkRequest))
+		return srv.(URLShortenerServer).CreateShortLinkV1(ctx, req.(*CreateShortLinkV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortener_GetShortLink_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetShortLinkRequest)
+func _URLShortener_GetShortLinkV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetShortLinkV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServer).GetShortLink(ctx, in)
+		return srv.(URLShortenerServer).GetShortLinkV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortener_GetShortLink_FullMethodName,
+		FullMethod: URLShortener_GetShortLinkV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServer).GetShortLink(ctx, req.(*GetShortLinkRequest))
+		return srv.(URLShortenerServer).GetShortLinkV1(ctx, req.(*GetShortLinkV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortener_BatchCreateShortLinks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(BatchCreateShortLinksRequest)
+func _URLShortener_BatchCreateShortLinksV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BatchCreateShortLinksV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServer).BatchCreateShortLinks(ctx, in)
+		return srv.(URLShortenerServer).BatchCreateShortLinksV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortener_BatchCreateShortLinks_FullMethodName,
+		FullMethod: URLShortener_BatchCreateShortLinksV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServer).BatchCreateShortLinks(ctx, req.(*BatchCreateShortLinksRequest))
+		return srv.(URLShortenerServer).BatchCreateShortLinksV1(ctx, req.(*BatchCreateShortLinksV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortener_GetUserURLs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetUserURLsRequest)
+func _URLShortener_GetUserURLsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserURLsV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServer).GetUserURLs(ctx, in)
+		return srv.(URLShortenerServer).GetUserURLsV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortener_GetUserURLs_FullMethodName,
+		FullMethod: URLShortener_GetUserURLsV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServer).GetUserURLs(ctx, req.(*GetUserURLsRequest))
+		return srv.(URLShortenerServer).GetUserURLsV1(ctx, req.(*GetUserURLsV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _URLShortener_DeleteUserURLs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteUserURLsRequest)
+func _URLShortener_DeleteUserURLsV1_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteUserURLsV1Request)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(URLShortenerServer).DeleteUserURLs(ctx, in)
+		return srv.(URLShortenerServer).DeleteUserURLsV1(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: URLShortener_DeleteUserURLs_FullMethodName,
+		FullMethod: URLShortener_DeleteUserURLsV1_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(URLShortenerServer).DeleteUserURLs(ctx, req.(*DeleteUserURLsRequest))
+		return srv.(URLShortenerServer).DeleteUserURLsV1(ctx, req.(*DeleteUserURLsV1Request))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -262,24 +262,24 @@ var URLShortener_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*URLShortenerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CreateShortLink",
-			Handler:    _URLShortener_CreateShortLink_Handler,
+			MethodName: "CreateShortLinkV1",
+			Handler:    _URLShortener_CreateShortLinkV1_Handler,
 		},
 		{
-			MethodName: "GetShortLink",
-			Handler:    _URLShortener_GetShortLink_Handler,
+			MethodName: "GetShortLinkV1",
+			Handler:    _URLShortener_GetShortLinkV1_Handler,
 		},
 		{
-			MethodName: "BatchCreateShortLinks",
-			Handler:    _URLShortener_BatchCreateShortLinks_Handler,
+			MethodName: "BatchCreateShortLinksV1",
+			Handler:    _URLShortener_BatchCreateShortLinksV1_Handler,
 		},
 		{
-			MethodName: "GetUserURLs",
-			Handler:    _URLShortener_GetUserURLs_Handler,
+			MethodName: "GetUserURLsV1",
+			Handler:    _URLShortener_GetUserURLsV1_Handler,
 		},
 		{
-			MethodName: "DeleteUserURLs",
-			Handler:    _URLShortener_DeleteUserURLs_Handler,
+			MethodName: "DeleteUserURLsV1",
+			Handler:    _URLShortener_DeleteUserURLsV1_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

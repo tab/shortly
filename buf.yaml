@@ -1,6 +1,6 @@
 version: v2
 modules:
-  - path: api/proto
+  - path: proto
     name: buf.build/tab/shortly
 deps:
   - buf.build/bufbuild/protovalidate

@@ -27,7 +27,7 @@ func NewShortener(cfg *config.Config, service service.Shortener) *Shortener {
 }
 
 // CreateShortLink handles short link creation
-func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortLinkRequest) (*proto.CreateShortLinkResponse, error) {
+func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortLinkV1Request) (*proto.CreateShortLinkV1Response, error) {
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, errors.ErrInvalidURL.Error())
 	}
@@ -35,10 +35,10 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 	shortURL, err := s.service.CreateShortLink(ctx, req.Url)
 	if err != nil {
 		if errors.Is(err, errors.ErrURLAlreadyExists) {
-			return &proto.CreateShortLinkResponse{
-				Result: shortURL,
-				Status: codes.AlreadyExists.String(),
-				Code:   int32(codes.AlreadyExists),
+			return &proto.CreateShortLinkV1Response{
+				ShortURL: shortURL,
+				Status:   codes.AlreadyExists.String(),
+				Code:     int32(codes.AlreadyExists),
 			}, nil
 		}
 
@@ -55,15 +55,15 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 		}
 	}
 
-	return &proto.CreateShortLinkResponse{
-		Result: shortURL,
-		Status: codes.OK.String(),
-		Code:   int32(codes.OK),
+	return &proto.CreateShortLinkV1Response{
+		ShortURL: shortURL,
+		Status:   codes.OK.String(),
+		Code:     int32(codes.OK),
 	}, nil
 }
 
 // GetShortLink handles short link retrieval
-func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkRequest) (*proto.GetShortLinkResponse, error) {
+func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkV1Request) (*proto.GetShortLinkV1Response, error) {
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, errors.ErrInvalidShortCode.Error())
 	}
@@ -77,22 +77,24 @@ func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkReq
 		return nil, status.Error(codes.NotFound, errors.ErrShortLinkDeleted.Error())
 	}
 
-	return &proto.GetShortLinkResponse{
-		Result: url.LongURL,
-		Status: codes.OK.String(),
-		Code:   int32(codes.OK),
+	return &proto.GetShortLinkV1Response{
+		RedirectURL: url.LongURL,
+		Status:      codes.OK.String(),
+		Code:        int32(codes.OK),
 	}, nil
 }
 
 // GetUserURLs handles user URLs retrieval
-func (s *Shortener) GetUserURLs(ctx context.Context, req *proto.GetUserURLsRequest) (*proto.GetUserURLsResponse, error) {
+func (s *Shortener) GetUserURLs(ctx context.Context, req *proto.GetUserURLsV1Request) (*proto.GetUserURLsV1Response, error) {
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	paginator := &pagination.Pagination{
+		//nolint:gosec
 		Page: int64(req.Page),
-		Per:  int64(req.Per),
+		//nolint:gosec
+		Per: int64(req.Per),
 	}
 
 	results, total, err := s.service.GetUserURLs(ctx, paginator)
@@ -108,15 +110,14 @@ func (s *Shortener) GetUserURLs(ctx context.Context, req *proto.GetUserURLsReque
 		}
 	}
 
-	return &proto.GetUserURLsResponse{
+	return &proto.GetUserURLsV1Response{
 		Items: items,
-		//nolint:gosec
-		Total: int32(total),
+		Total: uint64(total),
 	}, nil
 }
 
 // DeleteUserURLs handles short link deletion
-func (s *Shortener) DeleteUserURLs(ctx context.Context, req *proto.DeleteUserURLsRequest) (*proto.DeleteUserURLsResponse, error) {
+func (s *Shortener) DeleteUserURLs(ctx context.Context, req *proto.DeleteUserURLsV1Request) (*proto.DeleteUserURLsV1Response, error) {
 	if err := protovalidate.Validate(req); err != nil {
 		return nil, status.Error(codes.InvalidArgument, errors.ErrShortCodeEmpty.Error())
 	}
@@ -125,9 +126,8 @@ func (s *Shortener) DeleteUserURLs(ctx context.Context, req *proto.DeleteUserURL
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &proto.DeleteUserURLsResponse{
-		Success: true,
-		Status:  codes.OK.String(),
-		Code:    int32(codes.OK),
+	return &proto.DeleteUserURLsV1Response{
+		Status: codes.OK.String(),
+		Code:   int32(codes.OK),
 	}, nil
 }

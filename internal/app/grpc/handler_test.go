@@ -58,19 +58,19 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
-		response *proto.CreateShortLinkResponse
+		response *proto.CreateShortLinkV1Response
 		err      error
 	}
 
 	tests := []struct {
 		name     string
-		request  *proto.CreateShortLinkRequest
+		request  *proto.CreateShortLinkV1Request
 		before   func()
 		expected result
 	}{
 		{
 			name: "Success",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "https://example.com",
 			},
 			before: func() {
@@ -89,17 +89,17 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 				}, nil)
 			},
 			expected: result{
-				response: &proto.CreateShortLinkResponse{
-					Result: "http://localhost:8080/abcd1234",
-					Status: codes.OK.String(),
-					Code:   int32(codes.OK),
+				response: &proto.CreateShortLinkV1Response{
+					ShortURL: "http://localhost:8080/abcd1234",
+					Status:   codes.OK.String(),
+					Code:     int32(codes.OK),
 				},
 				err: nil,
 			},
 		},
 		{
 			name: "URL already exists",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "https://example.com",
 			},
 			before: func() {
@@ -118,17 +118,17 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 				}, nil)
 			},
 			expected: result{
-				response: &proto.CreateShortLinkResponse{
-					Result: "http://localhost:8080/abab0001",
-					Status: codes.AlreadyExists.String(),
-					Code:   int32(codes.AlreadyExists),
+				response: &proto.CreateShortLinkV1Response{
+					ShortURL: "http://localhost:8080/abab0001",
+					Status:   codes.AlreadyExists.String(),
+					Code:     int32(codes.AlreadyExists),
 				},
 				err: nil,
 			},
 		},
 		{
 			name: "Empty URL",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "",
 			},
 			before: func() {},
@@ -139,7 +139,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 		},
 		{
 			name: "URL with whitespace only",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "   ",
 			},
 			before: func() {},
@@ -150,7 +150,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 		},
 		{
 			name: "Invalid URL",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "not-a-valid-url",
 			},
 			before: func() {},
@@ -161,7 +161,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 		},
 		{
 			name: "Error generating UUID",
-			request: &proto.CreateShortLinkRequest{
+			request: &proto.CreateShortLinkV1Request{
 				Url: "https://example.com",
 			},
 			before: func() {
@@ -186,7 +186,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 				assert.Nil(t, response)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.response.Result, response.Result)
+				assert.Equal(t, tt.expected.response.ShortURL, response.ShortURL)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}
@@ -210,19 +210,19 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 	handler := NewShortener(cfg, srv)
 
 	type result struct {
-		response *proto.GetShortLinkResponse
+		response *proto.GetShortLinkV1Response
 		err      error
 	}
 
 	tests := []struct {
 		name     string
-		request  *proto.GetShortLinkRequest
+		request  *proto.GetShortLinkV1Request
 		before   func()
 		expected result
 	}{
 		{
 			name: "Success",
-			request: &proto.GetShortLinkRequest{
+			request: &proto.GetShortLinkV1Request{
 				ShortCode: "abcd1234",
 			},
 			before: func() {
@@ -232,17 +232,17 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 				}, true)
 			},
 			expected: result{
-				response: &proto.GetShortLinkResponse{
-					Result: "https://example.com",
-					Status: codes.OK.String(),
-					Code:   int32(codes.OK),
+				response: &proto.GetShortLinkV1Response{
+					RedirectURL: "https://example.com",
+					Status:      codes.OK.String(),
+					Code:        int32(codes.OK),
 				},
 				err: nil,
 			},
 		},
 		{
 			name: "Empty Short Code",
-			request: &proto.GetShortLinkRequest{
+			request: &proto.GetShortLinkV1Request{
 				ShortCode: "",
 			},
 			before: func() {},
@@ -253,7 +253,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 		},
 		{
 			name: "Not Found",
-			request: &proto.GetShortLinkRequest{
+			request: &proto.GetShortLinkV1Request{
 				ShortCode: "notfound",
 			},
 			before: func() {
@@ -266,7 +266,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 		},
 		{
 			name: "Deleted",
-			request: &proto.GetShortLinkRequest{
+			request: &proto.GetShortLinkV1Request{
 				ShortCode: "abcd1234",
 			},
 			before: func() {
@@ -295,7 +295,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 				assert.Nil(t, response)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.response.Result, response.Result)
+				assert.Equal(t, tt.expected.response.RedirectURL, response.RedirectURL)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}
@@ -327,19 +327,19 @@ func Test_Shortener_GetUserURLs(t *testing.T) {
 	ctx := context.WithValue(context.Background(), dto.CurrentUser, UserUUID)
 
 	type result struct {
-		response *proto.GetUserURLsResponse
+		response *proto.GetUserURLsV1Response
 		err      error
 	}
 
 	tests := []struct {
 		name     string
-		request  *proto.GetUserURLsRequest
+		request  *proto.GetUserURLsV1Request
 		before   func()
 		expected result
 	}{
 		{
 			name: "Success",
-			request: &proto.GetUserURLsRequest{
+			request: &proto.GetUserURLsV1Request{
 				Page: 1,
 				Per:  25,
 			},
@@ -358,7 +358,7 @@ func Test_Shortener_GetUserURLs(t *testing.T) {
 				}, 2, nil)
 			},
 			expected: result{
-				response: &proto.GetUserURLsResponse{
+				response: &proto.GetUserURLsV1Response{
 					Items: []*proto.UserURL{
 						{
 							ShortUrl:    fmt.Sprintf("%s/%s", cfg.BaseURL, "abcd0001"),
@@ -375,7 +375,7 @@ func Test_Shortener_GetUserURLs(t *testing.T) {
 		},
 		{
 			name: "No URLs",
-			request: &proto.GetUserURLsRequest{
+			request: &proto.GetUserURLsV1Request{
 				Page: 1,
 				Per:  25,
 			},
@@ -383,7 +383,7 @@ func Test_Shortener_GetUserURLs(t *testing.T) {
 				repo.EXPECT().GetURLsByUserID(ctx, UserUUID, limit, offset).Return([]repository.URL{}, 0, nil)
 			},
 			expected: result{
-				response: &proto.GetUserURLsResponse{
+				response: &proto.GetUserURLsV1Response{
 					Items: []*proto.UserURL{},
 					Total: 0,
 				},
@@ -391,7 +391,7 @@ func Test_Shortener_GetUserURLs(t *testing.T) {
 		},
 		{
 			name: "Error",
-			request: &proto.GetUserURLsRequest{
+			request: &proto.GetUserURLsV1Request{
 				Page: 1,
 				Per:  25,
 			},
@@ -441,20 +441,20 @@ func Test_Shortener_DeleteUserURLs(t *testing.T) {
 	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174001")
 
 	type result struct {
-		response *proto.DeleteUserURLsResponse
+		response *proto.DeleteUserURLsV1Response
 		err      error
 	}
 
 	tests := []struct {
 		name     string
-		request  *proto.DeleteUserURLsRequest
+		request  *proto.DeleteUserURLsV1Request
 		ctx      context.Context
 		before   func()
 		expected result
 	}{
 		{
 			name: "Success",
-			request: &proto.DeleteUserURLsRequest{
+			request: &proto.DeleteUserURLsV1Request{
 				ShortCodes: []string{"abcd1234", "efgh5678"},
 			},
 			ctx: context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
@@ -465,17 +465,16 @@ func Test_Shortener_DeleteUserURLs(t *testing.T) {
 				})
 			},
 			expected: result{
-				response: &proto.DeleteUserURLsResponse{
-					Success: true,
-					Status:  codes.OK.String(),
-					Code:    int32(codes.OK),
+				response: &proto.DeleteUserURLsV1Response{
+					Status: codes.OK.String(),
+					Code:   int32(codes.OK),
 				},
 				err: nil,
 			},
 		},
 		{
 			name: "Empty",
-			request: &proto.DeleteUserURLsRequest{
+			request: &proto.DeleteUserURLsV1Request{
 				ShortCodes: []string{},
 			},
 			ctx:    context.WithValue(context.Background(), dto.CurrentUser, UserUUID),
@@ -487,7 +486,7 @@ func Test_Shortener_DeleteUserURLs(t *testing.T) {
 		},
 		{
 			name: "Error",
-			request: &proto.DeleteUserURLsRequest{
+			request: &proto.DeleteUserURLsV1Request{
 				ShortCodes: []string{"abcd1234", "efgh5678"},
 			},
 			ctx:    context.WithValue(context.Background(), dto.CurrentUser, nil),
@@ -511,7 +510,6 @@ func Test_Shortener_DeleteUserURLs(t *testing.T) {
 				assert.Nil(t, response)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.response.Success, response.Success)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}

@@ -11,6 +11,9 @@ var ErrOriginalURLEmpty = errors.New("original URL is required")
 // ErrCorrelationIDEmpty is returned when the correlation ID is empty
 var ErrCorrelationIDEmpty = errors.New("correlation id is required")
 
+// ErrInvalidBatchParams is returned when the batch params are invalid
+var ErrInvalidBatchParams = errors.New("invalid batch params")
+
 // ErrInvalidShortCode is returned when the short code is invalid
 var ErrInvalidShortCode = errors.New("invalid short code")
 

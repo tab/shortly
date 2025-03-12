@@ -194,6 +194,172 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 	}
 }
 
+func Test_Shortener_CreateShortLinks(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	ctx := context.Background()
+	cfg := &config.Config{
+		BaseURL: "http://localhost:8080",
+	}
+	repo := repository.NewMockDatabase(ctrl)
+	rand := service.NewMockSecureRandomGenerator(ctrl)
+	appWorker := worker.NewMockWorker(ctrl)
+	srv := service.NewURLService(cfg, repo, rand, appWorker)
+
+	handler := NewShortener(cfg, srv)
+
+	UUID1, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720001")
+	UUID2, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f720002")
+
+	type result struct {
+		response *proto.BatchCreateShortLinksV1Response
+		err      error
+	}
+
+	tests := []struct {
+		name     string
+		request  *proto.BatchCreateShortLinksV1Request
+		before   func()
+		expected result
+	}{
+		{
+			name: "Success",
+			request: &proto.BatchCreateShortLinksV1Request{
+				Items: []*proto.BatchCreateParams{
+					{
+						CorrelationId: "123e4567-e89b-12d3-a456-426614174001",
+						OriginalUrl:   "https://google.com",
+					},
+					{
+						CorrelationId: "123e4567-e89b-12d3-a456-426614174002",
+						OriginalUrl:   "https://github.com",
+					},
+				},
+			},
+			before: func() {
+				gomock.InOrder(
+					rand.EXPECT().UUID().Return(UUID1, nil),
+					rand.EXPECT().Hex().Return("abcd0001", nil),
+					repo.EXPECT().GetURLByShortCode(ctx, "abcd0001").Return(nil, false),
+					rand.EXPECT().UUID().Return(UUID2, nil),
+					rand.EXPECT().Hex().Return("abcd0002", nil),
+					repo.EXPECT().GetURLByShortCode(ctx, "abcd0002").Return(nil, false),
+				)
+				items := []repository.URL{
+					{UUID: UUID1, LongURL: "https://google.com", ShortCode: "abcd0001"},
+					{UUID: UUID2, LongURL: "https://github.com", ShortCode: "abcd0002"},
+				}
+				repo.EXPECT().CreateURLs(ctx, items)
+			},
+			expected: result{
+				response: &proto.BatchCreateShortLinksV1Response{
+					Items: []*proto.BatchCreateResult{
+						{
+							CorrelationId: "123e4567-e89b-12d3-a456-426614174001",
+							ShortUrl:      "http://localhost:8080/abcd0001",
+						},
+						{
+							CorrelationId: "123e4567-e89b-12d3-a456-426614174002",
+							ShortUrl:      "http://localhost:8080/abcd0002",
+						},
+					},
+					Status: codes.OK.String(),
+					Code:   int32(codes.OK),
+				},
+			},
+		},
+		{
+			name: "No correlation ID",
+			request: &proto.BatchCreateShortLinksV1Request{
+				Items: []*proto.BatchCreateParams{
+					{
+						CorrelationId: "",
+						OriginalUrl:   "https://google.com",
+					},
+				},
+			},
+			before: func() {},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.InvalidArgument, errors.ErrInvalidBatchParams.Error()),
+			},
+		},
+		{
+			name: "No original URL",
+			request: &proto.BatchCreateShortLinksV1Request{
+				Items: []*proto.BatchCreateParams{
+					{
+						CorrelationId: "123e4567-e89b-12d3-a456-426614174001",
+						OriginalUrl:   "",
+					},
+				},
+			},
+			before: func() {},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.InvalidArgument, errors.ErrInvalidBatchParams.Error()),
+			},
+		},
+		{
+			name: "Error generating UUID",
+			request: &proto.BatchCreateShortLinksV1Request{
+				Items: []*proto.BatchCreateParams{
+					{
+						CorrelationId: "123e4567-e89b-12d3-a456-426614174001",
+						OriginalUrl:   "https://google.com",
+					},
+				},
+			},
+			before: func() {
+				rand.EXPECT().UUID().Return(uuid.UUID{}, errors.ErrFailedToGenerateUUID)
+			},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.Internal, errors.ErrFailedToGenerateUUID.Error()),
+			},
+		},
+		{
+			name: "Error generating short code",
+			request: &proto.BatchCreateShortLinksV1Request{
+				Items: []*proto.BatchCreateParams{
+					{
+						CorrelationId: "123e4567-e89b-12d3-a456-426614174001",
+						OriginalUrl:   "https://google.com",
+					},
+				},
+			},
+			before: func() {
+				rand.EXPECT().UUID().Return(UUID1, nil)
+				rand.EXPECT().Hex().Return("", errors.ErrFailedToReadRandomBytes)
+			},
+			expected: result{
+				response: nil,
+				err:      status.Error(codes.Internal, errors.ErrFailedToGenerateCode.Error()),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.before()
+
+			response, err := handler.CreateShortLinks(ctx, tt.request)
+
+			if tt.expected.err != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.expected.err.Error(), err.Error())
+				assert.Nil(t, response)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, response.Items, tt.expected.response.Items)
+				assert.Equal(t, response.Status, tt.expected.response.Status)
+				assert.Equal(t, response.Code, tt.expected.response.Code)
+			}
+		})
+	}
+}
+
 func Test_Shortener_GetShortLink(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

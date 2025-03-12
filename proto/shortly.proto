@@ -76,6 +76,8 @@ message BatchCreateParams {
 // BatchCreateShortLinksV1Response is the response message for BatchCreateShortLinksV1
 message BatchCreateShortLinksV1Response {
   repeated BatchCreateResult items = 1;
+  string status = 2;
+  int32 code = 3;
 }
 
 // BatchCreateResult is the response message for BatchCreateShortLinksV1

@@ -9,6 +9,7 @@ import (
 
 	"shortly/internal/app/api/pagination"
 	"shortly/internal/app/config"
+	"shortly/internal/app/dto"
 	"shortly/internal/app/errors"
 	"shortly/internal/app/grpc/proto"
 	"shortly/internal/app/service"
@@ -59,6 +60,40 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 		ShortURL: shortURL,
 		Status:   codes.OK.String(),
 		Code:     int32(codes.OK),
+	}, nil
+}
+
+// CreateShortLinks handles batch short link creation
+func (s *Shortener) CreateShortLinks(ctx context.Context, req *proto.BatchCreateShortLinksV1Request) (*proto.BatchCreateShortLinksV1Response, error) {
+	if err := protovalidate.Validate(req); err != nil {
+		return nil, status.Error(codes.InvalidArgument, errors.ErrInvalidBatchParams.Error())
+	}
+
+	params := make([]dto.BatchCreateShortLinkParams, 0, len(req.Items))
+	for _, item := range req.Items {
+		params = append(params, dto.BatchCreateShortLinkParams{
+			CorrelationID: item.CorrelationId,
+			OriginalURL:   item.OriginalUrl,
+		})
+	}
+
+	results, err := s.service.CreateShortLinks(ctx, params)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	items := make([]*proto.BatchCreateResult, len(results))
+	for i, res := range results {
+		items[i] = &proto.BatchCreateResult{
+			CorrelationId: res.CorrelationID,
+			ShortUrl:      res.ShortURL,
+		}
+	}
+
+	return &proto.BatchCreateShortLinksV1Response{
+		Items:  items,
+		Status: codes.OK.String(),
+		Code:   int32(codes.OK),
 	}, nil
 }
 

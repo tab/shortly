@@ -37,7 +37,7 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 	if err != nil {
 		if errors.Is(err, errors.ErrURLAlreadyExists) {
 			return &proto.CreateShortLinkV1Response{
-				ShortURL: shortURL,
+				ShortUrl: shortURL,
 				Status:   codes.AlreadyExists.String(),
 				Code:     int32(codes.AlreadyExists),
 			}, nil
@@ -57,7 +57,7 @@ func (s *Shortener) CreateShortLink(ctx context.Context, req *proto.CreateShortL
 	}
 
 	return &proto.CreateShortLinkV1Response{
-		ShortURL: shortURL,
+		ShortUrl: shortURL,
 		Status:   codes.OK.String(),
 		Code:     int32(codes.OK),
 	}, nil
@@ -113,7 +113,7 @@ func (s *Shortener) GetShortLink(ctx context.Context, req *proto.GetShortLinkV1R
 	}
 
 	return &proto.GetShortLinkV1Response{
-		RedirectURL: url.LongURL,
+		RedirectUrl: url.LongURL,
 		Status:      codes.OK.String(),
 		Code:        int32(codes.OK),
 	}, nil

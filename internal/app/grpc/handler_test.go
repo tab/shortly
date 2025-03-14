@@ -90,7 +90,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 			},
 			expected: result{
 				response: &proto.CreateShortLinkV1Response{
-					ShortURL: "http://localhost:8080/abcd1234",
+					ShortUrl: "http://localhost:8080/abcd1234",
 					Status:   codes.OK.String(),
 					Code:     int32(codes.OK),
 				},
@@ -119,7 +119,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 			},
 			expected: result{
 				response: &proto.CreateShortLinkV1Response{
-					ShortURL: "http://localhost:8080/abab0001",
+					ShortUrl: "http://localhost:8080/abab0001",
 					Status:   codes.AlreadyExists.String(),
 					Code:     int32(codes.AlreadyExists),
 				},
@@ -186,7 +186,7 @@ func Test_shortener_CreateShortLink(t *testing.T) {
 				assert.Nil(t, response)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.response.ShortURL, response.ShortURL)
+				assert.Equal(t, tt.expected.response.ShortUrl, response.ShortUrl)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}
@@ -399,7 +399,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 			},
 			expected: result{
 				response: &proto.GetShortLinkV1Response{
-					RedirectURL: "https://example.com",
+					RedirectUrl: "https://example.com",
 					Status:      codes.OK.String(),
 					Code:        int32(codes.OK),
 				},
@@ -461,7 +461,7 @@ func Test_Shortener_GetShortLink(t *testing.T) {
 				assert.Nil(t, response)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expected.response.RedirectURL, response.RedirectURL)
+				assert.Equal(t, tt.expected.response.RedirectUrl, response.RedirectUrl)
 				assert.Equal(t, tt.expected.response.Status, response.Status)
 				assert.Equal(t, tt.expected.response.Code, response.Code)
 			}

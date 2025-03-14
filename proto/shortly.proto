@@ -37,7 +37,7 @@ message CreateShortLinkV1Request {
 
 // CreateShortLinkV1Response is the response message for CreateShortLinkV1
 message CreateShortLinkV1Response {
-  string shortURL = 1;
+  string short_url = 1;
   string status = 2;
   int32 code = 3;
 }
@@ -49,7 +49,7 @@ message GetShortLinkV1Request {
 
 // GetShortLinkV1Response is the response message for GetShortLinkV1
 message GetShortLinkV1Response {
-  string redirectURL = 1;
+  string redirect_url = 1;
   string status = 2;
   int32 code = 3;
 }
@@ -57,13 +57,16 @@ message GetShortLinkV1Response {
 // BatchCreateShortLinksV1Request is the request message for BatchCreateShortLinksV1
 message BatchCreateShortLinksV1Request {
   repeated BatchCreateParams items = 1 [(buf.validate.field) = {
-    repeated: {min_items: 1, max_items: 1000}
+    repeated: {
+      min_items: 1
+      max_items: 1000
+    }
   }];
 }
 
 // BatchCreateParams is the request message for BatchCreateShortLinksV1
 message BatchCreateParams {
-  string correlation_id = 1 [(buf.validate.field).string = { uuid: true }];
+  string correlation_id = 1 [(buf.validate.field).string = {uuid: true}];
   string original_url = 2 [(buf.validate.field) = {
     string: {
       min_len: 1

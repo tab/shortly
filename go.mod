@@ -1,6 +1,6 @@
 module shortly
 
-go 1.22.7
+go 1.24.1
 
 require (
 	github.com/bufbuild/protovalidate-go v0.9.2

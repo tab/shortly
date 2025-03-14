@@ -47,6 +47,17 @@ jobs:
         with:
           version: v1.60
 
+  buf-linter:
+    name: Buf linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+      - name: Run buf lint
+        run: buf lint
+
   coverage:
     name: Codecov
     env:
@@ -72,13 +83,11 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22.7'
-
       - name: Load schema.sql
         env:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d shortly-test -f db/schema.sql
-
       - name: Run tests
         run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
       - name: Upload coverage to Codecov

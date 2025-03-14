@@ -4,6 +4,8 @@ modules:
     name: buf.build/tab/shortly
 deps:
   - buf.build/bufbuild/protovalidate
+  - buf.build/googleapis/googleapis
+  - buf.build/grpc-ecosystem/grpc-gateway
 lint:
   use:
     - STANDARD

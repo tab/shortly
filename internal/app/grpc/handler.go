@@ -126,10 +126,8 @@ func (s *Shortener) GetUserURLs(ctx context.Context, req *proto.GetUserURLsV1Req
 	}
 
 	paginator := &pagination.Pagination{
-		//nolint:gosec
-		Page: int64(req.Page),
-		//nolint:gosec
-		Per: int64(req.Per),
+		Page: int64(req.Page), //nolint:gosec
+		Per:  int64(req.Per),  //nolint:gosec
 	}
 
 	results, total, err := s.service.GetUserURLs(ctx, paginator)
@@ -147,7 +145,7 @@ func (s *Shortener) GetUserURLs(ctx context.Context, req *proto.GetUserURLsV1Req
 
 	return &proto.GetUserURLsV1Response{
 		Items: items,
-		Total: uint64(total),
+		Total: uint64(total), //nolint:gosec
 	}, nil
 }
 

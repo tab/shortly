@@ -20,6 +20,9 @@ const ServerAddress = "localhost:8080"
 // GRPCServerAddress is the address and port to run the gRPC server
 const GRPCServerAddress = "localhost:50051"
 
+// GRPCGatewayAddress is the address and port to run the gRPC gateway
+const GRPCGatewayAddress = "localhost:8081"
+
 // ProfilerAddress is the address and port to run the profiler
 const ProfilerAddress = "localhost:2080"
 
@@ -31,6 +34,7 @@ type Config struct {
 	ClientURL       string `json:"client_url"`
 	GRPCServerAddr  string `json:"grpc_server_address"`
 	GRPCSecretKey   string `json:"grpc_secret_key"`
+	GRPCGatewayAddr string `json:"grpc_gateway_address"`
 	ProfilerAddr    string `json:"profiler_address"`
 	FileStoragePath string `json:"file_storage_path"`
 	DatabaseDSN     string `json:"database_dsn"`
@@ -48,6 +52,7 @@ type Flags struct {
 	BaseURL         string
 	GRPCServerAddr  string
 	GRPCSecretKey   string
+	GRPCGatewayAddr string
 	ProfilerAddr    string
 	FileStoragePath string
 	DatabaseDSN     string
@@ -82,6 +87,7 @@ func ParseFlags() Flags {
 	flagBaseURL := flag.String("b", BaseURL, "base address of the resulting shortened URL")
 	flagGRPCServerAddr := flag.String("g", GRPCServerAddress, "address and port to run gRPC server")
 	flagGRPCSecretKey := flag.String("s", "", "gRPC secret key")
+	flagGRPCGatewayAddr := flag.String("w", GRPCGatewayAddress, "address and port to run gRPC gateway")
 	flagProfilerAddr := flag.String("p", ProfilerAddress, "address and port to run profiler")
 	flagFileStoragePath := flag.String("f", "", "path to the file storage")
 	flagDatabaseDSN := flag.String("d", "", "database DSN")
@@ -100,6 +106,7 @@ func ParseFlags() Flags {
 		BaseURL:         *flagBaseURL,
 		GRPCServerAddr:  *flagGRPCServerAddr,
 		GRPCSecretKey:   *flagGRPCSecretKey,
+		GRPCGatewayAddr: *flagGRPCGatewayAddr,
 		ProfilerAddr:    *flagProfilerAddr,
 		FileStoragePath: *flagFileStoragePath,
 		DatabaseDSN:     *flagDatabaseDSN,
@@ -163,85 +170,64 @@ func (b *Builder) WithFile() *Builder {
 
 // WithFlags loads the configuration from the flags
 func (b *Builder) WithFlags(f Flags) *Builder {
-	if f.ConfigFilePath != "" {
-		b.cfg.ConfigFilePath = f.ConfigFilePath
+	set := func(val string, target *string) {
+		if val != "" {
+			*target = val
+		}
 	}
-	if f.Addr != "" {
-		b.cfg.Addr = f.Addr
-	}
-	if f.BaseURL != "" {
-		b.cfg.BaseURL = f.BaseURL
-	}
-	if f.GRPCServerAddr != "" {
-		b.cfg.GRPCServerAddr = f.GRPCServerAddr
-	}
-	if f.GRPCSecretKey != "" {
-		b.cfg.GRPCSecretKey = f.GRPCSecretKey
-	}
-	if f.ProfilerAddr != "" {
-		b.cfg.ProfilerAddr = f.ProfilerAddr
-	}
-	if f.FileStoragePath != "" {
-		b.cfg.FileStoragePath = f.FileStoragePath
-	}
-	if f.DatabaseDSN != "" {
-		b.cfg.DatabaseDSN = f.DatabaseDSN
-	}
-	if f.SecretKey != "" {
-		b.cfg.SecretKey = f.SecretKey
-	}
+
+	set(f.ConfigFilePath, &b.cfg.ConfigFilePath)
+	set(f.Addr, &b.cfg.Addr)
+	set(f.BaseURL, &b.cfg.BaseURL)
+	set(f.GRPCServerAddr, &b.cfg.GRPCServerAddr)
+	set(f.GRPCSecretKey, &b.cfg.GRPCSecretKey)
+	set(f.GRPCGatewayAddr, &b.cfg.GRPCGatewayAddr)
+	set(f.ProfilerAddr, &b.cfg.ProfilerAddr)
+	set(f.FileStoragePath, &b.cfg.FileStoragePath)
+	set(f.DatabaseDSN, &b.cfg.DatabaseDSN)
+	set(f.SecretKey, &b.cfg.SecretKey)
+	set(f.TrustedSubnet, &b.cfg.TrustedSubnet)
+
 	b.cfg.EnableHTTPS = f.EnableHTTPS
-	if f.TrustedSubnet != "" {
-		b.cfg.TrustedSubnet = f.TrustedSubnet
-	}
 
 	return b
 }
 
 // WithEnv loads the configuration from the environment variables
 func (b *Builder) WithEnv() *Builder {
-	if v, ok := os.LookupEnv("SERVER_ADDRESS"); ok && v != "" {
-		b.cfg.Addr = v
+	set := func(envName string, target *string) {
+		if v, ok := os.LookupEnv(envName); ok && v != "" {
+			*target = v
+		}
 	}
-	if v, ok := os.LookupEnv("BASE_URL"); ok && v != "" {
-		b.cfg.BaseURL = v
+
+	list := []struct {
+		env    string
+		target *string
+	}{
+		{"SERVER_ADDRESS", &b.cfg.Addr},
+		{"BASE_URL", &b.cfg.BaseURL},
+		{"CLIENT_URL", &b.cfg.ClientURL},
+		{"GRPC_SERVER_ADDRESS", &b.cfg.GRPCServerAddr},
+		{"GRPC_SECRET_KEY", &b.cfg.GRPCSecretKey},
+		{"GRPC_GATEWAY_ADDRESS", &b.cfg.GRPCGatewayAddr},
+		{"PROFILER_ADDRESS", &b.cfg.ProfilerAddr},
+		{"FILE_STORAGE_PATH", &b.cfg.FileStoragePath},
+		{"DATABASE_DSN", &b.cfg.DatabaseDSN},
+		{"SECRET_KEY", &b.cfg.SecretKey},
+		{"CONFIG", &b.cfg.ConfigFilePath},
+		{"TRUSTED_SUBNET", &b.cfg.TrustedSubnet},
 	}
-	if v, ok := os.LookupEnv("CLIENT_URL"); ok && v != "" {
-		b.cfg.ClientURL = v
+
+	for _, item := range list {
+		set(item.env, item.target)
 	}
-	if v, ok := os.LookupEnv("GRPC_SERVER_ADDRESS"); ok && v != "" {
-		b.cfg.GRPCServerAddr = v
-	}
-	if v, ok := os.LookupEnv("GRPC_SECRET_KEY"); ok && v != "" {
-		b.cfg.GRPCSecretKey = v
-	}
-	if v, ok := os.LookupEnv("PROFILER_ADDRESS"); ok && v != "" {
-		b.cfg.ProfilerAddr = v
-	}
-	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); ok && v != "" {
-		b.cfg.FileStoragePath = v
-	}
-	if v, ok := os.LookupEnv("DATABASE_DSN"); ok && v != "" {
-		b.cfg.DatabaseDSN = v
-	}
-	if v, ok := os.LookupEnv("SECRET_KEY"); ok && v != "" {
-		b.cfg.SecretKey = v
-	}
+
 	if v, ok := os.LookupEnv("ENABLE_HTTPS"); ok && v != "" {
 		b.cfg.EnableHTTPS = (v == "true")
 	}
-	if v, ok := os.LookupEnv("CERTIFICATE_PATH"); ok && v != "" {
-		b.cfg.Certificate = v
-	}
-	if v, ok := os.LookupEnv("CERTIFICATE_KEY_PATH"); ok && v != "" {
-		b.cfg.PrivateKey = v
-	}
-	if v, ok := os.LookupEnv("CONFIG"); ok && v != "" {
-		b.cfg.ConfigFilePath = v
-	}
-	if v, ok := os.LookupEnv("TRUSTED_SUBNET"); ok && v != "" {
-		b.cfg.TrustedSubnet = v
-	}
+	set("CERTIFICATE_PATH", &b.cfg.Certificate)
+	set("CERTIFICATE_KEY_PATH", &b.cfg.PrivateKey)
 
 	return b
 }

@@ -15,8 +15,6 @@ import (
 	"shortly/internal/app/service"
 )
 
-const startupTimeout = 100 * time.Millisecond
-
 func Test_NewGRPCServer(t *testing.T) {
 	cfg := &config.Config{
 		GRPCServerAddr: "localhost:50051",
@@ -40,6 +38,7 @@ func Test_GRPCServer_RunAndShutdown(t *testing.T) {
 	shortener := &service.URLService{}
 	srv := NewGRPCServer(cfg, shortener)
 
+	startupTimeout := 100 * time.Millisecond
 	runErrCh := make(chan error, 1)
 
 	go func() {
@@ -74,6 +73,7 @@ func Test_GRPCServer_RunWithTLS(t *testing.T) {
 	shortener := &service.URLService{}
 	srv := NewGRPCServer(cfg, shortener)
 
+	startupTimeout := 100 * time.Millisecond
 	runErrCh := make(chan error, 1)
 
 	go func() {

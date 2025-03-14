@@ -3,25 +3,42 @@ syntax = "proto3";
 package shortly.v1;
 
 import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
 
 option go_package = "github.com/tab/shortly/internal/app/grpc/proto";
 
 // URLShortener service
 service URLShortener {
   // CreateShortLinkV1 creates a short link for the given URL
-  rpc CreateShortLinkV1(CreateShortLinkV1Request) returns (CreateShortLinkV1Response);
+  rpc CreateShortLinkV1(CreateShortLinkV1Request) returns (CreateShortLinkV1Response) {
+    option (google.api.http) = {
+      post: "/api/v1/shorten"
+      body: "*"
+    };
+  }
 
   // GetShortLinkV1 returns the original URL for the given shortCode
-  rpc GetShortLinkV1(GetShortLinkV1Request) returns (GetShortLinkV1Response);
+  rpc GetShortLinkV1(GetShortLinkV1Request) returns (GetShortLinkV1Response) {
+    option (google.api.http) = {get: "/api/v1/shorten/{short_code}"};
+  }
 
   // BatchCreateShortLinksV1 creates short links for the given URLs
-  rpc BatchCreateShortLinksV1(BatchCreateShortLinksV1Request) returns (BatchCreateShortLinksV1Response);
+  rpc BatchCreateShortLinksV1(BatchCreateShortLinksV1Request) returns (BatchCreateShortLinksV1Response) {
+    option (google.api.http) = {
+      post: "/api/v1/shorten/batch"
+      body: "*"
+    };
+  }
 
   // GetUserURLsV1 returns the list of short URLs created by the user
-  rpc GetUserURLsV1(GetUserURLsV1Request) returns (GetUserURLsV1Response);
+  rpc GetUserURLsV1(GetUserURLsV1Request) returns (GetUserURLsV1Response) {
+    option (google.api.http) = {get: "/api/v1/user/urls"};
+  }
 
   // DeleteUserURLsV1 deletes the short URLs created by the user
-  rpc DeleteUserURLsV1(DeleteUserURLsV1Request) returns (DeleteUserURLsV1Response);
+  rpc DeleteUserURLsV1(DeleteUserURLsV1Request) returns (DeleteUserURLsV1Response) {
+    option (google.api.http) = {delete: "/api/v1/user/urls"};
+  }
 }
 
 // CreateShortLinkV1Request is the request message for CreateShortLinkV1

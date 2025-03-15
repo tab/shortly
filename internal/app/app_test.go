@@ -42,6 +42,8 @@ func Test_NewApplication(t *testing.T) {
 				assert.NotNil(t, app.cfg)
 				assert.NotNil(t, app.logger)
 				assert.NotNil(t, app.server)
+				assert.NotNil(t, app.grpcServer)
+				assert.NotNil(t, app.grpcGateway)
 				assert.NotNil(t, app.pprofServer)
 			}
 		})
@@ -119,6 +121,8 @@ func Test_Application_Run(t *testing.T) {
 	appLogger := logger.NewLogger()
 	repo := repository.NewInMemoryRepository()
 	appWorker := worker.NewDeleteWorker(ctx, cfg, repo, appLogger)
+	mockGrpcServer := server.NewMockGRPCServer(ctrl)
+	mockGrpcGateway := server.NewMockGRPCGateway(ctrl)
 	mockPprofServer := server.NewMockPprofServer(ctrl)
 
 	tests := []struct {
@@ -134,12 +138,22 @@ func Test_Application_Run(t *testing.T) {
 					time.Sleep(100 * time.Millisecond)
 					return nil
 				})
+				mockGrpcServer.EXPECT().Run().DoAndReturn(func() error {
+					time.Sleep(100 * time.Millisecond)
+					return nil
+				})
+				mockGrpcGateway.EXPECT().Run().DoAndReturn(func() error {
+					time.Sleep(100 * time.Millisecond)
+					return nil
+				})
 				mockPprofServer.EXPECT().Run().DoAndReturn(func() error {
 					time.Sleep(100 * time.Millisecond)
 					return nil
 				})
 				mockPersistenceManager.EXPECT().Save().Return(nil)
 				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcGateway.EXPECT().Shutdown(gomock.Any()).Return(nil)
 				mockPprofServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
 			},
 			expected: nil,
@@ -163,6 +177,8 @@ func Test_Application_Run(t *testing.T) {
 				persistenceManager: mockPersistenceManager,
 				deleteWorker:       appWorker,
 				server:             mockServer,
+				grpcServer:         mockGrpcServer,
+				grpcGateway:        mockGrpcGateway,
 				pprofServer:        mockPprofServer,
 			}
 
@@ -196,10 +212,20 @@ func Test_Application_Run_ShutdownErrors(t *testing.T) {
 
 	mockPersistenceManager := persistence.NewMockManager(ctrl)
 	mockServer := server.NewMockServer(ctrl)
+	mockGrpcServer := server.NewMockGRPCServer(ctrl)
+	mockGrpcGateway := server.NewMockGRPCGateway(ctrl)
 	mockPprofServer := server.NewMockPprofServer(ctrl)
 
 	mockPersistenceManager.EXPECT().Load().Return(nil).AnyTimes()
 	mockServer.EXPECT().Run().DoAndReturn(func() error {
+		time.Sleep(50 * time.Millisecond)
+		return nil
+	}).AnyTimes()
+	mockGrpcServer.EXPECT().Run().DoAndReturn(func() error {
+		time.Sleep(50 * time.Millisecond)
+		return nil
+	}).AnyTimes()
+	mockGrpcGateway.EXPECT().Run().DoAndReturn(func() error {
 		time.Sleep(50 * time.Millisecond)
 		return nil
 	}).AnyTimes()
@@ -214,6 +240,8 @@ func Test_Application_Run_ShutdownErrors(t *testing.T) {
 		persistenceManager: mockPersistenceManager,
 		deleteWorker:       appWorker,
 		server:             mockServer,
+		grpcServer:         mockGrpcServer,
+		grpcGateway:        mockGrpcGateway,
 		pprofServer:        mockPprofServer,
 	}
 
@@ -240,10 +268,31 @@ func Test_Application_Run_ShutdownErrors(t *testing.T) {
 			expected: assert.AnError,
 		},
 		{
+			name: "GrpcServerShutdownError",
+			before: func() {
+				mockPersistenceManager.EXPECT().Save().Return(nil)
+				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcServer.EXPECT().Shutdown(gomock.Any()).Return(assert.AnError)
+			},
+			expected: assert.AnError,
+		},
+		{
+			name: "GrpcGatewayShutdownError",
+			before: func() {
+				mockPersistenceManager.EXPECT().Save().Return(nil)
+				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcGateway.EXPECT().Shutdown(gomock.Any()).Return(assert.AnError)
+			},
+			expected: assert.AnError,
+		},
+		{
 			name: "PprofShutdownError",
 			before: func() {
 				mockPersistenceManager.EXPECT().Save().Return(nil)
 				mockServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcServer.EXPECT().Shutdown(gomock.Any()).Return(nil)
+				mockGrpcGateway.EXPECT().Shutdown(gomock.Any()).Return(nil)
 				mockPprofServer.EXPECT().Shutdown(gomock.Any()).Return(assert.AnError)
 			},
 			expected: assert.AnError,

@@ -12,7 +12,7 @@ import (
 	"shortly/internal/app/service"
 )
 
-func Test_Middleware(t *testing.T) {
+func Test_Auth_Middleware(t *testing.T) {
 	client := &http.Client{}
 	cfg := &config.Config{
 		SecretKey: "jwt-secret-key",

@@ -5,6 +5,40 @@ info:
 servers:
   - url: http://localhost:8080
 paths:
+  /live:
+    get:
+      summary: Liveness check
+      description: Service liveness check
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: Service liveness check message
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /ready:
+    get:
+      summary: Readiness check
+      description: Service readiness check
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: Service readiness check message
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /ping:
     get:
       summary: Health check
@@ -96,6 +130,54 @@ paths:
           $ref: '#/components/responses/NotFound'
         '410':
           $ref: '#/components/responses/Gone'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/user/urls:
+    get:
+      summary: Fetch user URLs
+      description: Load all user URLs
+      responses:
+        '200':
+          description: User URLs loaded successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    short_code:
+                      type: string
+                      description: Short code of the URL
+                    original_url:
+                      type: string
+                      format: uri
+                      description: The original URL
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      summary: Delete user URLs
+      description: Deletes all URLs shortened by the user
+      responses:
+        '202':
+          description: User URLs deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+                    description: User URLs deletion message
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/internal/stats:
+    get:
+      summary: Retrieve internal statistics
+      description: Retrieves internal statistics of the service
+      responses:
+        '200':
+          $ref: '#/components/responses/Stats'
         '500':
           $ref: '#/components/responses/InternalServerError'
   /:
@@ -279,6 +361,19 @@ components:
             type: string
             description: Error message
           example: "Shortened URL not found"
+    Stats:
+      description: Internal statistics
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              urls:
+                type: integer
+                description: Total number of URLs shortened
+              users:
+                type: number
+                description: Total number of users
     InternalServerError:
       description: Internal Server Error
       content:

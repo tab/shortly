@@ -152,3 +152,43 @@ func (mr *MockHealthCheckerMockRecorder) Ping(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Ping", reflect.TypeOf((*MockHealthChecker)(nil).Ping), ctx)
 }
+
+// MockStatsReporter is a mock of StatsReporter interface.
+type MockStatsReporter struct {
+	ctrl     *gomock.Controller
+	recorder *MockStatsReporterMockRecorder
+	isgomock struct{}
+}
+
+// MockStatsReporterMockRecorder is the mock recorder for MockStatsReporter.
+type MockStatsReporterMockRecorder struct {
+	mock *MockStatsReporter
+}
+
+// NewMockStatsReporter creates a new mock instance.
+func NewMockStatsReporter(ctrl *gomock.Controller) *MockStatsReporter {
+	mock := &MockStatsReporter{ctrl: ctrl}
+	mock.recorder = &MockStatsReporterMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockStatsReporter) EXPECT() *MockStatsReporterMockRecorder {
+	return m.recorder
+}
+
+// Counters mocks base method.
+func (m *MockStatsReporter) Counters(ctx context.Context) (int, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Counters", ctx)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Counters indicates an expected call of Counters.
+func (mr *MockStatsReporterMockRecorder) Counters(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Counters", reflect.TypeOf((*MockStatsReporter)(nil).Counters), ctx)
+}

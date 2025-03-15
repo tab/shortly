@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package shortly.v1;
+
+import "buf/validate/validate.proto";
+import "google/api/annotations.proto";
+
+option go_package = "github.com/tab/shortly/internal/app/grpc/proto";
+
+// URLShortener service
+service URLShortener {
+  // CreateShortLinkV1 creates a short link for the given URL
+  rpc CreateShortLinkV1(CreateShortLinkV1Request) returns (CreateShortLinkV1Response) {
+    option (google.api.http) = {
+      post: "/api/v1/shorten"
+      body: "*"
+    };
+  }
+
+  // GetShortLinkV1 returns the original URL for the given shortCode
+  rpc GetShortLinkV1(GetShortLinkV1Request) returns (GetShortLinkV1Response) {
+    option (google.api.http) = {get: "/api/v1/shorten/{short_code}"};
+  }
+
+  // BatchCreateShortLinksV1 creates short links for the given URLs
+  rpc BatchCreateShortLinksV1(BatchCreateShortLinksV1Request) returns (BatchCreateShortLinksV1Response) {
+    option (google.api.http) = {
+      post: "/api/v1/shorten/batch"
+      body: "*"
+    };
+  }
+
+  // GetUserURLsV1 returns the list of short URLs created by the user
+  rpc GetUserURLsV1(GetUserURLsV1Request) returns (GetUserURLsV1Response) {
+    option (google.api.http) = {get: "/api/v1/user/urls"};
+  }
+
+  // DeleteUserURLsV1 deletes the short URLs created by the user
+  rpc DeleteUserURLsV1(DeleteUserURLsV1Request) returns (DeleteUserURLsV1Response) {
+    option (google.api.http) = {delete: "/api/v1/user/urls"};
+  }
+}
+
+// CreateShortLinkV1Request is the request message for CreateShortLinkV1
+message CreateShortLinkV1Request {
+  string url = 1 [(buf.validate.field) = {
+    string: {
+      min_len: 1
+      max_len: 2048
+      pattern: "^https?://.*"
+    }
+  }];
+}
+
+// CreateShortLinkV1Response is the response message for CreateShortLinkV1
+message CreateShortLinkV1Response {
+  string short_url = 1;
+  string status = 2;
+  int32 code = 3;
+}
+
+// GetShortLinkV1Request is the request message for GetShortLinkV1
+message GetShortLinkV1Request {
+  string short_code = 1 [(buf.validate.field).string.len = 8];
+}
+
+// GetShortLinkV1Response is the response message for GetShortLinkV1
+message GetShortLinkV1Response {
+  string redirect_url = 1;
+  string status = 2;
+  int32 code = 3;
+}
+
+// BatchCreateShortLinksV1Request is the request message for BatchCreateShortLinksV1
+message BatchCreateShortLinksV1Request {
+  repeated BatchCreateParams items = 1 [(buf.validate.field) = {
+    repeated: {
+      min_items: 1
+      max_items: 1000
+    }
+  }];
+}
+
+// BatchCreateParams is the request message for BatchCreateShortLinksV1
+message BatchCreateParams {
+  string correlation_id = 1 [(buf.validate.field).string = {uuid: true}];
+  string original_url = 2 [(buf.validate.field) = {
+    string: {
+      min_len: 1
+      max_len: 2048
+      pattern: "^https?://.*"
+    }
+  }];
+}
+
+// BatchCreateShortLinksV1Response is the response message for BatchCreateShortLinksV1
+message BatchCreateShortLinksV1Response {
+  repeated BatchCreateResult items = 1;
+  string status = 2;
+  int32 code = 3;
+}
+
+// BatchCreateResult is the response message for BatchCreateShortLinksV1
+message BatchCreateResult {
+  string correlation_id = 1;
+  string short_url = 2;
+}
+
+// GetUserURLsV1Request is the request message for GetUserURLsV1
+message GetUserURLsV1Request {
+  uint64 page = 1 [(buf.validate.field) = {
+    uint64: {gte: 1}
+  }];
+  uint64 per = 2 [(buf.validate.field) = {
+    uint64: {gte: 1}
+  }];
+}
+
+// GetUserURLsV1Response is the response message for GetUserURLsV1
+message GetUserURLsV1Response {
+  repeated UserURL items = 1;
+  uint64 total = 2;
+}
+
+// UserURL is the object for GetUserURLsV1Response
+message UserURL {
+  string short_url = 1;
+  string original_url = 2;
+}
+
+// DeleteUserURLsV1Request is the request message for DeleteUserURLsV1
+message DeleteUserURLsV1Request {
+  repeated string short_codes = 1 [(buf.validate.field) = {
+    repeated: {
+      min_items: 1
+      items: {
+        string: {min_len: 1}
+      }
+    }
+  }];
+}
+
+// DeleteUserURLsV1Response is the response message for DeleteUserURLsV1
+message DeleteUserURLsV1Response {
+  string status = 1;
+  int32 code = 2;
+}

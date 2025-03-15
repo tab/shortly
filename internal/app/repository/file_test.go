@@ -17,7 +17,7 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 		err     error
 	}
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	tests := []struct {
 		name     string
@@ -100,7 +100,7 @@ func Test_FileStorageRepository_Load(t *testing.T) {
 }
 
 func Test_FileStorageRepository_Save(t *testing.T) {
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	tests := []struct {
 		name     string

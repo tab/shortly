@@ -22,3 +22,6 @@ coverage:
 ignore:
   - "**/*_mock.go"
   - "**/*_test.go"
+  - "**/*.pb.go"
+  - "**/*.pb.gw.go"
+  - "**/*.sql.go"

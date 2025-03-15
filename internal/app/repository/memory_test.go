@@ -66,7 +66,7 @@ func Benchmark_InMemoryRepository_CreateURL(b *testing.B) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	b.ResetTimer()
 
@@ -446,7 +446,7 @@ func Test_InMemoryRepository_DeleteURLsByUserID(t *testing.T) {
 func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 	ctx := context.Background()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
 		memento *Memento
@@ -506,7 +506,7 @@ func Test_InMemoryRepository_CreateMemento(t *testing.T) {
 func Test_InMemoryRepository_Restore(t *testing.T) {
 	ctx := context.Background()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
 
 	type result struct {
 		memento *Memento
@@ -568,8 +568,8 @@ func Test_InMemoryRepository_Clear(t *testing.T) {
 	ctx := context.Background()
 	store := NewInMemoryRepository()
 
-	UUID, _ := uuid.Parse("6455bd07-e431-4851-af3c-4f703f726639")
-	UserUUID, _ := uuid.Parse("123e4567-e89b-12d3-a456-426614174000")
+	UUID := uuid.MustParse("6455bd07-e431-4851-af3c-4f703f726639")
+	UserUUID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 
 	tests := []struct {
 		name     string

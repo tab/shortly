@@ -16,19 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22.7'
-      - name: Download statictest binary
-        uses: robinraju/release-downloader@v1.11
-        with:
-          repository: Yandex-Practicum/go-autotests
-          latest: true
-          fileName: statictest
-          out-file-path: .tools
-          token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Setup autotest binary
+          go-version: '1.24.1'
+      - name: Build statictest
         run: |
-          chmod -R +x $GITHUB_WORKSPACE/.tools/statictest
-          mv $GITHUB_WORKSPACE/.tools/statictest /usr/local/bin/statictest
+          git clone -b v0.11.4 https://github.com/Yandex-Practicum/go-autotests.git /tmp/go-autotests
+          cd /tmp/go-autotests/cmd/statictest
+          go build -o /usr/local/bin/statictest
       - name: Run statictest
         run: |
           go vet -vettool=$(which statictest) ./...
@@ -41,11 +34,22 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22.7'
+          go-version: '1.24.1'
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.60
+          version: v1.64
+
+  buf-linter:
+    name: Buf linter
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: bufbuild/buf-action@v1
+        with:
+          setup_only: true
+      - name: Run buf lint
+        run: buf lint
 
   coverage:
     name: Codecov
@@ -71,14 +75,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22.7'
-
+          go-version: '1.24.1'
       - name: Load schema.sql
         env:
           PGPASSWORD: postgres
         run: |
           psql -h localhost -U postgres -d shortly-test -f db/schema.sql
-
       - name: Run tests
         run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
       - name: Upload coverage to Codecov

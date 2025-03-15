@@ -1,0 +1,359 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "shortly.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "URLShortener"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/api/v1/shorten": {
+      "post": {
+        "summary": "CreateShortLinkV1 creates a short link for the given URL",
+        "operationId": "URLShortener_CreateShortLinkV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateShortLinkV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateShortLinkV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "URLShortener"
+        ]
+      }
+    },
+    "/api/v1/shorten/batch": {
+      "post": {
+        "summary": "BatchCreateShortLinksV1 creates short links for the given URLs",
+        "operationId": "URLShortener_BatchCreateShortLinksV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1BatchCreateShortLinksV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1BatchCreateShortLinksV1Request"
+            }
+          }
+        ],
+        "tags": [
+          "URLShortener"
+        ]
+      }
+    },
+    "/api/v1/shorten/{shortCode}": {
+      "get": {
+        "summary": "GetShortLinkV1 returns the original URL for the given shortCode",
+        "operationId": "URLShortener_GetShortLinkV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetShortLinkV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shortCode",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "URLShortener"
+        ]
+      }
+    },
+    "/api/v1/user/urls": {
+      "get": {
+        "summary": "GetUserURLsV1 returns the list of short URLs created by the user",
+        "operationId": "URLShortener_GetUserURLsV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetUserURLsV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "per",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "URLShortener"
+        ]
+      },
+      "delete": {
+        "summary": "DeleteUserURLsV1 deletes the short URLs created by the user",
+        "operationId": "URLShortener_DeleteUserURLsV1",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteUserURLsV1Response"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "shortCodes",
+            "in": "query",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "tags": [
+          "URLShortener"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1BatchCreateParams": {
+      "type": "object",
+      "properties": {
+        "correlationId": {
+          "type": "string"
+        },
+        "originalUrl": {
+          "type": "string"
+        }
+      },
+      "title": "BatchCreateParams is the request message for BatchCreateShortLinksV1"
+    },
+    "v1BatchCreateResult": {
+      "type": "object",
+      "properties": {
+        "correlationId": {
+          "type": "string"
+        },
+        "shortUrl": {
+          "type": "string"
+        }
+      },
+      "title": "BatchCreateResult is the response message for BatchCreateShortLinksV1"
+    },
+    "v1BatchCreateShortLinksV1Request": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1BatchCreateParams"
+          }
+        }
+      },
+      "title": "BatchCreateShortLinksV1Request is the request message for BatchCreateShortLinksV1"
+    },
+    "v1BatchCreateShortLinksV1Response": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1BatchCreateResult"
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "BatchCreateShortLinksV1Response is the response message for BatchCreateShortLinksV1"
+    },
+    "v1CreateShortLinkV1Request": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string"
+        }
+      },
+      "title": "CreateShortLinkV1Request is the request message for CreateShortLinkV1"
+    },
+    "v1CreateShortLinkV1Response": {
+      "type": "object",
+      "properties": {
+        "shortUrl": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "CreateShortLinkV1Response is the response message for CreateShortLinkV1"
+    },
+    "v1DeleteUserURLsV1Response": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "DeleteUserURLsV1Response is the response message for DeleteUserURLsV1"
+    },
+    "v1GetShortLinkV1Response": {
+      "type": "object",
+      "properties": {
+        "redirectUrl": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        },
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "GetShortLinkV1Response is the response message for GetShortLinkV1"
+    },
+    "v1GetUserURLsV1Response": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1UserURL"
+          }
+        },
+        "total": {
+          "type": "string",
+          "format": "uint64"
+        }
+      },
+      "title": "GetUserURLsV1Response is the response message for GetUserURLsV1"
+    },
+    "v1UserURL": {
+      "type": "object",
+      "properties": {
+        "shortUrl": {
+          "type": "string"
+        },
+        "originalUrl": {
+          "type": "string"
+        }
+      },
+      "title": "UserURL is the object for GetUserURLsV1Response"
+    }
+  }
+}
